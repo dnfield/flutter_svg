@@ -10,6 +10,17 @@ you'll need to clone that, build it (see [instructions](https://github.com/flutt
 
 `flutter run --local-engine=android_debug_unopt_x86` (to run a build for the android emulator, for example)
 
+## TODO
+
+- [ ] Finalize interface for parsing SVG paths and create PR
+- [ ] Find out why `canvas.drawPoints` isn't allowing me to fill the resulting shape
+- [ ] Better support for transforms
+- [ ] Support for minimal CSS/styles
+- [ ] Unit tests
+- [ ] More SVG samples to cover more complicated cases
+- [ ] XLink support
+- [ ] Glyph support
+
 ## SVG sample attribution
 
 SVGs in `/assets/w3samples` pulled from [W3 sample files](https://dev.w3.org/SVG/tools/svgweb/samples/svg-files/)
