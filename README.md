@@ -4,22 +4,22 @@ Messing around with drawing SVGs on canvas
 
 ## Getting Started
 
-For now, this requires the flutter/engine path_svg branch
+~~~For now, this requires the flutter/engine path_svg branch~~~
 
-you'll need to clone that, build it (see [instructions](https://github.com/flutter/engine/blob/master/CONTRIBUTING.md)), and then use something like
+After some testing and discussion, I've implemented Chromium's path parsing logic in Dart.
+It probably has some room for improvement and definitely needs more tests.
 
-`flutter run --local-engine=android_debug_unopt_x86` (to run a build for the android emulator, for example)
 
 ## TODO
 
-- [ ] Finalize interface for parsing SVG paths and create PR
-- [ ] Find out why `canvas.drawPoints` isn't allowing me to fill the resulting shape
-- [ ] Better support for transforms
-- [ ] Support for minimal CSS/styles
+- [ ] ~~~Finalize interface for parsing SVG paths and create PR~~~
+- [ ] ~~~Find out why `canvas.drawPoints` isn't allowing me to fill the resulting shape~~~
+- [x] Better support for transforms
+- [ ] Support for minimal CSS/styles?
 - [ ] Unit tests
 - [ ] More SVG samples to cover more complicated cases
-- [ ] XLink support
-- [ ] Glyph support
+- [ ] XLink support?
+- [ ] Glyph support?
 
 ## SVG sample attribution
 
