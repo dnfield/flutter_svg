@@ -40,6 +40,9 @@ SVGs in `/assets/w3samples` pulled from [W3 sample files](https://dev.w3.org/SVG
 
 SVGs in `/assets/deborah_ufw` provided by @deborah-ufw
 
-SVGs in `/assets/simple` are pulled from trivial examples or generated to test basic functionality
+SVGs in `/assets/simple` are pulled from trivial examples or generated to test
+basic functionality
 
-Please submit SVGs this can't render properly (e.g. that don't render here the way they do in chrome), 
+Please submit SVGs this can't render properly (e.g. that don't render here the
+way they do in chrome), as long as they're not using anything "probably out of
+scope" (above).
