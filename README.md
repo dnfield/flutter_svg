@@ -46,7 +46,7 @@ SVGs in `/assets/w3samples` pulled from [W3 sample files](https://dev.w3.org/SVG
 SVGs in `/assets/deborah_ufw` provided by @deborah-ufw
 
 SVGs in `/assets/simple` are pulled from trivial examples or generated to test
-basic functionality
+basic functionality - some of them come directly from the SVG 1.1 spec.
 
 SVGs in `/assets/wikimedia` are pulled from [Wikimedia Commons](https://commons.wikimedia.org/wiki/Main_Page)
 
