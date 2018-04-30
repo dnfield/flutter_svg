@@ -4,7 +4,7 @@
 
 Messing around with drawing SVGs on canvas
 
-<img src="/../master/assets/flutter_logo.svg?sanitize=true" width="200px">
+<img src="/../master/assets/flutter_logo.svg?sanitize=true" width="200px" alt="Flutter Logo">
 
 ## Getting Started
 
