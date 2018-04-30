@@ -4,7 +4,7 @@
 
 Messing around with drawing SVGs on canvas
 
-![Flutter Logo SVG](/../master/assets/flutter_logo.svg?raw=true)
+![Flutter Logo SVG](/../master/assets/flutter_logo.svg?sanitize=true)
 
 ## Getting Started
 
