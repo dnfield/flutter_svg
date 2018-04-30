@@ -1,6 +1,10 @@
 # flutter_svg
 
+[![Build Status](https://travis-ci.org/dnfield/flutter_svg.svg?branch=master)](https://travis-ci.org/dnfield/flutter_svg)
+
 Messing around with drawing SVGs on canvas
+
+[Flutter Logo SVG](/../master/assets/flutter_logo.svg?raw=true)
 
 ## Getting Started
 
@@ -26,6 +30,7 @@ to do this).
 - [ ] XLink/ref support?
 - [ ] Glyph support?
 - [ ] Text support
+- [ ] Gradient support (Linear: Partially done, Radial: TBD)
 
 ## Probably out of scope
 
