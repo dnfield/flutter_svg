@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/dnfield/flutter_svg.svg?branch=master)](https://travis-ci.org/dnfield/flutter_svg)
 
-Messing around with drawing SVGs on canvas
+Draw SVG and Android VectorDrawable (XML) files on a Flutter Widget.
 
 <img src="/../master/assets/flutter_logo.svg?sanitize=true" width="200px" alt="Flutter Logo">
 
