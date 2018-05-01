@@ -26,7 +26,7 @@ final Widget svg = new SvgImage.asset(
 );
 ```
 
-See [main.dart](/../master/main.dart) for a complete sample.
+See [main.dart](/../master/lib/main.dart) for a complete sample.
 
 ## TODO
 
