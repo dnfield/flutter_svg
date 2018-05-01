@@ -8,29 +8,44 @@ Messing around with drawing SVGs on canvas
 
 ## Getting Started
 
-~~~For now, this requires the flutter/engine path_svg branch~~~
+This is a Dart-native rendering library. Issues/PRs will be raised in Flutter
+and flutter/engine as necessary for features that are not good candidates for
+Dart implementations (especially if they're impossible to implement without
+engine support).  However, not everything that Skia can easily do needs to be
+done by Skia; for example, the Path parsing logic here isn't much slower than
+doing it in native, and Skia isn't always doing low level GPU accelerated work
+where you might think it is (e.g. Dash Paths).
 
-After some testing and discussion, I've implemented Chromium's path parsing
-logic in Dart. It probably has some room for improvement and definitely needs
-more tests. Surprisingly (at least to me), the Skia C++ parsing implementation
-wasn't notably faster than just feeing in Path commands.  If the Dart
-implementation here isn't fast enough (or can't be made fast enough), you
-should look at preprocessing your SVGs into Dart code. I have dreams of making
-an intermediate format (or perhaps just coopting [usvg](https://github.com/razrfalcon/usvg)
-to do this).
+Basic usage (to create an SVG rendering widget from an asset):
+
+```dart
+final String assetName = 'assets/image.svg';
+final Widget svg = new SvgImage.asset(
+  assetName,
+  new Size(100.0, 100.0),
+);
+```
+
+See [main.dart](/../master/main.dart) for a complete sample.
 
 ## TODO
 
-- [ ] ~~~Finalize interface for parsing SVG paths and create PR~~~
-- [ ] ~~~Find out why `canvas.drawPoints` isn't allowing me to fill the resulting shape~~~
-- [x] Better support for transforms
-- [ ] Support for minimal CSS/styles?  See also [svgcleaner](https://github.com/razrfalcon/svgcleaner)
-- [ ] Unit tests
-- [ ] More SVG samples to cover more complicated cases
-- [ ] XLink/ref support?
-- [ ] Glyph support?
+This list is roughly ordered.
+
 - [ ] Text support
-- [ ] Gradient support (Linear: Partially done, Radial: TBD)
+- [ ] Gradient support (Linear: Mostly done, Radial: partly done)
+- [ ] Dash path support
+- [ ] More SVG samples to cover more complicated cases
+- [ ] Display/visibility support
+- [ ] Unit tests
+- [ ] Inerhitance of inheritable properties (necessary? preprocess?)
+- [ ] Support for minimal CSS/styles?  See also [svgcleaner](https://github.com/razrfalcon/svgcleaner)
+- [ ] XLink/ref support (necessary? partially supported for gradients)
+- [ ] Glyph support?
+- [ ] Markers
+- [ ] Filters/effects
+- [ ] Android Vector Drawable support (partial so far)
+- [ ] Caching of image
 
 ## Probably out of scope
 
@@ -38,6 +53,7 @@ to do this).
 - Full (any?) CSS support - preprocess your SVGs (perhaps with svgcleaner to get rid of all CSS?)
 - Scripting in SVGs
 - Foreign elements
+- Rendering properties/hints
 
 ## SVG sample attribution
 
