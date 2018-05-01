@@ -67,6 +67,7 @@ basic functionality - some of them come directly from the SVG 1.1 spec.
 SVGs in `/assets/wikimedia` are pulled from [Wikimedia Commons](https://commons.wikimedia.org/wiki/Main_Page)
 
 Android Drawables in `assets/android_vd` are pulled from Android Documentation and examples.
+
 The Flutter Logo created based on the Flutter Logo Widget.
 
 Please submit SVGs this can't render properly (e.g. that don't render here the
