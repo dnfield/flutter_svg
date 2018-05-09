@@ -34,7 +34,8 @@ This list is roughly ordered.
 
 - [ ] Text support
 - [ ] Gradient support (Linear: Mostly done, Radial: partly done)
-- [ ] Dash path support
+- [x] Dash path support
+- [ ] Dash path with percentage dasharray values
 - [ ] More SVG samples to cover more complicated cases
 - [ ] Display/visibility support
 - [ ] Unit tests
