@@ -26,27 +26,40 @@ final Widget svg = new SvgImage.asset(
 );
 ```
 
-See [main.dart](/../master/lib/main.dart) for a complete sample.
+See [main.dart](/../master/example/main.dart) for a complete sample.
+
+## Use Cases
+
+- Your designer creates a vector asset that you want to include without converting to 5 different
+  raster format resolutions.
+- Your vector drawing is meant to be static and non (or maybe minimally) interactive
 
 ## TODO
 
-This list is roughly ordered.
+This list is not very well ordered.  I'm mainly picking up things that seem interesting or useful,
+or where I've gotten a request to fix something/example of something that's broken.
 
-- [ ] Text support
-- [ ] Gradient support (Linear: Mostly done, Radial: partly done)
-- [x] Dash path support
-- [ ] Dash path with percentage dasharray values
-- [ ] More SVG samples to cover more complicated cases
-- [ ] Display/visibility support
-- [ ] Unit tests
-- [ ] Inerhitance of inheritable properties (necessary? preprocess?)
-- [ ] Support for minimal CSS/styles?  See also [svgcleaner](https://github.com/razrfalcon/svgcleaner)
-- [ ] XLink/ref support (necessary? partially supported for gradients)
+- [ ] Text support.
+- [ ] Gradient support (Linear: Mostly done, Radial: partly done).
+- [x] Dash path support.
+- [ ] Dash path with percentage dasharray values.
+- [ ] More SVG samples to cover more complicated cases (getting there - please send me samples of
+      things that don't work!).
+- [ ] Display/visibility support.
+- [ ] Unit tests. In particular, tests that validate XML -> Drawable* structures.
+- [ ] Inheritance of inheritable properties (~~necessary? preprocess?~~ significant progress).
+- [ ] Support for minimal CSS/styles?  See also
+      [svgcleaner](https://github.com/razrfalcon/svgcleaner) (partial - style attr mostly supported).
+- [ ] XLink/ref support (necessary? partially supported for gradients).
 - [ ] Glyph support?
-- [ ] Markers
-- [ ] Filters/effects
-- [ ] Android Vector Drawable support (partial so far)
-- [ ] Caching of image
+- [ ] Markers.
+- [ ] Filters/effects.
+- [ ] Android Vector Drawable support (partial so far).
+- [ ] Caching of image.
+- [ ] The XML parsing implementation is heavy for what this really needs.  I've made efforts to keep
+      the API forward-reading-only compatible to eventually be able to use a SAX/XMLReader style
+      parser.
+- [ ] Color swapping/hue shifting/tinting of asset.
 
 ## Probably out of scope
 
