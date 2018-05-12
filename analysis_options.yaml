@@ -32,6 +32,8 @@ analyzer:
     # allow having TODOs in the code
     todo: ignore
   exclude:
+    # for Travis - don't try to analyze the flutter repo
+    - 'flutter/**'
 
 
 linter:
