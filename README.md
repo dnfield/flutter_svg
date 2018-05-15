@@ -19,7 +19,7 @@ where you might think it is (e.g. Dash Paths).
 All of the SVGs in the `assets/` folder (except the text related one(s)) now
 have corresponding PNGs in the `golden/` folder that were rendered using
 `flutter test tool/gen_golden.dart` and compared against their rendering output
-in Chrome. Automated tests will continue to compare these to ensure code 
+in Chrome. Automated tests will continue to compare these to ensure code
 changes do not break known-good renderings.
 
 Basic usage (to create an SVG rendering widget from an asset):
