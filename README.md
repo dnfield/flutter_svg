@@ -1,12 +1,10 @@
 # flutter_svg
 
-[![Build Status](https://travis-ci.org/dnfield/flutter_svg.svg?branch=master)](https://travis-ci.org/dnfield/flutter_svg)
+[![Build Status](https://travis-ci.org/dnfield/flutter_svg.svg?branch=master)](https://travis-ci.org/dnfield/flutter_svg) [![Coverage Status](https://coveralls.io/repos/github/dnfield/flutter_svg/badge.svg?branch=master)](https://coveralls.io/github/dnfield/flutter_svg?branch=master)
 
-[![Coverage Status](https://coveralls.io/repos/github/dnfield/flutter_svg/badge.svg?branch=master)](https://coveralls.io/github/dnfield/flutter_svg?branch=master)
+<img src="/../master/assets/flutter_logo.svg?sanitize=true" width="200px" alt="Flutter Logo which can be rendered by this package!">
 
 Draw SVG and Android VectorDrawable (XML) files on a Flutter Widget.
-
-<img src="/../master/assets/flutter_logo.svg?sanitize=true" width="200px" alt="Flutter Logo">
 
 ## Getting Started
 
@@ -18,6 +16,12 @@ done by Skia; for example, the Path parsing logic here isn't much slower than
 doing it in native, and Skia isn't always doing low level GPU accelerated work
 where you might think it is (e.g. Dash Paths).
 
+All of the SVGs in the `assets/` folder (except the text related one(s)) now
+have corresponding PNGs in the `golden/` folder that were rendered using
+`flutter test tool/gen_golden.dart` and compared against their rendering output
+in Chrome. Automated tests will continue to compare these to ensure code 
+changes do not break known-good renderings.
+
 Basic usage (to create an SVG rendering widget from an asset):
 
 ```dart
@@ -28,13 +32,34 @@ final Widget svg = new SvgImage.asset(
 );
 ```
 
+If you'd like to render the SVG to some other canvas, you can do something like:
+
+```dart
+import 'package:flutter_svg/flutter_svg.dart' as svg;
+final svg.DrawableRoot svgRoot = await svg.loadAsset('assets/image.svg');
+
+// Optional, but probably normally desireable: scale the canvas dimensions to
+// the SVG's viewbox
+svgRoot.scaleCanvasToViewBox(canvas);
+
+// Optional, but probably normally desireable: ensure the SVG isn't rendered
+// outside of the viewbox bounds
+svgRoot.clipCanvasToViewBox(canvas);
+svgRoot.draw(canvas, size);
+```
+
+While I'm making every effort to avoid needlessly changing the API, it's not
+guarnateed to be stable yet (hence the pre-1.0.0 version).
+
 See [main.dart](/../master/example/main.dart) for a complete sample.
 
 ## Use Cases
 
 - Your designer creates a vector asset that you want to include without converting to 5 different
   raster format resolutions.
-- Your vector drawing is meant to be static and non (or maybe minimally) interactive
+- Your vector drawing is meant to be static and non (or maybe minimally) interactive.
+- You want to load SVGs dynamically from network sources at runtime.
+- You want to paint SVG data and render it to an image.
 
 ## TODO
 
@@ -48,7 +73,7 @@ or where I've gotten a request to fix something/example of something that's brok
 - [ ] More SVG samples to cover more complicated cases (getting there - please send me samples of
       things that don't work!).
 - [ ] Display/visibility support.
-- [ ] Unit tests. In particular, tests that validate XML -> Drawable* structures.
+- [ ] Unit tests. In particular, tests that validate XML -> Drawable* structures. (Vastly improved as of 0.2.)
 - [ ] Inheritance of inheritable properties (~~necessary? preprocess?~~ significant progress).
 - [ ] Support for minimal CSS/styles?  See also
       [svgcleaner](https://github.com/razrfalcon/svgcleaner) (partial - style attr mostly supported).
