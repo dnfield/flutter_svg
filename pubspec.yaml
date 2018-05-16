@@ -52,6 +52,7 @@ flutter:
     - assets/simple/rect_rrect.svg
     - assets/simple/linear_gradient.svg
     - assets/simple/linear_gradient_2.svg
+    - assets/simple/radial_gradient_focal.svg
     - assets/simple/radial_gradient.svg
     - assets/simple/dash_path.svg
     - assets/simple/text.svg
@@ -63,3 +64,9 @@ flutter:
 environment:
   sdk: ">=1.19.0 <3.0.0"
   flutter: ">=0.3.6 <2.0.0"
+
+dependency_overrides:
+  sky_engine:
+    path: /Users/dnfield/engine/src/out/host_debug_unopt/gen/dart-pkg/sky_engine
+  sky_services:
+    path: /Users/dnfield/engine/src/out/host_debug_unopt/gen/dart-pkg/sky_services

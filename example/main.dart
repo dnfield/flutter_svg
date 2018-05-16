@@ -3,33 +3,34 @@ import 'package:flutter_svg/avd.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 const List<String> assetNames = const <String>[
-  'assets/notfound.svg',
-  'assets/flutter_logo.svg',
-  'assets/dart.svg',
-  'assets/simple/group_opacity.svg',
-  'assets/simple/text.svg',
-  'assets/simple/linear_gradient.svg',
-  'assets/simple/linear_gradient_2.svg',
+  // 'assets/notfound.svg',
+  // 'assets/flutter_logo.svg',
+  // 'assets/dart.svg',
+  // 'assets/simple/group_opacity.svg',
+  // 'assets/simple/text.svg',
+  // 'assets/simple/linear_gradient.svg',
+  // 'assets/simple/linear_gradient_2.svg',
+  'assets/simple/radial_gradient_focal.svg',
   'assets/simple/radial_gradient.svg',
-  'assets/simple/rect_rrect.svg',
-  'assets/simple/style_attr.svg',
-  'assets/w3samples/aa.svg',
-  'assets/w3samples/alphachannel.svg',
-  'assets/deborah_ufw/new-action-expander.svg',
-  'assets/deborah_ufw/new-camera.svg',
-  'assets/deborah_ufw/new-gif-button.svg',
-  'assets/deborah_ufw/new-gif.svg',
-  'assets/deborah_ufw/new-image.svg',
-  'assets/deborah_ufw/new-mention.svg',
-  'assets/deborah_ufw/new-pause-button.svg',
-  'assets/deborah_ufw/new-play-button.svg',
-  'assets/deborah_ufw/new-send-circle.svg',
-  'assets/deborah_ufw/numeric_25.svg',
-  'assets/simple/ellipse.svg',
-  'assets/simple/dash_path.svg',
-  'assets/simple/nested_group.svg',
-  'assets/wikimedia/chess_knight.svg',
-  'assets/wikimedia/Ghostscript_Tiger.svg',
+  // 'assets/simple/rect_rrect.svg',
+  // 'assets/simple/style_attr.svg',
+  // 'assets/w3samples/aa.svg',
+  // 'assets/w3samples/alphachannel.svg',
+  // 'assets/deborah_ufw/new-action-expander.svg',
+  // 'assets/deborah_ufw/new-camera.svg',
+  // 'assets/deborah_ufw/new-gif-button.svg',
+  // 'assets/deborah_ufw/new-gif.svg',
+  // 'assets/deborah_ufw/new-image.svg',
+  // 'assets/deborah_ufw/new-mention.svg',
+  // 'assets/deborah_ufw/new-pause-button.svg',
+  // 'assets/deborah_ufw/new-play-button.svg',
+  // 'assets/deborah_ufw/new-send-circle.svg',
+  // 'assets/deborah_ufw/numeric_25.svg',
+  // 'assets/simple/ellipse.svg',
+  // 'assets/simple/dash_path.svg',
+  // 'assets/simple/nested_group.svg',
+  // 'assets/wikimedia/chess_knight.svg',
+  // 'assets/wikimedia/Ghostscript_Tiger.svg',
 ];
 
 const List<String> uriNames = const <String>[
@@ -68,10 +69,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
   final ErrorWidgetBuilder customErrorBuilder = (FlutterErrorDetails details) {
     print(details);
-    return const Icon(
-      Icons.error,
-      color: Colors.red,
-    );
+    return new Row(children: const <Widget>[
+      const Icon(
+        Icons.error,
+        color: Colors.red,
+      ),
+      const Text('Not found')
+    ]);
   };
 
   @override
