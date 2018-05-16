@@ -68,13 +68,13 @@ class _MyHomePageState extends State<MyHomePage> {
   double _dimension;
 
   final ErrorWidgetBuilder customErrorBuilder = (FlutterErrorDetails details) {
-    print(details);
+    debugPrint(details.toString());
     return new Row(children: const <Widget>[
       const Icon(
         Icons.error,
         color: Colors.red,
       ),
-      const Text('Not found')
+      const Text('Error Loading')
     ]);
   };
 

@@ -13,4 +13,4 @@ doc/api/
 coverage/
 
 # Flutter crash logs
-flutter_*.log
+/flutter_*.log
