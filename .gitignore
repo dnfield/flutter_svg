@@ -11,3 +11,6 @@ packages
 .flutter-plugins
 doc/api/
 coverage/
+
+# Flutter crash logs
+/flutter_*.log
