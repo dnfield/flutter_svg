@@ -32,13 +32,47 @@ final Widget svg = new SvgImage.asset(
 );
 ```
 
+The default placeholder is an empty box.  The default error widget is an 
+ErrorWidget.
+
+You can also specify a placeholder widget and an error widget. The placeholder
+will display during parsing/loading (normally only relevant for network access).
+
+```dart
+final ErrorWidgetBuilder customErrorBuilder = (FlutterErrorDetails details) {
+  debugPrint(details.toString());
+  return new Row(children: const <Widget>[
+    const Icon(
+      Icons.error,
+      color: Colors.red,
+    ),
+    const Text('Error Loading')
+  ]);
+};
+
+final String assetName = 'assets/image_that_does_not_exist.svg';
+final Widget svg = new SvgImage.asset(
+  assetName,
+  new Size(100.0, 100.0),
+  errorWidgetBuilder: customErrorBuilder,
+);
+
+final Widget networkSvg = new SvgImage.network(
+  'https://site-that-takes-a-while.com/image.svg',
+  new Size(100.0, 100.0),
+  loadingPlaceholderBuilder: (BuildContext context) => new Container(
+      padding: const EdgeInsets.all(30.0),
+      child: const CircularProgressIndicator()),
+);
+```
+
 If you'd like to render the SVG to some other canvas, you can do something like:
 
 ```dart
 import 'package:flutter_svg/flutter_svg.dart' as svg;
 final svg.DrawableRoot svgRoot = await svg.loadAsset('assets/image.svg');
 
-// Optional, but probably normally desireable: scale the canvas dimensions to
+// Optional, but probably normally desirable: scale the canvas dimensions to
 // the SVG's viewbox
 svgRoot.scaleCanvasToViewBox(canvas);
 
@@ -48,6 +82,8 @@ svgRoot.clipCanvasToViewBox(canvas);
 svgRoot.draw(canvas, size);
 ```
 
+The `SvgImage` widget is basically a wrapper around that.
+
 While I'm making every effort to avoid needlessly changing the API, it's not
 guarnateed to be stable yet (hence the pre-1.0.0 version).
 
@@ -55,43 +91,52 @@ See [main.dart](/../master/example/main.dart) for a complete sample.
 
 ## Use Cases
 
-- Your designer creates a vector asset that you want to include without converting to 5 different
-  raster format resolutions.
-- Your vector drawing is meant to be static and non (or maybe minimally) interactive.
+- Your designer creates a vector asset that you want to include without
+  converting to 5 different raster format resolutions.
+- Your vector drawing is meant to be static and non (or maybe minimally)
+  interactive.
 - You want to load SVGs dynamically from network sources at runtime.
 - You want to paint SVG data and render it to an image.
 
 ## TODO
 
-This list is not very well ordered.  I'm mainly picking up things that seem interesting or useful,
-or where I've gotten a request to fix something/example of something that's broken.
+This list is not very well ordered.  I'm mainly picking up things that seem
+interesting or useful, or where I've gotten a request to fix something/example
+of something that's broken.
 
 - [ ] Text support.
 - [ ] Gradient support (Linear: Mostly done, Radial: partly done).
 - [x] Dash path support.
 - [ ] Dash path with percentage dasharray values.
-- [ ] More SVG samples to cover more complicated cases (getting there - please send me samples of
-      things that don't work!).
+- [ ] More SVG samples to cover more complicated cases (getting there - please
+      file issues for things that don't work!).
 - [ ] Display/visibility support.
-- [ ] Unit tests. In particular, tests that validate XML -> Drawable* structures. (Vastly improved as of 0.2.)
-- [ ] Inheritance of inheritable properties (~~necessary? preprocess?~~ significant progress).
+- [x] Unit tests. ~~In particular, tests that validate XML -> Drawable*
+      structures. (Vastly improved as of 0.2.)~~ this is getting there,
+      just need to stay on top of it.
+- [ ] Inheritance of inheritable properties (~~necessary? preprocess?~~
+      significant progress, still some rough edges).
 - [ ] Support for minimal CSS/styles?  See also
-      [svgcleaner](https://github.com/razrfalcon/svgcleaner) (partial - style attr mostly supported).
+      [svgcleaner](https://github.com/razrfalcon/svgcleaner) (partial - style
+      attribute mostly supported).
 - [ ] XLink/ref support (necessary? partially supported for gradients).
 - [ ] Glyph support?
 - [ ] Markers.
 - [ ] Filters/effects.
 - [ ] Android Vector Drawable support (partial so far).
 - [ ] Caching of image.
-- [ ] The XML parsing implementation is heavy for what this really needs.  I've made efforts to keep
-      the API forward-reading-only compatible to eventually be able to use a SAX/XMLReader style
-      parser.
+- [ ] The XML parsing implementation is heavy for what this really needs. I've
+      made efforts to keep the API forward-reading-only compatible to
+      eventually be able to use a SAX/XMLReader streaming style parser.
 - [ ] Color swapping/hue shifting/tinting of asset.
+- [ ] 
 
 ## Probably out of scope
 
-- SMIL animations. That just seems crazy.
-- Full (any?) CSS support - preprocess your SVGs (perhaps with svgcleaner to get rid of all CSS?)
+- SMIL animations. That just seems crazy.  I think it'll be possible to animate
+  the SVG but probably in a more Flutter driven way.
+- Full (any?) CSS support - preprocess your SVGs (perhaps with svgcleaner to
+  get rid of all CSS?)
 - Scripting in SVGs
 - Foreign elements
 - Rendering properties/hints
@@ -109,9 +154,10 @@ SVGs in `/assets/wikimedia` are pulled from [Wikimedia Commons](https://commons.
 
 Android Drawables in `assets/android_vd` are pulled from Android Documentation and examples.
 
-The Flutter Logo created based on the Flutter Logo Widget.
+The Flutter Logo created based on the Flutter Logo Widget (c) Google.
 
-The Dart logo is from [darglang.org](https://github.com/dart-lang/site-shared/blob/master/src/_assets/images/dart/logo%2Btext/horizontal/original.svg) (c) Google
+The Dart logo is from [darglang.org](https://github.com/dart-lang/site-shared/blob/master/src/_assets/images/dart/logo%2Btext/horizontal/original.svg) 
+(c) Google
 
 Please submit SVGs this can't render properly (e.g. that don't render here the
 way they do in chrome), as long as they're not using anything "probably out of
