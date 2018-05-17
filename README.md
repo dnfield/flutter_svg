@@ -129,7 +129,6 @@ of something that's broken.
       made efforts to keep the API forward-reading-only compatible to
       eventually be able to use a SAX/XMLReader streaming style parser.
 - [ ] Color swapping/hue shifting/tinting of asset.
-- [ ] 
 
 ## Probably out of scope
 
