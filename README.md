@@ -111,6 +111,8 @@ Android Drawables in `assets/android_vd` are pulled from Android Documentation a
 
 The Flutter Logo created based on the Flutter Logo Widget.
 
+The Dart logo is from [darglang.org](https://github.com/dart-lang/site-shared/blob/master/src/_assets/images/dart/logo%2Btext/horizontal/original.svg) (c) Google
+
 Please submit SVGs this can't render properly (e.g. that don't render here the
 way they do in chrome), as long as they're not using anything "probably out of
 scope" (above).
