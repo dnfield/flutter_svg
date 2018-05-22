@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:ui';
 
-import 'package:flutter/widgets.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart' hide Image;
 
+import 'src/vector_drawable.dart';
 import 'src/vector_painter.dart';
 
 enum PaintLocation { Foreground, Background }
@@ -22,7 +24,7 @@ enum PaintLocation { Foreground, Background }
 ///
 /// By default, an [ErrorWidget] will be rendered if an error occurs. This
 /// can be replace with a custom [ErrorWidgetBuilder] to taste.
-class VectorDrawableImage extends StatelessWidget {
+class VectorDrawablePainter extends StatelessWidget {
   static final WidgetBuilder defaultPlaceholderBuilder =
       (BuildContext ctx) => const LimitedBox();
 
@@ -49,7 +51,7 @@ class VectorDrawableImage extends StatelessWidget {
   /// Child content for this widget.
   final Widget child;
 
-  const VectorDrawableImage(this.future, this.size,
+  const VectorDrawablePainter(this.future, this.size,
       {this.clipToViewBox = true,
       Key key,
       this.paintLocation = PaintLocation.Background,
@@ -96,5 +98,76 @@ class VectorDrawableImage extends StatelessWidget {
         // return const LimitedBox();
       },
     );
+  }
+}
+
+/// Key for the image obtained by an [VectorAssetImage] or [ExactVectorAssetImage].
+///
+/// This is used to identify the precise resource in the [imageCache].
+@immutable
+class VectorAssetBundleImageKey {
+  /// Creates the key for an [AssetImage] or [AssetBundleImageProvider].
+  ///
+  /// The arguments must not be null.
+  const VectorAssetBundleImageKey({
+    @required this.bundle,
+    @required this.name,
+    @required this.size,
+  })  : assert(bundle != null),
+        assert(name != null),
+        assert(size != null);
+
+  /// The bundle from which the image will be obtained.
+  ///
+  /// The image is obtained by calling [AssetBundle.load] on the given [bundle]
+  /// using the key given by [name].
+  final AssetBundle bundle;
+
+  /// The key to use to obtain the resource from the [bundle]. This is the
+  /// argument passed to [AssetBundle.load].
+  final String name;
+
+  /// The size to render this SVG as.
+  final Size size;
+
+  @override
+  bool operator ==(dynamic other) {
+    if (other.runtimeType != runtimeType) {
+      return false;
+    }
+    final VectorAssetBundleImageKey typedOther = other;
+    return bundle == typedOther.bundle &&
+        name == typedOther.name &&
+        size == typedOther.size;
+  }
+
+  @override
+  int get hashCode => hashValues(bundle, name, size);
+
+  @override
+  String toString() =>
+      '$runtimeType(bundle: $bundle, name: "$name", size: $size)';
+}
+
+abstract class VectorAssetBundleImageProvider
+    extends ImageProvider<VectorAssetBundleImageKey> {
+  const VectorAssetBundleImageProvider();
+
+  /// Fetches the image from the asset bundle, decodes it, and returns a
+  /// corresponding [ImageInfo] object.
+  ///
+  /// This function is used by [load].
+  @protected
+  Future<ImageInfo> loadAsync(VectorAssetBundleImageKey key);
+
+  /// Converts a key into an [ImageStreamCompleter], and begins fetching the
+  /// image using [loadAsync].
+  @override
+  ImageStreamCompleter load(VectorAssetBundleImageKey key) {
+    return new OneFrameImageStreamCompleter(loadAsync(key),
+        informationCollector: (StringBuffer information) {
+      information.writeln('Image provider: $this');
+      information.write('Image key: $key');
+    });
   }
 }

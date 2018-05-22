@@ -9,12 +9,12 @@ import 'package:xml/xml.dart' as xml show parse;
 
 import 'src/avd/xml_parsers.dart';
 import 'src/avd_parser.dart';
-import 'src/vector_painter.dart';
+import 'src/vector_drawable.dart';
 import 'vector_drawable.dart';
 
 /// Extends [VectorDrawableImage] to parse SVG data to [Drawable].
-class AvdImage extends VectorDrawableImage {
-  const AvdImage._(Future<DrawableRoot> future, Size size,
+class AvdPainter extends VectorDrawablePainter {
+  const AvdPainter._(Future<DrawableRoot> future, Size size,
       {bool clipToViewBox,
       Key key,
       PaintLocation paintLocation,
@@ -27,13 +27,13 @@ class AvdImage extends VectorDrawableImage {
             errorWidgetBuilder: errorWidgetBuilder,
             loadingPlaceholderBuilder: loadingPlaceholderBuilder);
 
-  factory AvdImage.fromString(String svg, Size size,
+  factory AvdPainter.fromString(String svg, Size size,
       {Key key,
       bool clipToViewBox = true,
       PaintLocation paintLocation = PaintLocation.Background,
       ErrorWidgetBuilder errorWidgetBuilder,
       WidgetBuilder loadingPlaceholderBuilder}) {
-    return new AvdImage._(
+    return new AvdPainter._(
       new Future<DrawableRoot>.value(fromAvdString(svg, size)),
       size,
       clipToViewBox: clipToViewBox,
@@ -44,7 +44,7 @@ class AvdImage extends VectorDrawableImage {
     );
   }
 
-  factory AvdImage.asset(String assetName, Size size,
+  factory AvdPainter.asset(String assetName, Size size,
       {Key key,
       AssetBundle bundle,
       String package,
@@ -52,7 +52,7 @@ class AvdImage extends VectorDrawableImage {
       PaintLocation paintLocation = PaintLocation.Background,
       ErrorWidgetBuilder errorWidgetBuilder,
       WidgetBuilder loadingPlaceholderBuilder}) {
-    return new AvdImage._(
+    return new AvdPainter._(
       loadAsset(assetName, size, bundle: bundle, package: package),
       size,
       clipToViewBox: clipToViewBox,
@@ -63,14 +63,14 @@ class AvdImage extends VectorDrawableImage {
     );
   }
 
-  factory AvdImage.network(String uri, Size size,
+  factory AvdPainter.network(String uri, Size size,
       {Map<String, String> headers,
       Key key,
       bool clipToViewBox = true,
       PaintLocation paintLocation = PaintLocation.Background,
       ErrorWidgetBuilder errorWidgetBuilder,
       WidgetBuilder loadingPlaceholderBuilder}) {
-    return new AvdImage._(
+    return new AvdPainter._(
       loadNetworkAsset(uri, size),
       size,
       clipToViewBox: clipToViewBox,

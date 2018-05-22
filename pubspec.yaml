@@ -47,6 +47,7 @@ flutter:
     - assets/deborah_ufw/new-play-button.svg
     - assets/deborah_ufw/new-send-circle.svg
     - assets/deborah_ufw/numeric_25.svg
+    - assets/material/baseline-send-24px.svg
     - assets/simple/clip_path_3.svg
     - assets/simple/clip_path_2.svg
     - assets/simple/clip_path.svg

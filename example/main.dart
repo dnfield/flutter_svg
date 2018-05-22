@@ -3,7 +3,7 @@ import 'package:flutter_svg/avd.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 const List<String> assetNames = const <String>[
-  'assets/notfound.svg',
+  // 'assets/notfound.svg',
   'assets/flutter_logo.svg',
   'assets/dart.svg',
   'assets/simple/clip_path_3.svg',
@@ -36,9 +36,9 @@ const List<String> assetNames = const <String>[
 ];
 
 const List<String> uriNames = const <String>[
-  'http://upload.wikimedia.org/wikipedia/commons/0/02/SVG_logo.svg',
-  'https://dev.w3.org/SVG/tools/svgweb/samples/svg-files/410.svg',
-  'https://upload.wikimedia.org/wikipedia/commons/b/b4/Chess_ndd45.svg',
+  // 'http://upload.wikimedia.org/wikipedia/commons/0/02/SVG_logo.svg',
+  // 'https://dev.w3.org/SVG/tools/svgweb/samples/svg-files/410.svg',
+  // 'https://upload.wikimedia.org/wikipedia/commons/b/b4/Chess_ndd45.svg',
 ];
 
 void main() => runApp(new MyApp());
@@ -66,7 +66,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final List<VectorDrawableImage> _painters = <VectorDrawableImage>[];
+  final List<Widget> _painters = <Widget>[];
   double _dimension;
 
   final ErrorWidgetBuilder customErrorBuilder = (FlutterErrorDetails details) {
@@ -83,11 +83,35 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    _dimension = 365.0;
+    _dimension = 24.0;
 
+    Size sz = new Size(_dimension, _dimension);
+    _painters.add(
+      // const SizedBox(
+      //   width: 50.0,
+      //   height: 50.0,
+      // child:
+      new Image(
+        image: new SvgExactAssetImage(
+            'assets/flutter_logo.svg', sz),
+        // size: 50.0,
+        // color: Colors.blueGrey,
+        // ),
+      ),
+    );
+    _painters.add(new ImageIcon(new SvgExactAssetImage(
+        'assets/deborah_ufw/new-gif.svg', sz)));
+    _painters.add(new Icon(Icons.send, size: _dimension,));
+    _painters.add(new Image(
+        image: new SvgExactAssetImage(
+            'assets/material/baseline-send-24px.svg', sz)));
+    _painters.add(new ImageIcon(new SvgExactAssetImage(
+        'assets/material/baseline-send-24px.svg', sz)));
+    _painters.add(new SvgPainter.asset(
+        'assets/material/baseline-send-24px.svg', sz));
     for (String assetName in assetNames) {
       _painters.add(
-        new SvgImage.asset(
+        new SvgPainter.asset(
           assetName,
           new Size(_dimension, _dimension),
           errorWidgetBuilder: customErrorBuilder,
@@ -97,7 +121,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
     for (String uriName in uriNames) {
       _painters.add(
-        new SvgImage.network(
+        new SvgPainter.network(
           uriName,
           new Size(_dimension, _dimension),
           loadingPlaceholderBuilder: (BuildContext context) => new Container(
@@ -106,7 +130,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       );
     }
-    _painters.add(new AvdImage.asset('assets/android_vd/battery_charging.xml',
+    _painters.add(new AvdPainter.asset('assets/android_vd/battery_charging.xml',
         new Size(_dimension, _dimension)));
   }
 

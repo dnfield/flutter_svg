@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart' show SynchronousFuture;
 import 'package:flutter/services.dart' show rootBundle, AssetBundle;
 import 'package:flutter/widgets.dart';
 import 'package:xml/xml.dart' hide parse;
@@ -9,12 +11,12 @@ import 'package:xml/xml.dart' as xml show parse;
 
 import 'src/svg/xml_parsers.dart';
 import 'src/svg_parser.dart';
-import 'src/vector_painter.dart';
+import 'src/vector_drawable.dart';
 import 'vector_drawable.dart';
 
 /// Extends [VectorDrawableImage] to parse SVG data to [Drawable].
-class SvgImage extends VectorDrawableImage {
-  const SvgImage._(Future<DrawableRoot> future, Size size,
+class SvgPainter extends VectorDrawablePainter {
+  const SvgPainter._(Future<DrawableRoot> future, Size size,
       {bool clipToViewBox,
       Key key,
       Widget child,
@@ -29,14 +31,14 @@ class SvgImage extends VectorDrawableImage {
             errorWidgetBuilder: errorWidgetBuilder,
             loadingPlaceholderBuilder: loadingPlaceholderBuilder);
 
-  factory SvgImage.fromString(String svg, Size size,
+  factory SvgPainter.fromString(String svg, Size size,
       {Key key,
       bool clipToViewBox = true,
       PaintLocation paintLocation = PaintLocation.Background,
       Widget child,
       ErrorWidgetBuilder errorWidgetBuilder,
       WidgetBuilder loadingPlaceholderBuilder}) {
-    return new SvgImage._(
+    return new SvgPainter._(
       new Future<DrawableRoot>.value(fromSvgString(svg, size)),
       size,
       clipToViewBox: clipToViewBox,
@@ -49,7 +51,7 @@ class SvgImage extends VectorDrawableImage {
   }
 
   /// Creates an [SvgImage] from a bundled asset (possibly from a [package]).
-  factory SvgImage.asset(String assetName, Size size,
+  factory SvgPainter.asset(String assetName, Size size,
       {Key key,
       AssetBundle bundle,
       String package,
@@ -58,7 +60,7 @@ class SvgImage extends VectorDrawableImage {
       Widget child,
       ErrorWidgetBuilder errorWidgetBuilder,
       WidgetBuilder loadingPlaceholderBuilder}) {
-    return new SvgImage._(
+    return new SvgPainter._(
       loadAsset(assetName, size, bundle: bundle, package: package),
       size,
       clipToViewBox: clipToViewBox,
@@ -71,7 +73,7 @@ class SvgImage extends VectorDrawableImage {
   }
 
   /// Creates an [SvgImage] from a HTTP [uri].
-  factory SvgImage.network(String uri, Size size,
+  factory SvgPainter.network(String uri, Size size,
       {Map<String, String> headers,
       Key key,
       bool clipToViewBox = true,
@@ -79,7 +81,7 @@ class SvgImage extends VectorDrawableImage {
       PaintLocation paintLocation = PaintLocation.Background,
       ErrorWidgetBuilder errorWidgetBuilder,
       WidgetBuilder loadingPlaceholderBuilder}) {
-    return new SvgImage._(
+    return new SvgPainter._(
       loadNetworkAsset(uri, size),
       size,
       clipToViewBox: clipToViewBox,
@@ -121,6 +123,95 @@ DrawableRoot fromSvgString(String rawSvg, Size size) {
     definitions,
     parseStyle(svg, definitions, viewBox, null),
   );
+}
+
+class SvgExactAssetImage extends VectorAssetBundleImageProvider {
+  /// Creates an object that fetches the given image from an asset bundle.
+  ///
+  /// The [assetName] and [size] arguments must not be null. The [bundle] argument
+  /// may be null, in which case the bundle provided in the [ImageConfiguration] p
+  /// assed to the [resolve] call will be used instead.
+  ///
+  /// The [package] argument must be non-null when fetching an asset that is
+  /// included in a package. See the documentation for the [ExactAssetImage] class
+  /// itself for details.
+  const SvgExactAssetImage(
+    this.assetName,
+    this.size, {
+    this.bundle,
+    this.package,
+  })  : assert(assetName != null),
+        assert(size != null);
+
+  /// The name of the asset.
+  final String assetName;
+
+  /// The size to render this asset to.
+  final Size size;
+
+  /// The key to use to obtain the resource from the [bundle]. This is the
+  /// argument passed to [AssetBundle.load].
+  String get keyName =>
+      package == null ? assetName : 'packages/$package/$assetName';
+
+  /// The bundle from which the image will be obtained.
+  ///
+  /// If the provided [bundle] is null, the bundle provided in the
+  /// [ImageConfiguration] passed to the [resolve] call will be used instead. If
+  /// that is also null, the [rootBundle] is used.
+  ///
+  /// The image is obtained by calling [AssetBundle.load] on the given [bundle]
+  /// using the key given by [keyName].
+  final AssetBundle bundle;
+
+  /// The name of the package from which the image is included. See the
+  /// documentation for the [ExactAssetImage] class itself for details.
+  final String package;
+
+  @override
+  Future<VectorAssetBundleImageKey> obtainKey(
+      ImageConfiguration configuration) {
+    return new SynchronousFuture<VectorAssetBundleImageKey>(
+        new VectorAssetBundleImageKey(
+            bundle: bundle ?? configuration.bundle ?? rootBundle,
+            size: size,
+            name: keyName));
+  }
+
+  /// Fetches the image from the asset bundle, decodes it, and returns a
+  /// corresponding [ImageInfo] object.
+  ///
+  /// This function is used by [load].
+  @override
+  @protected
+  Future<ImageInfo> loadAsync(VectorAssetBundleImageKey key) async {
+    final DrawableRoot svg =
+        await loadAsset(key.name, key.size, bundle: key.bundle);
+    if (svg == null) {
+      throw 'Unable to read data';
+    }
+
+    final ui.Image img = svg.toImage(key.size);
+    return new ImageInfo(image: img);
+  }
+
+  @override
+  bool operator ==(dynamic other) {
+    if (other.runtimeType != runtimeType) {
+      return false;
+    }
+    final SvgExactAssetImage typedOther = other;
+    return keyName == typedOther.keyName &&
+        size == typedOther.size &&
+        bundle == typedOther.bundle;
+  }
+
+  @override
+  int get hashCode => hashValues(keyName, size, bundle);
+
+  @override
+  String toString() =>
+      '$runtimeType(name: "$keyName", size: $size, bundle: $bundle)';
 }
 
 /// Creates a [DrawableRoot] from a bundled asset.  [size] specifies the size

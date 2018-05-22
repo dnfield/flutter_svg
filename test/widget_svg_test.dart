@@ -26,9 +26,9 @@ void main() {
         fill="none" stroke="blue" stroke-width="2" />
 </svg>''';
 
-  testWidgets('SvgImage.fromString', (WidgetTester tester) async {
+  testWidgets('SvgPainter.fromString', (WidgetTester tester) async {
     final GlobalKey key = new GlobalKey();
-    await tester.pumpWidget(new SvgImage.fromString(
+    await tester.pumpWidget(new SvgPainter.fromString(
       svg,
       const Size(100.0, 100.0),
       key: key,
@@ -36,13 +36,13 @@ void main() {
     expect(find.byKey(key), findsOneWidget);
   });
 
-  testWidgets('SvgImage.asset', (WidgetTester tester) async {
+  testWidgets('SvgPainter.asset', (WidgetTester tester) async {
     final MockAssetBundle mockAsset = new MockAssetBundle();
     when(mockAsset.loadString('test.svg'))
         .thenAnswer((_) => new Future<String>.value(svg));
 
     final GlobalKey key = new GlobalKey();
-    await tester.pumpWidget(new SvgImage.asset(
+    await tester.pumpWidget(new SvgPainter.asset(
       'test.svg',
       const Size(100.0, 100.0),
       key: key,
@@ -81,11 +81,11 @@ void main() {
     );
   });
 
-  testWidgets('SvgImage.network', (WidgetTester tester) async {
+  testWidgets('SvgPainter.network', (WidgetTester tester) async {
     HttpOverrides.runZoned(() async {
       when(mockResponse.statusCode).thenReturn(200);
       final GlobalKey key = new GlobalKey();
-      await tester.pumpWidget(new SvgImage.network(
+      await tester.pumpWidget(new SvgPainter.network(
         'test.svg',
         const Size(100.0, 100.0),
         key: key,
@@ -94,7 +94,7 @@ void main() {
     }, createHttpClient: (SecurityContext c) => mockHttpClient);
   });
 
-  // TODO: Why isn't this working when I just use SvgImage.network?
+  // TODO: Why isn't this working when I just use SvgPainter.network?
   test('loadNetworkAsset HTTP exception', () {
     HttpOverrides.runZoned(() {
       when(mockResponse.statusCode).thenReturn(400);

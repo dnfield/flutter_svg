@@ -13,24 +13,15 @@ import 'dart:ui';
 import 'package:path/path.dart' as path;
 
 import 'package:flutter_svg/svg.dart' as svg;
-import 'package:flutter_svg/src/vector_painter.dart';
+import 'package:flutter_svg/src/vector_drawable.dart';
 
 Future<Uint8List> getSvgPngBytes(String svgData) async {
-  final PictureRecorder rec = new PictureRecorder();
-  final Canvas canvas = new Canvas(rec);
-
   const Size size = const Size(200.0, 200.0);
 
   final DrawableRoot svgRoot = svg.fromSvgString(svgData, size);
-  svgRoot.scaleCanvasToViewBox(canvas, size);
-  svgRoot.clipCanvasToViewBox(canvas);
 
-  canvas.drawPaint(new Paint()..color = const Color(0xFFFFFFFF));
-  svgRoot.draw(canvas);
-
-  final Picture pict = rec.endRecording();
-
-  final Image image = pict.toImage(size.width.toInt(), size.height.toInt());
+  final Image image = svgRoot.toImage(size,
+      background: new Paint()..color = const Color(0xFFFFFFFF));
   final ByteData bytes = await image.toByteData(format: ImageByteFormat.png);
 
   return bytes.buffer.asUint8List();
