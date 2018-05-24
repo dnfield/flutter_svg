@@ -2,9 +2,7 @@
 
 [![Pub](https://img.shields.io/pub/v/flutter_svg.svg)](https://pub.dartlang.org/packages/flutter_svg) [![Build Status](https://travis-ci.org/dnfield/flutter_svg.svg?branch=master)](https://travis-ci.org/dnfield/flutter_svg) [![Coverage Status](https://coveralls.io/repos/github/dnfield/flutter_svg/badge.svg?branch=master)](https://coveralls.io/github/dnfield/flutter_svg?branch=master)
 
-<!-- markdownlint-disable MD033 -->
 <img src="/../master/assets/flutter_logo.svg?sanitize=true" width="200px" alt="Flutter Logo which can be rendered by this package!">
-<!-- markdownlint-enable MD033 -->
 
 Draw SVG and Android VectorDrawable (XML) files on a Flutter Widget.
 
