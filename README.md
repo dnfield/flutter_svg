@@ -33,6 +33,16 @@ final Widget svg = new SvgPicture.asset(
 );
 ```
 
+You can color/tint the image like so:
+
+```dart
+final String assetName = 'assets/icon.svg';
+final Widget svgIcon = new SvgPicture.asset(
+  assetName,
+  color: Colors.red,
+);
+```
+
 The default placeholder is an empty box.  There is currently no way to show an
 Error visually, however errors will get properly logged to the console in debug
 mode.
@@ -117,12 +127,12 @@ of something that's broken.
 - [ ] Glyph support?
 - [ ] Markers.
 - [ ] Filters/effects.
-- [ ] Android Vector Drawable support (partial so far).
-- [ ] Caching of image.
+- [ ] Android Vector Drawable support (PoC implementation so far).
+- [x] Caching of image.
 - [ ] The XML parsing implementation is heavy for what this really needs. I've
       made efforts to keep the API forward-reading-only compatible to
       eventually be able to use a SAX/XMLReader streaming style parser.
-- [ ] Color swapping/hue shifting/tinting of asset.
+- [x] Color swapping/hue shifting/tinting of asset.
 
 ## Probably out of scope
 
