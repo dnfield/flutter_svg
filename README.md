@@ -26,9 +26,8 @@ Basic usage (to create an SVG rendering widget from an asset):
 
 ```dart
 final String assetName = 'assets/image.svg';
-final Widget svg = new SvgImage.asset(
+final Widget svg = new SvgPicture.asset(
   assetName,
-  new Size(100.0, 100.0),
 );
 ```
 
