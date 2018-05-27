@@ -2,7 +2,9 @@
 
 [![Pub](https://img.shields.io/pub/v/flutter_svg.svg)](https://pub.dartlang.org/packages/flutter_svg) [![Build Status](https://travis-ci.org/dnfield/flutter_svg.svg?branch=master)](https://travis-ci.org/dnfield/flutter_svg) [![Coverage Status](https://coveralls.io/repos/github/dnfield/flutter_svg/badge.svg?branch=master)](https://coveralls.io/github/dnfield/flutter_svg?branch=master)
 
+<!-- markdownlint-disable MD033 -->
 <img src="/../master/assets/flutter_logo.svg?sanitize=true" width="200px" alt="Flutter Logo which can be rendered by this package!">
++<!-- markdownlint-enable MD033 -->
 
 Draw SVG and Android VectorDrawable (XML) files on a Flutter Widget.
 
@@ -31,34 +33,22 @@ final Widget svg = new SvgPicture.asset(
 );
 ```
 
-The default placeholder is an empty box.  The default error widget is an
-ErrorWidget.
+The default placeholder is an empty box.  There is currently no way to show an
+Error visually, however errors will get properly logged to the console in debug
+mode.
 
-You can also specify a placeholder widget and an error widget. The placeholder
-will display during parsing/loading (normally only relevant for network access).
+You can also specify a placeholder widget. The placeholder will display during
+parsing/loading (normally only relevant for network access).
 
 ```dart
-final ErrorWidgetBuilder customErrorBuilder = (FlutterErrorDetails details) {
-  debugPrint(details.toString());
-  return new Row(children: const <Widget>[
-    const Icon(
-      Icons.error,
-      color: Colors.red,
-    ),
-    const Text('Error Loading')
-  ]);
-};
-
+// Will print error messages to the console.
 final String assetName = 'assets/image_that_does_not_exist.svg';
-final Widget svg = new SvgImage.asset(
+final Widget svg = new SvgPicture.asset(
   assetName,
-  new Size(100.0, 100.0),
-  errorWidgetBuilder: customErrorBuilder,
 );
 
 final Widget networkSvg = new SvgImage.network(
   'https://site-that-takes-a-while.com/image.svg',
-  new Size(100.0, 100.0),
   loadingPlaceholderBuilder: (BuildContext context) => new Container(
       padding: const EdgeInsets.all(30.0),
       child: const CircularProgressIndicator()),
@@ -68,9 +58,13 @@ final Widget networkSvg = new SvgImage.network(
 If you'd like to render the SVG to some other canvas, you can do something like:
 
 ```dart
-import 'package:flutter_svg/flutter_svg.dart' as svg;
-final svg.DrawableRoot svgRoot = await svg.loadAsset('assets/image.svg');
+import 'package:flutter_svg/flutter_svg.dart';
+final DrawableRoot svgRoot = await svg.loadAsset('assets/image.svg');
 
+// If you only want the final Picture output, just use
+final Picture picture = svgRoot.toPicture();
+
+// Otherwise, if you want to draw it to a canvas:
 // Optional, but probably normally desirable: scale the canvas dimensions to
 // the SVG's viewbox
 svgRoot.scaleCanvasToViewBox(canvas);
@@ -81,7 +75,7 @@ svgRoot.clipCanvasToViewBox(canvas);
 svgRoot.draw(canvas, size);
 ```
 
-The `SvgImage` widget is basically a wrapper around that.
+The `SvgPicture` widget is basically a wrapper around that.
 
 While I'm making every effort to avoid needlessly changing the API, it's not
 guarnateed to be stable yet (hence the pre-1.0.0 version).
@@ -104,7 +98,8 @@ interesting or useful, or where I've gotten a request to fix something/example
 of something that's broken.
 
 - [ ] Text support.
-- [ ] Gradient support (Linear: Mostly done, Radial: partly done).
+- [ ] Gradient support (Linear: Mostly done, Radial: finishing this will require
+      newer version of flutter).
 - [x] Dash path support.
 - [ ] Dash path with percentage dasharray values.
 - [ ] More SVG samples to cover more complicated cases (getting there - please
@@ -114,7 +109,7 @@ of something that's broken.
       structures. (Vastly improved as of 0.2.)~~ this is getting there,
       just need to stay on top of it.
 - [ ] Inheritance of inheritable properties (~~necessary? preprocess?~~
-      significant progress, still some rough edges).
+      significant progress, still some rough edges, particularly for definitions).
 - [ ] Support for minimal CSS/styles?  See also
       [svgcleaner](https://github.com/razrfalcon/svgcleaner) (partial - style
       attribute mostly supported).
