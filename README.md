@@ -4,7 +4,7 @@
 
 <!-- markdownlint-disable MD033 -->
 <img src="/../master/assets/flutter_logo.svg?sanitize=true" width="200px" alt="Flutter Logo which can be rendered by this package!">
-+<!-- markdownlint-enable MD033 -->
+<!-- markdownlint-enable MD033 -->
 
 Draw SVG and Android VectorDrawable (XML) files on a Flutter Widget.
 
