@@ -31,6 +31,8 @@ analyzer:
     missing_return: warning
     # allow having TODOs in the code
     todo: ignore
+    unrecognized_error_code: ignore
+    asset_does_not_exist: ignore
   exclude:
     # for Travis - don't try to analyze the flutter repo
     - 'flutter/**'
