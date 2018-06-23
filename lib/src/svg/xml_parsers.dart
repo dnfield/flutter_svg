@@ -128,16 +128,16 @@ PaintServer parseLinearGradient(XmlElement el) {
   final Matrix4 transform = parseTransform(getAttribute(el, 'gradientTransform', def: null));
   
   return (Rect bounds) {
-    final from = Vector3(bounds.left + x1, bounds.top + y1, 0.0);
-    final to = Vector3(bounds.left + x2, bounds.top + y2, 0.0);
+    Vector3 from = Vector3(bounds.left + (bounds.width * x1), bounds.top + (bounds.height * y1), 0.0);
+    Vector3 to = Vector3(bounds.left + (bounds.width * x2), bounds.top + (bounds.height * y2), 0.0);
     if(transform != null){
-      transform.transform3(from);
-      transform.transform3(to);
+      from = transform.transform3(from);
+      to = transform.transform3(to);
     }
 
     final Gradient gradient = new Gradient.linear(
-      Offset(from.x, from.y),
-      Offset(to.x, to.y),
+      new Offset(from.x, from.y),
+      new Offset(to.x, to.y),
       colors,
       offsets,
       spreadMethod,
