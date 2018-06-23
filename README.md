@@ -108,8 +108,8 @@ interesting or useful, or where I've gotten a request to fix something/example
 of something that's broken.
 
 - [ ] Text support.
-- [ ] Gradient support (Linear: Mostly done, Radial: finishing this will require
-      newer version of flutter).
+- [x] Gradient support ~~(Linear: Mostly done, Radial: finishing this will require
+      newer version of flutter).~~
 - [x] Dash path support.
 - [ ] Dash path with percentage dasharray values.
 - [ ] More SVG samples to cover more complicated cases (getting there - please
@@ -157,10 +157,10 @@ SVGs in `/assets/wikimedia` are pulled from [Wikimedia Commons](https://commons.
 
 Android Drawables in `assets/android_vd` are pulled from Android Documentation and examples.
 
-The Flutter Logo created based on the Flutter Logo Widget (c) Google.
+The Flutter Logo created based on the Flutter Logo Widget © Google.
 
 The Dart logo is from [dartlang.org](https://github.com/dart-lang/site-shared/blob/master/src/_assets/images/dart/logo%2Btext/horizontal/original.svg)
-(c) Google
+© Google
 
 Please submit SVGs this can't render properly (e.g. that don't render here the
 way they do in chrome), as long as they're not using anything "probably out of
