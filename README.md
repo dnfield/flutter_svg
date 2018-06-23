@@ -43,7 +43,9 @@ final Widget svgIcon = new SvgPicture.asset(
 );
 ```
 
-The default placeholder is an empty box.  There is currently no way to show an
+The default placeholder is an empty box (`LimitedBox`) - although if a `height` or
+`width` is specified on the `SvgPicture`, a `SizedBox` will be used instead (which
+ensures better layout experience).  There is currently no way to show an
 Error visually, however errors will get properly logged to the console in debug
 mode.
 
@@ -85,10 +87,17 @@ svgRoot.clipCanvasToViewBox(canvas);
 svgRoot.draw(canvas, size);
 ```
 
-The `SvgPicture` widget is basically a wrapper around that.
+The `SvgPicture` helps to automate this logic, and it provides some convenience
+wrappers for getting assets from multiple sources and caching the resultant
+`Picture`.  _It does not render the data to an `Image` at any point_; you certainly
+can do that in Flutter, but you then lose some of the benefit of having a vector
+format to begin with.
 
 While I'm making every effort to avoid needlessly changing the API, it's not
-guarnateed to be stable yet (hence the pre-1.0.0 version).
+guarnateed to be stable yet (hence the pre-1.0.0 version). To date, the biggest change
+is deprecating the `SvgImage` widgets in favor of `SvgPicture` - it became very confusing
+to maintain that name, as `Picture`s are the underlying mechanism for rendering
+rather than `Image`s.
 
 See [main.dart](/../master/example/main.dart) for a complete sample.
 
