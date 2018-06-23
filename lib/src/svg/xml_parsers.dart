@@ -128,11 +128,11 @@ PaintServer parseLinearGradient(XmlElement el) {
   final Matrix4 transform = parseTransform(getAttribute(el, 'gradientTransform', def: null));
   
   return (Rect bounds) {
-    final Vector3 from = new Vector3(bounds.left + x1, bounds.top + y1, 0.0);
-    final Vector3 to = new Vector3(bounds.left + x2, bounds.top + y2, 0.0);
-    if(transform != null){
-      transform.transform3(from);
-      transform.transform3(to);
+    Vector3 from = new Vector3(bounds.left + (bounds.width * x1), bounds.top + (bounds.height * y1), 0.0);
+    Vector3 to = new Vector3(bounds.left + (bounds.width * x2), bounds.top + (bounds.height * y2), 0.0);
+    if (transform != null) {
+      from = transform.transform3(from);
+      to = transform.transform3(to);
     }
 
     return new Gradient.linear(
