@@ -125,19 +125,19 @@ PaintServer parseLinearGradient(XmlElement el) {
 
   parseStops(stops, colors, offsets);
 
+  final Matrix4 transform = parseTransform(getAttribute(el, 'gradientTransform', def: null));
+  
   return (Rect bounds) {
-    final Offset from = new Offset(
-      bounds.left + (bounds.width * x1),
-      bounds.left + (bounds.height * y1),
-    );
-    final Offset to = new Offset(
-      bounds.left + (bounds.width * x2),
-      bounds.left + (bounds.height * y2),
-    );
+    Vector3 from = Vector3(bounds.left + (bounds.width * x1), bounds.top + (bounds.height * y1), 0.0);
+    Vector3 to = Vector3(bounds.left + (bounds.width * x2), bounds.top + (bounds.height * y2), 0.0);
+    if(transform != null){
+      from = transform.transform3(from);
+      to = transform.transform3(to);
+    }
 
     final Gradient gradient = new Gradient.linear(
-      from,
-      to,
+      new Offset(from.x, from.y),
+      new Offset(to.x, to.y),
       colors,
       offsets,
       spreadMethod,
@@ -158,6 +158,8 @@ PaintServer parseRadialGradient(XmlElement el) {
   final List<Color> colors = new List<Color>(stops.length);
   final List<double> offsets = new List<double>(stops.length);
   parseStops(stops, colors, offsets);
+
+  final Matrix4 transform = parseTransform(getAttribute(el, 'gradientTransform', def: null));
 
   return (Rect bounds) {
     final double cx = _parseDecimalOrPercentage(
@@ -191,7 +193,7 @@ PaintServer parseRadialGradient(XmlElement el) {
       colors,
       offsets,
       spreadMethod,
-      null,
+      transform?.storage,
       focal,
       0.0,
     );
