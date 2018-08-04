@@ -56,7 +56,15 @@ Drawable parseSvgElement(XmlElement el, DrawableDefinitionServer definitions,
   if (shapeFn != null) {
     return new DrawableSvgShape.parse(shapeFn, definitions, el, parentStyle);
   } else if (el.name.local == 'defs') {
-    parseDefs(el, definitions).forEach(unhandled);
+    final Iterable<XmlElement> defs = parseDefs(el, definitions);
+    for (XmlElement def in defs) {
+      final String id = getAttribute(def, 'id');
+      if (id != null) {
+        definitions.addXmlElement(id, def);
+      } else {
+        unhandled(def);
+      }
+    }
     return new DrawableNoop(el.name.local);
   } else if (el.name.local.endsWith('Gradient')) {
     definitions.addPaintServer(
@@ -66,6 +74,23 @@ Drawable parseSvgElement(XmlElement el, DrawableDefinitionServer definitions,
     return parseSvgGroup(el, definitions, bounds, parentStyle, key);
   } else if (el.name.local == 'text') {
     return parseSvgText(el, definitions, bounds, parentStyle);
+  } else if (el.name.local == 'use') {
+    String id = getAttribute(el, 'xlink:href');
+    if (id != null) {
+      if (id.startsWith('#')) {
+        id = id.substring(1); // Chop off '#'.
+      }
+      final XmlElement def = definitions.getXmlElement(id);
+      if (def != null) {
+        final SvgPathFactory pathFn = svgPathParsers[def.name.local];
+        if (pathFn != null) {
+          return DrawableSvgShape.parse(pathFn, definitions, def, parentStyle);
+        }
+        unhandled(def);
+      }
+    }
+    unhandled(el);
+    return new DrawableNoop(el.name.local);
   } else if (el.name.local == 'svg') {
     throw new UnsupportedError(
         'Nested SVGs not supported in this implementation.');

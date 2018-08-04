@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/widgets.dart' hide TextStyle;
 import 'package:meta/meta.dart';
 import 'package:path_drawing/path_drawing.dart';
+import 'package:xml/xml.dart';
 
 import 'render_picture.dart' as render_picture;
 
@@ -280,6 +281,7 @@ class DrawableText implements Drawable {
 class DrawableDefinitionServer {
   final Map<String, PaintServer> _paintServers = <String, PaintServer>{};
   final Map<String, List<Path>> _clipPaths = <String, List<Path>>{};
+  final Map<String, XmlElement> _xmlElements = <String, XmlElement>{};
 
   /// Attempt to lookup a pre-defined [Paint] by [id].
   ///
@@ -305,6 +307,16 @@ class DrawableDefinitionServer {
   void addClipPath(String id, List<Path> paths) {
     assert(id != null);
     _clipPaths[id] = paths;
+  }
+
+  XmlElement getXmlElement(String id) {
+    assert(id != null);
+    return _xmlElements[id];
+  }
+
+  void addXmlElement(String id, XmlElement el) {
+    assert(id != null);
+    _xmlElements[id] = el;
   }
 }
 
