@@ -48,8 +48,13 @@ class DrawableSvgShape extends DrawableShape {
 /// Creates a [Drawable] from an SVG <g> or shape element.  Also handles parsing <defs> and gradients.
 ///
 /// If an unsupported element is encountered, it will be created as a [DrawableNoop].
-Drawable parseSvgElement(XmlElement el, DrawableDefinitionServer definitions,
-    Rect bounds, DrawableStyle parentStyle, String key) {
+Drawable parseSvgElement(
+    XmlElement el,
+    XmlDefinitionServer xmlDefinitions,
+    DrawableDefinitionServer definitions,
+    Rect bounds,
+    DrawableStyle parentStyle,
+    String key) {
   final Function unhandled = (XmlElement e) => _unhandledElement(e, key);
 
   final SvgPathFactory shapeFn = svgPathParsers[el.name.local];
@@ -60,7 +65,7 @@ Drawable parseSvgElement(XmlElement el, DrawableDefinitionServer definitions,
     for (XmlElement def in defs) {
       final String id = getAttribute(def, 'id');
       if (id != null) {
-        definitions.addXmlElement(id, def);
+        xmlDefinitions.addXmlElement(id, def);
       } else {
         unhandled(def);
       }
@@ -71,7 +76,8 @@ Drawable parseSvgElement(XmlElement el, DrawableDefinitionServer definitions,
         'url(#${getAttribute(el, 'id')})', parseGradient(el));
     return new DrawableNoop(el.name.local);
   } else if (el.name.local == 'g' || el.name.local == 'a') {
-    return parseSvgGroup(el, definitions, bounds, parentStyle, key);
+    return parseSvgGroup(
+        el, xmlDefinitions, definitions, bounds, parentStyle, key);
   } else if (el.name.local == 'text') {
     return parseSvgText(el, definitions, bounds, parentStyle);
   } else if (el.name.local == 'use') {
@@ -80,7 +86,7 @@ Drawable parseSvgElement(XmlElement el, DrawableDefinitionServer definitions,
       if (id.startsWith('#')) {
         id = id.substring(1); // Chop off '#'.
       }
-      final XmlElement def = definitions.getXmlElement(id);
+      final XmlElement def = xmlDefinitions.getXmlElement(id);
       if (def != null) {
         final SvgPathFactory pathFn = svgPathParsers[def.name.local];
         if (pathFn != null) {
@@ -210,15 +216,20 @@ Drawable parseSvgText(XmlElement el, DrawableDefinitionServer definitions,
 }
 
 /// Parses an SVG <g> element.
-Drawable parseSvgGroup(XmlElement el, DrawableDefinitionServer definitions,
-    Rect bounds, DrawableStyle parentStyle, String key) {
+Drawable parseSvgGroup(
+    XmlElement el,
+    XmlDefinitionServer xmlDefinitions,
+    DrawableDefinitionServer definitions,
+    Rect bounds,
+    DrawableStyle parentStyle,
+    String key) {
   final List<Drawable> children = <Drawable>[];
   final DrawableStyle style =
       parseStyle(el, definitions, bounds, parentStyle, needsTransform: true);
   for (XmlNode child in el.children) {
     if (child is XmlElement) {
-      final Drawable el =
-          parseSvgElement(child, definitions, bounds, style, key);
+      final Drawable el = parseSvgElement(
+          child, xmlDefinitions, definitions, bounds, style, key);
       if (el != null) {
         children.add(el);
       }
@@ -262,4 +273,19 @@ DrawableStyle parseStyle(XmlElement el, DrawableDefinitionServer definitions,
       height: -1.0,
     ),
   );
+}
+
+// Contains XmlElements that can be referenced by a String ID.
+class XmlDefinitionServer {
+  final Map<String, XmlElement> _xmlElements = <String, XmlElement>{};
+
+  XmlElement getXmlElement(String id) {
+    assert(id != null);
+    return _xmlElements[id];
+  }
+
+  void addXmlElement(String id, XmlElement el) {
+    assert(id != null);
+    _xmlElements[id] = el;
+  }
 }
