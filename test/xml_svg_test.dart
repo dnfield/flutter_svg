@@ -68,12 +68,12 @@ void main() {
 
     final XmlElement none = parse('<linearGradient />').rootElement;
 
-    expect(parseTileMode(pad), TileMode.clamp);
-    expect(parseTileMode(invalid), TileMode.clamp);
-    expect(parseTileMode(none), TileMode.clamp);
+    expect(parseTileMode(pad.attributes), TileMode.clamp);
+    expect(parseTileMode(invalid.attributes), TileMode.clamp);
+    expect(parseTileMode(none.attributes), TileMode.clamp);
 
-    expect(parseTileMode(reflect), TileMode.mirror);
-    expect(parseTileMode(repeat), TileMode.repeated);
+    expect(parseTileMode(reflect.attributes), TileMode.mirror);
+    expect(parseTileMode(repeat.attributes), TileMode.repeated);
   });
 
   test('@stroke-dashoffset tests', () {

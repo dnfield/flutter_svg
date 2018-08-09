@@ -20,6 +20,18 @@ abstract class Drawable {
   void draw(Canvas canvas, ColorFilter colorFilter);
 }
 
+/// A [Drawable] that can have a [DrawableStyle] applied to it.
+abstract class DrawableStyleable implements Drawable {
+  const DrawableStyleable(this.style);
+  final DrawableStyle style;
+}
+
+/// A [Drawable] that can have child [Drawables] and [DrawableStyle].
+abstract class DrawableParent implements DrawableStyleable {
+  const DrawableParent(this.children);
+  final List<Drawable> children;
+}
+
 /// Styling information for vector drawing.
 ///
 /// Contains [Paint], [Path], dashing, transform, and text styling information.
@@ -444,16 +456,12 @@ class DrawableDefinitionServer {
   }
 }
 
-abstract class DrawableParent implements Drawable {
-  const DrawableParent(this.children);
-  final List<Drawable> children;
-}
-
 /// The root element of a drawable.
-class DrawableRoot extends DrawableParent {
-  const DrawableRoot(
-      this.viewBox, List<Drawable> children, this.definitions, this.style)
-      : super(children);
+class DrawableRoot implements DrawableParent {
+  const DrawableRoot(this.viewBox, this.children, this.definitions, this.style);
+
+  @override
+  final List<Drawable> children;
 
   /// The expected coordinates used by child paths for drawing.
   final Rect viewBox;
@@ -465,6 +473,7 @@ class DrawableRoot extends DrawableParent {
   // final Map<String, PaintServer> paintServers;
 
   /// The [DrawableStyle] for inheritence.
+  @override
   final DrawableStyle style;
 
   /// Scales the `canvas` so that the drawing units in this [Drawable]
@@ -541,10 +550,14 @@ class DrawableNoop implements Drawable {
 }
 
 /// Represents a group of drawing elements that may share a common `transform`, `stroke`, or `fill`.
-class DrawableGroup extends DrawableParent {
-  const DrawableGroup(List<Drawable> children, this.style) : super(children);
+class DrawableGroup implements DrawableParent {
+  const DrawableGroup(this.children, this.style);
 
+  @override
   final DrawableStyle style;
+
+  @override
+  final List<Drawable> children;
 
   @override
   bool get hasDrawableContent => children != null && children.isNotEmpty;
@@ -591,13 +604,14 @@ class DrawableGroup extends DrawableParent {
 }
 
 /// Represents a drawing element that will be rendered to the canvas.
-class DrawableShape implements Drawable {
-  final DrawableStyle style;
-  final Path path;
-
+class DrawableShape implements DrawableStyleable {
   const DrawableShape(this.path, this.style)
       : assert(path != null),
         assert(style != null);
+
+  @override
+  final DrawableStyle style;
+  final Path path;
 
   Rect get bounds => path.getBounds();
 

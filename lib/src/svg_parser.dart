@@ -35,7 +35,7 @@ class DrawableSvgShape extends DrawableShape {
 
     final Path path = pathFactory(el);
     return new DrawableSvgShape(
-      applyTransformIfNeeded(path, el),
+      applyTransformIfNeeded(path, el.attributes),
       parseStyle(el.attributes, definitions, path.getBounds(), parentStyle,
           defaultFillIfNotSpecified: defaultFill,
           defaultStrokeIfNotSpecified: defaultStroke),

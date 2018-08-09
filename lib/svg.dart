@@ -7,6 +7,7 @@ import 'dart:ui' show Picture;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show AssetBundle;
 import 'package:flutter/widgets.dart';
+import 'package:flutter_svg/parser.dart';
 import 'package:xml/xml.dart' hide parse;
 import 'package:xml/xml.dart' as xml show parse;
 
@@ -96,31 +97,33 @@ class Svg {
   ///
   /// The `key` is used for debugging purposes.
   DrawableRoot fromSvgString(String rawSvg, String key) {
-    final XmlElement svg = xml.parse(rawSvg).rootElement;
-    final Rect viewBox = parseViewBox(svg.attributes);
-    //final Map<String, PaintServer> paintServers = <String, PaintServer>{};
-    final DrawableDefinitionServer definitions = new DrawableDefinitionServer();
-    final DrawableStyle style =
-        parseStyle(svg.attributes, definitions, viewBox, null);
+    final SvgParser parser = new SvgParser();
+    return parser.parse(rawSvg);
+    // final XmlElement svg = xml.parse(rawSvg).rootElement;
+    // final Rect viewBox = parseViewBox(svg.attributes);
+    // //final Map<String, PaintServer> paintServers = <String, PaintServer>{};
+    // final DrawableDefinitionServer definitions = new DrawableDefinitionServer();
+    // final DrawableStyle style =
+    //     parseStyle(svg.attributes, definitions, viewBox, null);
 
-    final List<Drawable> children = svg.children
-        .where((XmlNode child) => child is XmlElement)
-        .map(
-          (XmlNode child) => parseSvgElement(
-                child,
-                definitions,
-                viewBox,
-                style,
-                key,
-              ),
-        )
-        .toList();
-    return new DrawableRoot(
-      viewBox,
-      children,
-      definitions,
-      parseStyle(svg.attributes, definitions, viewBox, null),
-    );
+    // final List<Drawable> children = svg.children
+    //     .where((XmlNode child) => child is XmlElement)
+    //     .map(
+    //       (XmlNode child) => parseSvgElement(
+    //             child,
+    //             definitions,
+    //             viewBox,
+    //             style,
+    //             key,
+    //           ),
+    //     )
+    //     .toList();
+    // return new DrawableRoot(
+    //   viewBox,
+    //   children,
+    //   definitions,
+    //   parseStyle(svg.attributes, definitions, viewBox, null),
+    // );
   }
 }
 

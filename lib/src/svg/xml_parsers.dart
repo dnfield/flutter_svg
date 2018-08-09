@@ -54,10 +54,10 @@ Rect parseViewBox(List<XmlAttribute> svgAttributes) {
   );
 }
 
-String buildUrlIri(XmlElement def) =>
-    'url(#${getAttribute(def.attributes, 'id')})';
+String buildUrlIri(List<XmlAttribute> attributes) =>
+    'url(#${getAttribute(attributes, 'id')})';
 
-/// Parses a <def> element, extracting <linearGradient> and (TODO) <radialGradient> elements into the `paintServers` map.
+/// Parses a <def> element, extracting <linearGradient> and <radialGradient> elements into the `paintServers` map.
 ///
 /// Returns any elements it was not able to process.
 Iterable<XmlElement> parseDefs(
@@ -65,9 +65,9 @@ Iterable<XmlElement> parseDefs(
   for (XmlNode def in el.children) {
     if (def is XmlElement) {
       if (def.name.local.endsWith('Gradient')) {
-        definitions.addPaintServer(buildUrlIri(def), parseGradient(def));
+        definitions.addPaintServer(buildUrlIri(def.attributes), parseGradient(def));
       } else if (def.name.local == 'clipPath') {
-        definitions.addClipPath(buildUrlIri(def), parseClipPathDefinition(def));
+        definitions.addClipPath(buildUrlIri(def.attributes), parseClipPathDefinition(def));
       } else {
         yield def;
       }
@@ -83,9 +83,9 @@ double _parseDecimalOrPercentage(String val, {double multiplier = 1.0}) {
   }
 }
 
-TileMode parseTileMode(XmlElement el) {
+TileMode parseTileMode(List<XmlAttribute> attributes) {
   final String spreadMethod =
-      getAttribute(el.attributes, 'spreadMethod', def: 'pad');
+      getAttribute(attributes, 'spreadMethod', def: 'pad');
   switch (spreadMethod) {
     case 'pad':
       return TileMode.clamp;
@@ -122,7 +122,7 @@ PaintServer parseLinearGradient(XmlElement el) {
   final double y2 =
       _parseDecimalOrPercentage(getAttribute(el.attributes, 'y2', def: '0%'));
 
-  final TileMode spreadMethod = parseTileMode(el);
+  final TileMode spreadMethod = parseTileMode(el.attributes);
   final List<XmlElement> stops = el.findElements('stop').toList();
   final List<Color> colors = new List<Color>(stops.length);
   final List<double> offsets = new List<double>(stops.length);
@@ -153,7 +153,7 @@ PaintServer parseLinearGradient(XmlElement el) {
 PaintServer parseRadialGradient(XmlElement el) {
   final String rawCx = getAttribute(el.attributes, 'cx', def: '50%');
   final String rawCy = getAttribute(el.attributes, 'cy', def: '50%');
-  final TileMode spreadMethod = parseTileMode(el);
+  final TileMode spreadMethod = parseTileMode(el.attributes);
 
   final List<XmlElement> stops = el.findElements('stop').toList();
 
@@ -207,7 +207,7 @@ List<Path> parseClipPathDefinition(XmlElement el) {
     if (child is XmlElement) {
       final SvgPathFactory pathFn = svgPathParsers[child.name.local];
       if (pathFn != null) {
-        final Path nextPath = applyTransformIfNeeded(pathFn(child), child);
+        final Path nextPath = applyTransformIfNeeded(pathFn(child), child.attributes);
         nextPath.fillType = parseFillRule(child.attributes, 'clip-rule');
         if (currentPath != null && nextPath.fillType != currentPath.fillType) {
           currentPath = nextPath;
@@ -474,12 +474,12 @@ Path parsePathFromEllipse(XmlElement el) {
   return new Path()..addOval(r);
 }
 
-Path applyTransformIfNeeded(Path path, XmlElement el) {
+Path applyTransformIfNeeded(Path path, List<XmlAttribute> attributes) {
   assert(path != null);
-  assert(el != null);
+  assert(attributes != null);
 
   final Matrix4 transform =
-      parseTransform(getAttribute(el.attributes, 'transform', def: null));
+      parseTransform(getAttribute(attributes, 'transform', def: null));
 
   if (transform != null) {
     return path.transform(transform.storage);
