@@ -7,7 +7,8 @@ version: 0.5.5+1
 dependencies:
   path_drawing: ^0.3.0
   xml: # ^3.2.0
-    path: /Users/dnfield/github/dart-xml
+    git:
+      url: git://github.com/dnfield/dart-xml.git
   vector_math: ^2.0.4
   meta: ^1.1.2
   flutter:

@@ -8,14 +8,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show AssetBundle;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/parser.dart';
-import 'package:xml/xml.dart' hide parse;
-import 'package:xml/xml.dart' as xml show parse;
+// import 'package:xml/xml.dart' hide parse;
+// import 'package:xml/xml.dart' as xml show parse;
 
 import 'src/picture_provider.dart';
 import 'src/picture_stream.dart';
 import 'src/render_picture.dart';
-import 'src/svg/xml_parsers.dart';
-import 'src/svg_parser.dart';
+// import 'src/svg/xml_parsers.dart';
+// import 'src/svg_parser.dart';
 import 'src/vector_drawable.dart';
 
 /// Instance for [Svg]'s utility methods, which can produce a [DrawableRoot]

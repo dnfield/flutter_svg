@@ -397,9 +397,11 @@ packages:
   xml:
     dependency: "direct main"
     description:
-      path: "/Users/dnfield/github/dart-xml"
-      relative: false
-    source: path
+      path: "."
+      ref: HEAD
+      resolved-ref: e052ee3e53de83c81cb2d20f85c3d1c358424b33
+      url: "git://github.com/dnfield/dart-xml.git"
+    source: git
     version: "3.2.0"
   yaml:
     dependency: transitive
@@ -409,5 +411,5 @@ packages:
     source: hosted
     version: "2.1.15"
 sdks:
-  dart: ">=2.0.0-dev.69.0 <=2.0.0-dev.69.5.flutter-1ac34f1513"
+  dart: ">=2.0.0-dev.69.0 <=2.0.0-dev.69.5.flutter-eab492385c"
   flutter: ">=0.5.1 <2.0.0"
