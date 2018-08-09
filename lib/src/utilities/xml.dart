@@ -1,5 +1,4 @@
 import 'package:xml/xml.dart';
-import 'package:xml/xml/utils/node_list.dart';
 
 /// Gets the attribute, trims it, and returns the attribute or default if the attribute
 /// is null or ''.

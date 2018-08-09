@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:path_drawing/path_drawing.dart';
 import 'package:vector_math/vector_math_64.dart';
 import 'package:xml/xml.dart';
-import 'package:xml/xml/utils/node_list.dart';
 
 import '../utilities/xml.dart';
 import '../vector_drawable.dart';

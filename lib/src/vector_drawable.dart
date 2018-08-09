@@ -444,13 +444,19 @@ class DrawableDefinitionServer {
   }
 }
 
+abstract class DrawableParent implements Drawable {
+  const DrawableParent(this.children);
+  final List<Drawable> children;
+}
+
 /// The root element of a drawable.
-class DrawableRoot implements Drawable {
+class DrawableRoot extends DrawableParent {
+  const DrawableRoot(
+      this.viewBox, List<Drawable> children, this.definitions, this.style)
+      : super(children);
+
   /// The expected coordinates used by child paths for drawing.
   final Rect viewBox;
-
-  /// The actual child or group to draw.
-  final List<Drawable> children;
 
   /// Contains reusable definitions such as gradients and clipPaths.
   final DrawableDefinitionServer definitions;
@@ -460,8 +466,6 @@ class DrawableRoot implements Drawable {
 
   /// The [DrawableStyle] for inheritence.
   final DrawableStyle style;
-
-  const DrawableRoot(this.viewBox, this.children, this.definitions, this.style);
 
   /// Scales the `canvas` so that the drawing units in this [Drawable]
   /// will scale to the `desiredSize`.
@@ -537,11 +541,10 @@ class DrawableNoop implements Drawable {
 }
 
 /// Represents a group of drawing elements that may share a common `transform`, `stroke`, or `fill`.
-class DrawableGroup implements Drawable {
-  final List<Drawable> children;
-  final DrawableStyle style;
+class DrawableGroup extends DrawableParent {
+  const DrawableGroup(List<Drawable> children, this.style) : super(children);
 
-  const DrawableGroup(this.children, this.style);
+  final DrawableStyle style;
 
   @override
   bool get hasDrawableContent => children != null && children.isNotEmpty;

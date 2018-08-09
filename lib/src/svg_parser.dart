@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:xml/xml.dart';
 import 'package:vector_math/vector_math_64.dart';
-import 'package:xml/xml/utils/node_list.dart';
 
 import 'svg/colors.dart';
 import 'svg/parsers.dart';
