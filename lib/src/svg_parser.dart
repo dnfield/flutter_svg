@@ -101,7 +101,8 @@ Paint _transparentPaint = new Paint()..color = const Color(0x0);
 void _appendParagraphs(ParagraphBuilder fill, ParagraphBuilder stroke,
     String text, DrawableStyle style) {
   fill
-    ..pushStyle(style.textStyle.toFlutterTextStyle(foregroundOverride: style.fill))
+    ..pushStyle(
+        style.textStyle.toFlutterTextStyle(foregroundOverride: style.fill))
     ..addText(text);
 
   stroke
