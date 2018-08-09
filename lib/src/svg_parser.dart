@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:xml/xml.dart';
 import 'package:vector_math/vector_math_64.dart';
+import 'package:xml/xml/utils/node_list.dart';
 
 import 'svg/colors.dart';
 import 'svg/parsers.dart';
@@ -36,7 +37,7 @@ class DrawableSvgShape extends DrawableShape {
     final Path path = pathFactory(el);
     return new DrawableSvgShape(
       applyTransformIfNeeded(path, el),
-      parseStyle(el, definitions, path.getBounds(), parentStyle,
+      parseStyle(el.attributes, definitions, path.getBounds(), parentStyle,
           defaultFillIfNotSpecified: defaultFill,
           defaultStrokeIfNotSpecified: defaultStroke),
     );
@@ -58,7 +59,7 @@ Drawable parseSvgElement(XmlElement el, DrawableDefinitionServer definitions,
     return new DrawableNoop(el.name.local);
   } else if (el.name.local.endsWith('Gradient')) {
     definitions.addPaintServer(
-        'url(#${getAttribute(el, 'id')})', parseGradient(el));
+        'url(#${getAttribute(el.attributes, 'id')})', parseGradient(el));
     return new DrawableNoop(el.name.local);
   } else if (el.name.local == 'g' || el.name.local == 'a') {
     return parseSvgGroup(el, definitions, bounds, parentStyle, key);
@@ -101,7 +102,8 @@ Paint _transparentPaint = new Paint()..color = const Color(0x0);
 void _appendParagraphs(ParagraphBuilder fill, ParagraphBuilder stroke,
     String text, DrawableStyle style) {
   fill
-    ..pushStyle(style.textStyle.toFlutterTextStyle(foregroundOverride: style.fill))
+    ..pushStyle(
+        style.textStyle.toFlutterTextStyle(foregroundOverride: style.fill))
     ..addText(text);
 
   stroke
@@ -135,7 +137,7 @@ void _paragraphParser(
         break;
       case XmlNodeType.ELEMENT:
         final DrawableStyle childStyle =
-            parseStyle(child, definitions, bounds, style);
+            parseStyle(child.attributes, definitions, bounds, style);
         _paragraphParser(fill, stroke, definitions, bounds, child, childStyle);
         fill.pop();
         stroke.pop();
@@ -149,16 +151,17 @@ void _paragraphParser(
 Drawable parseSvgText(XmlElement el, DrawableDefinitionServer definitions,
     Rect bounds, DrawableStyle parentStyle) {
   final Offset offset = new Offset(
-      double.parse(getAttribute(el, 'x', def: '0')),
-      double.parse(getAttribute(el, 'y', def: '0')));
+      double.parse(getAttribute(el.attributes, 'x', def: '0')),
+      double.parse(getAttribute(el.attributes, 'y', def: '0')));
 
-  final DrawableStyle style = parseStyle(el, definitions, bounds, parentStyle);
+  final DrawableStyle style =
+      parseStyle(el.attributes, definitions, bounds, parentStyle);
 
   final ParagraphBuilder fill = new ParagraphBuilder(new ParagraphStyle());
   final ParagraphBuilder stroke = new ParagraphBuilder(new ParagraphStyle());
 
   final DrawableTextAnchorPosition textAnchor =
-      parseTextAnchor(getAttribute(el, 'text-anchor', def: 'start'));
+      parseTextAnchor(getAttribute(el.attributes, 'text-anchor', def: 'start'));
 
   if (el.children.length == 1) {
     _appendParagraphs(fill, stroke, el.text, style);
@@ -185,8 +188,9 @@ Drawable parseSvgText(XmlElement el, DrawableDefinitionServer definitions,
 Drawable parseSvgGroup(XmlElement el, DrawableDefinitionServer definitions,
     Rect bounds, DrawableStyle parentStyle, String key) {
   final List<Drawable> children = <Drawable>[];
-  final DrawableStyle style =
-      parseStyle(el, definitions, bounds, parentStyle, needsTransform: true);
+  final DrawableStyle style = parseStyle(
+      el.attributes, definitions, bounds, parentStyle,
+      needsTransform: true);
   for (XmlNode child in el.children) {
     if (child is XmlElement) {
       final Drawable el =
@@ -209,8 +213,11 @@ Drawable parseSvgGroup(XmlElement el, DrawableDefinitionServer definitions,
 /// Parses style attributes or @style attribute.
 ///
 /// Remember that @style attribute takes precedence.
-DrawableStyle parseStyle(XmlElement el, DrawableDefinitionServer definitions,
-    Rect bounds, DrawableStyle parentStyle,
+DrawableStyle parseStyle(
+    List<XmlAttribute> el,
+    DrawableDefinitionServer definitions,
+    Rect bounds,
+    DrawableStyle parentStyle,
     {bool needsTransform = false,
     Color defaultFillIfNotSpecified,
     Color defaultStrokeIfNotSpecified}) {

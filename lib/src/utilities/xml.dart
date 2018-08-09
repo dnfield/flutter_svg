@@ -1,14 +1,15 @@
 import 'package:xml/xml.dart';
+import 'package:xml/xml/utils/node_list.dart';
 
 /// Gets the attribute, trims it, and returns the attribute or default if the attribute
 /// is null or ''.
 ///
 /// Will look to the style first if it can.
-String getAttribute(XmlElement el, String name,
+String getAttribute(List<XmlAttribute> el, String name,
     {String def = '', String namespace, bool checkStyle = true}) {
   String raw = '';
   if (checkStyle) {
-    final String style = el.getAttribute('style')?.trim();
+    final String style = _getAttribute(el, 'style')?.trim();
     if (style != '' && style != null) {
       // Probably possible to slightly optimize this (e.g. use indexOf instead of split),
       // but handling potential whitespace will get complicated and this just works.
@@ -24,11 +25,20 @@ String getAttribute(XmlElement el, String name,
     }
 
     if (raw == '' || raw == null) {
-      raw = el.getAttribute(name, namespace: namespace)?.trim();
+      raw = _getAttribute(el, name, namespace: namespace)?.trim();
     }
   } else {
-    raw = el.getAttribute(name, namespace: namespace)?.trim();
+    raw = _getAttribute(el, name, namespace: namespace)?.trim();
   }
 
   return raw == '' || raw == null ? def : raw;
+}
+
+String _getAttribute(List<XmlAttribute> list, String localName,
+    {String def = '', String namespace}) {
+  return list
+          .firstWhere((XmlAttribute attr) => attr.name.local == localName,
+              orElse: () => null)
+          ?.value ??
+      def;
 }

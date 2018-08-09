@@ -63,7 +63,7 @@ class Avd {
   /// Creates a [DrawableRoot] from a string of Android Vector Drawable data.
   DrawableRoot fromAvdString(String rawSvg, String key) {
     final XmlElement svg = xml.parse(rawSvg).rootElement;
-    final Rect viewBox = parseViewBox(svg);
+    final Rect viewBox = parseViewBox(svg.attributes);
     final List<Drawable> children = svg.children
         .where((XmlNode child) => child is XmlElement)
         .map((XmlNode child) => parseAvdElement(
@@ -154,7 +154,7 @@ class AvdPicture extends SvgPicture {
 /// Creates a [DrawableRoot] from a string of SVG data.
 DrawableRoot fromAvdString(String rawSvg, Size size) {
   final XmlElement svg = xml.parse(rawSvg).rootElement;
-  final Rect viewBox = parseViewBox(svg);
+  final Rect viewBox = parseViewBox(svg.attributes);
   final List<Drawable> children = svg.children
       .where((XmlNode child) => child is XmlElement)
       .map((XmlNode child) => parseAvdElement(

@@ -97,10 +97,11 @@ class Svg {
   /// The `key` is used for debugging purposes.
   DrawableRoot fromSvgString(String rawSvg, String key) {
     final XmlElement svg = xml.parse(rawSvg).rootElement;
-    final Rect viewBox = parseViewBox(svg);
+    final Rect viewBox = parseViewBox(svg.attributes);
     //final Map<String, PaintServer> paintServers = <String, PaintServer>{};
     final DrawableDefinitionServer definitions = new DrawableDefinitionServer();
-    final DrawableStyle style = parseStyle(svg, definitions, viewBox, null);
+    final DrawableStyle style =
+        parseStyle(svg.attributes, definitions, viewBox, null);
 
     final List<Drawable> children = svg.children
         .where((XmlNode child) => child is XmlElement)
@@ -118,7 +119,7 @@ class Svg {
       viewBox,
       children,
       definitions,
-      parseStyle(svg, definitions, viewBox, null),
+      parseStyle(svg.attributes, definitions, viewBox, null),
     );
   }
 }

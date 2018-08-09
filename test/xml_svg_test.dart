@@ -12,12 +12,12 @@ void main() {
             '<test stroke="#fff" fill="#eee" stroke-dashpattern="1 2" style="stroke-opacity:1;fill-opacity:.23" />')
         .rootElement;
 
-    expect(getAttribute(el, 'stroke'), '#fff');
-    expect(getAttribute(el, 'fill'), '#eee');
-    expect(getAttribute(el, 'stroke-dashpattern'), '1 2');
-    expect(getAttribute(el, 'stroke-opacity'), '1');
-    expect(getAttribute(el, 'stroke-another'), '');
-    expect(getAttribute(el, 'fill-opacity'), '.23');
+    expect(getAttribute(el.attributes, 'stroke'), '#fff');
+    expect(getAttribute(el.attributes, 'fill'), '#eee');
+    expect(getAttribute(el.attributes, 'stroke-dashpattern'), '1 2');
+    expect(getAttribute(el.attributes, 'stroke-opacity'), '1');
+    expect(getAttribute(el.attributes, 'stroke-another'), '');
+    expect(getAttribute(el.attributes, 'fill-opacity'), '.23');
   });
   // if the parsing logic changes, we can simplify some methods.  for now assert that whitespace in attributes is preserved
   test('Attribute WhiteSpace test', () {
@@ -50,10 +50,10 @@ void main() {
         parse('<svg width="100cm" height="100cm" />').rootElement;
 
     final XmlElement svgWithNoSizeInfo = parse('<svg />').rootElement;
-    expect(parseViewBox(svgWithViewBox), rect);
-    expect(parseViewBox(svgWithViewBoxAndWidthHeight), rect);
-    expect(parseViewBox(svgWithWidthHeight), rect);
-    expect(parseViewBox(svgWithNoSizeInfo), Rect.zero);
+    expect(parseViewBox(svgWithViewBox.attributes), rect);
+    expect(parseViewBox(svgWithViewBoxAndWidthHeight.attributes), rect);
+    expect(parseViewBox(svgWithWidthHeight.attributes), rect);
+    expect(parseViewBox(svgWithNoSizeInfo.attributes), Rect.zero);
   });
 
   test('TileMode tests', () {
@@ -83,7 +83,7 @@ void main() {
         parse('<stroke stroke-dashoffset="20%" />').rootElement;
 
     // TODO: DashOffset is completely opaque right now, maybe expose the raw value?
-    expect(parseDashOffset(abs), isNotNull);
-    expect(parseDashOffset(pct), isNotNull);
+    expect(parseDashOffset(abs.attributes), isNotNull);
+    expect(parseDashOffset(pct.attributes), isNotNull);
   });
 }
