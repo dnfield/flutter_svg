@@ -71,7 +71,8 @@ If you'd like to render the SVG to some other canvas, you can do something like:
 
 ```dart
 import 'package:flutter_svg/flutter_svg.dart';
-final DrawableRoot svgRoot = await svg.loadAsset('assets/image.svg');
+final String rawSvg = '''<svg viewBox="...">...</svg>''';
+final DrawableRoot svgRoot = await svg.fromSvgString(rawSvg, rawSvg);
 
 // If you only want the final Picture output, just use
 final Picture picture = svgRoot.toPicture();
