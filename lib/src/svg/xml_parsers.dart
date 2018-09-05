@@ -74,12 +74,18 @@ Iterable<XmlElement> parseDefs(
 }
 
 double _parseDecimalOrPercentage(String val, {double multiplier = 1.0}) {
-  if (val.endsWith('%')) {
-    return double.parse(val.substring(0, val.length - 1)) / 100 * multiplier;
+  if (_isPercentage(val)) {
+    return _parsePercentage(val, multiplier: multiplier);
   } else {
     return double.parse(val);
   }
 }
+
+double _parsePercentage(String val, {double multiplier = 1.0}) {
+  return double.parse(val.substring(0, val.length - 1)) / 100 * multiplier;
+}
+
+bool _isPercentage(String val) => val.endsWith('%');
 
 TileMode parseTileMode(XmlElement el) {
   final String spreadMethod = getAttribute(el, 'spreadMethod', def: 'pad');
@@ -109,14 +115,10 @@ void parseStops(
 
 /// Parses an SVG <linearGradient> element into a [Paint].
 PaintServer parseLinearGradient(XmlElement el) {
-  final double x1 =
-      _parseDecimalOrPercentage(getAttribute(el, 'x1', def: '0%'));
-  final double x2 =
-      _parseDecimalOrPercentage(getAttribute(el, 'x2', def: '100%'));
-  final double y1 =
-      _parseDecimalOrPercentage(getAttribute(el, 'y1', def: '0%'));
-  final double y2 =
-      _parseDecimalOrPercentage(getAttribute(el, 'y2', def: '0%'));
+  final String x1 = getAttribute(el, 'x1', def: '0%');
+  final String x2 = getAttribute(el, 'x2', def: '100%');
+  final String y1 = getAttribute(el, 'y1', def: '0%');
+  final String y2 = getAttribute(el, 'y2', def: '0%');
 
   final TileMode spreadMethod = parseTileMode(el);
   final List<XmlElement> stops = el.findElements('stop').toList();
@@ -128,8 +130,17 @@ PaintServer parseLinearGradient(XmlElement el) {
   final Matrix4 transform = parseTransform(getAttribute(el, 'gradientTransform', def: null));
   
   return (Rect bounds) {
-    Vector3 from = new Vector3(bounds.left + (bounds.width * x1), bounds.top + (bounds.height * y1), 0.0);
-    Vector3 to = new Vector3(bounds.left + (bounds.width * x2), bounds.top + (bounds.height * y2), 0.0);
+    final Offset fromOffset = new Offset(
+      _isPercentage(x1) ? bounds.width * _parsePercentage(x1) : double.parse(x1),
+      _isPercentage(y1) ? bounds.height * _parsePercentage(y1) : double.parse(y1),
+    );
+    final Offset toOffset = new Offset(
+      _isPercentage(x2) ? bounds.width * _parsePercentage(x2) : double.parse(x2),
+      _isPercentage(y2) ? bounds.height * _parsePercentage(y2) : double.parse(y2),
+    );
+
+    Vector3 from = new Vector3(bounds.left + fromOffset.dx, bounds.top + fromOffset.dy, 0.0);
+    Vector3 to = new Vector3(bounds.left + toOffset.dx, bounds.top + toOffset.dy, 0.0);
     if (transform != null) {
       from = transform.transform3(from);
       to = transform.transform3(to);
