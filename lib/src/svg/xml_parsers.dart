@@ -108,13 +108,16 @@ void parseStops(
     colors[i] = parseColor(getAttribute(stops[i], 'stop-color'))
         .withOpacity(double.parse(rawOpacity));
 
-    final String rawOffset = getAttribute(stops[i], 'offset');
+    final String rawOffset = getAttribute(stops[i], 'offset', def: '0%');
     offsets[i] = _parseDecimalOrPercentage(rawOffset);
   }
 }
 
 /// Parses an SVG <linearGradient> element into a [Paint].
 PaintServer parseLinearGradient(XmlElement el) {
+  final gradientUnits = getAttribute(el, 'gradientUnits', def: 'objectBoundingBox');
+  final isObjectBoundingBox = gradientUnits == 'objectBoundingBox';
+
   final String x1 = getAttribute(el, 'x1', def: '0%');
   final String x2 = getAttribute(el, 'x2', def: '100%');
   final String y1 = getAttribute(el, 'y1', def: '0%');
@@ -130,17 +133,48 @@ PaintServer parseLinearGradient(XmlElement el) {
   final Matrix4 transform = parseTransform(getAttribute(el, 'gradientTransform', def: null));
   
   return (Rect bounds) {
-    final Offset fromOffset = new Offset(
-      _isPercentage(x1) ? bounds.width * _parsePercentage(x1) : double.parse(x1),
-      _isPercentage(y1) ? bounds.height * _parsePercentage(y1) : double.parse(y1),
-    );
-    final Offset toOffset = new Offset(
-      _isPercentage(x2) ? bounds.width * _parsePercentage(x2) : double.parse(x2),
-      _isPercentage(y2) ? bounds.height * _parsePercentage(y2) : double.parse(y2),
-    );
+    Vector3 from, to;
 
-    Vector3 from = new Vector3(bounds.left + fromOffset.dx, bounds.top + fromOffset.dy, 0.0);
-    Vector3 to = new Vector3(bounds.left + toOffset.dx, bounds.top + toOffset.dy, 0.0);
+    if (isObjectBoundingBox) {
+      final Offset fromOffset = new Offset(
+        bounds.width * _parseDecimalOrPercentage(x1),
+        bounds.height * _parseDecimalOrPercentage(y1),
+      );
+      final Offset toOffset = new Offset(
+        bounds.width * _parseDecimalOrPercentage(x2),
+        bounds.height * _parseDecimalOrPercentage(y2),
+      );
+
+      from = new Vector3(
+        bounds.left + fromOffset.dx,
+        bounds.top + fromOffset.dy,
+        0.0,
+      );
+      to = new Vector3(
+        bounds.left + toOffset.dx,
+        bounds.top + toOffset.dy,
+        0.0,
+      );
+    } else {
+      if (_isPercentage(x1) || _isPercentage(x2) || _isPercentage(y1) || _isPercentage(y2)) {
+        // TODO: Support userSpaceOnUse with percentage values
+        print('Unsupported userSpaceOnUse with percentage values');
+        return new Gradient.linear(
+          Offset.zero,
+          Offset.zero,
+          colors,
+          offsets,
+          TileMode.clamp,
+        );
+      }
+
+      final Offset fromOffset = new Offset(double.parse(x1), double.parse(y1));
+      final Offset toOffset = new Offset(double.parse(x2), double.parse(y2));
+
+      from = new Vector3(fromOffset.dx, fromOffset.dy, 0.0);
+      to = new Vector3(toOffset.dx, toOffset.dy, 0.0);
+    }
+
     if (transform != null) {
       from = transform.transform3(from);
       to = transform.transform3(to);
