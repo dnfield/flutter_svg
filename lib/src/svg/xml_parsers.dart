@@ -115,8 +115,8 @@ void parseStops(
 
 /// Parses an SVG <linearGradient> element into a [Paint].
 PaintServer parseLinearGradient(XmlElement el) {
-  final gradientUnits = getAttribute(el, 'gradientUnits', def: 'objectBoundingBox');
-  final isObjectBoundingBox = gradientUnits == 'objectBoundingBox';
+  final String gradientUnits = getAttribute(el, 'gradientUnits', def: 'objectBoundingBox');
+  final bool isObjectBoundingBox = gradientUnits == 'objectBoundingBox';
 
   final String x1 = getAttribute(el, 'x1', def: '0%');
   final String x2 = getAttribute(el, 'x2', def: '100%');
@@ -192,8 +192,14 @@ PaintServer parseLinearGradient(XmlElement el) {
 
 /// Parses a <radialGradient> into a [Paint].
 PaintServer parseRadialGradient(XmlElement el) {
+  final String gradientUnits = getAttribute(el, 'gradientUnits', def: 'objectBoundingBox');
+  final bool isObjectBoundingBox = gradientUnits == 'objectBoundingBox';
+
   final String rawCx = getAttribute(el, 'cx', def: '50%');
   final String rawCy = getAttribute(el, 'cy', def: '50%');
+  final String rawR = getAttribute(el, 'r', def: '50%');
+  final String rawFx = getAttribute(el, 'fx', def: rawCx);
+  final String rawFy = getAttribute(el, 'fy', def: rawCy);
   final TileMode spreadMethod = parseTileMode(el);
 
   final List<XmlElement> stops = el.findElements('stop').toList();
@@ -205,26 +211,37 @@ PaintServer parseRadialGradient(XmlElement el) {
   final Matrix4 transform = parseTransform(getAttribute(el, 'gradientTransform', def: null));
 
   return (Rect bounds) {
-    final double cx = _parseDecimalOrPercentage(
-      rawCx,
-      multiplier: bounds.width + bounds.left + bounds.left,
-    );
-    final double cy = _parseDecimalOrPercentage(
-      rawCy,
-      multiplier: bounds.height + bounds.top + bounds.top,
-    );
-    final double r = _parseDecimalOrPercentage(
-      getAttribute(el, 'r', def: '50%'),
-      multiplier: (bounds.width + bounds.height) / 2,
-    );
-    final double fx = _parseDecimalOrPercentage(
-      getAttribute(el, 'fx', def: rawCx),
-      multiplier: bounds.width + (bounds.left * 2),
-    );
-    final double fy = _parseDecimalOrPercentage(
-      getAttribute(el, 'fy', def: rawCy),
-      multiplier: bounds.height + (bounds.top),
-    );
+    double cx, cy, r, fx, fy;
+
+    if (isObjectBoundingBox) {
+      cx = (bounds.width + bounds.left * 2) * _parseDecimalOrPercentage(rawCx);
+      cy = (bounds.height + bounds.top * 2) * _parseDecimalOrPercentage(rawCy);
+      r = ((bounds.width + bounds.height) / 2) * _parseDecimalOrPercentage(rawR);
+      fx = (bounds.width + bounds.left * 2) * _parseDecimalOrPercentage(rawFx);
+      fy = (bounds.height + bounds.top) * _parseDecimalOrPercentage(rawFy);
+    } else {
+      if (_isPercentage(rawCx)
+        || _isPercentage(rawCy)
+        || _isPercentage(rawR)
+        || _isPercentage(rawFx)
+        || _isPercentage(rawFy)) {
+        // TODO: Support userSpaceOnUse with percentage values
+        print('Unsupported userSpaceOnUse with percentage values');
+        return new Gradient.linear(
+          Offset.zero,
+          Offset.zero,
+          colors,
+          offsets,
+          TileMode.clamp,
+        );
+      }
+
+      cx = double.parse(rawCx);
+      cy = double.parse(rawCy);
+      r = double.parse(rawR);
+      fx = double.parse(rawFx);
+      fy = double.parse(rawFy);
+    }
 
     final Offset center = new Offset(cx, cy);
     final Offset focal =
