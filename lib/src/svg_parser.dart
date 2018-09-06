@@ -12,7 +12,9 @@ import 'vector_drawable.dart';
 
 /// An SVG Shape element that will be drawn to the canvas.
 class DrawableSvgShape extends DrawableShape {
-  const DrawableSvgShape(Path path, DrawableStyle style) : super(path, style);
+  const DrawableSvgShape(Path path, DrawableStyle style, this.transform) : super(path, style);
+
+  final Matrix4 transform;
 
   /// Applies the transformation in the @transform attribute to the path.
   factory DrawableSvgShape.parse(
@@ -35,11 +37,24 @@ class DrawableSvgShape extends DrawableShape {
 
     final Path path = pathFactory(el);
     return new DrawableSvgShape(
-      applyTransformIfNeeded(path, el),
+      path,
       parseStyle(el, definitions, path.getBounds(), parentStyle,
           defaultFillIfNotSpecified: defaultFill,
           defaultStrokeIfNotSpecified: defaultStroke),
+      parseTransform(getAttribute(el, 'transform', def: null)),
     );
+  }
+
+  @override
+  void draw(Canvas canvas, ColorFilter colorFilter) {
+    if (transform != null) {
+      canvas.save();
+      canvas.transform(transform.storage);
+      super.draw(canvas, colorFilter);
+      canvas.restore();
+    } else {
+      super.draw(canvas, colorFilter);
+    }
   }
 }
 
