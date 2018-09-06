@@ -159,13 +159,7 @@ PaintServer parseLinearGradient(XmlElement el) {
       if (_isPercentage(x1) || _isPercentage(x2) || _isPercentage(y1) || _isPercentage(y2)) {
         // TODO: Support userSpaceOnUse with percentage values
         print('Unsupported userSpaceOnUse with percentage values');
-        return new Gradient.linear(
-          Offset.zero,
-          Offset.zero,
-          colors,
-          offsets,
-          TileMode.clamp,
-        );
+        return const NoopShader();
       }
 
       final Offset fromOffset = new Offset(double.parse(x1), double.parse(y1));
@@ -227,13 +221,7 @@ PaintServer parseRadialGradient(XmlElement el) {
         || _isPercentage(rawFy)) {
         // TODO: Support userSpaceOnUse with percentage values
         print('Unsupported userSpaceOnUse with percentage values');
-        return new Gradient.linear(
-          Offset.zero,
-          Offset.zero,
-          colors,
-          offsets,
-          TileMode.clamp,
-        );
+        return const NoopShader();
       }
 
       cx = double.parse(rawCx);
@@ -351,7 +339,7 @@ double parseOpacity(XmlElement el) {
 DrawablePaint _getDefinitionPaint(PaintingStyle paintingStyle, String iri,
     DrawableDefinitionServer definitions, Rect bounds,
     {double opacity}) {
-  final Shader shader = definitions.getPaint(iri, bounds);
+  Shader shader = definitions.getPaint(iri, bounds);
   if (shader == null) {
     FlutterError.onError(
       new FlutterErrorDetails(
@@ -369,6 +357,13 @@ DrawablePaint _getDefinitionPaint(PaintingStyle paintingStyle, String iri,
       ),
     );
   }
+
+  // Handle unsupported shaders
+  if (shader is NoopShader) {
+    shader = null;
+    opacity = 0.0;
+  }
+
   return new DrawablePaint(
     paintingStyle,
     shader: shader,
@@ -544,4 +539,10 @@ Path applyTransformIfNeeded(Path path, XmlElement el) {
   } else {
     return path;
   }
+}
+
+/// Represents an unsupported shader. Trying to set this to any dart:ui method
+/// will make the engine crash.
+class NoopShader implements Shader {
+  const NoopShader();
 }
