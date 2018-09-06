@@ -130,29 +130,34 @@ PaintServer parseLinearGradient(XmlElement el) {
 
   parseStops(stops, colors, offsets);
 
-  final Matrix4 transform = parseTransform(getAttribute(el, 'gradientTransform', def: null));
+  final Matrix4 originalTransform = parseTransform(getAttribute(el, 'gradientTransform', def: null));
   
   return (Rect bounds) {
     Vector3 from, to;
+    Matrix4 transform = originalTransform?.clone() ?? new Matrix4.identity();
 
     if (isObjectBoundingBox) {
+      final Matrix4 scale = affineMatrix(bounds.width, 0.0, 0.0, bounds.height, 0.0, 0.0);
+      final Matrix4 translate = affineMatrix(1.0, 0.0, 0.0, 1.0, bounds.left, bounds.top);
+      transform = translate.multiplied(scale)..multiply(transform);
+
       final Offset fromOffset = new Offset(
-        bounds.width * _parseDecimalOrPercentage(x1),
-        bounds.height * _parseDecimalOrPercentage(y1),
+        _parseDecimalOrPercentage(x1),
+        _parseDecimalOrPercentage(y1),
       );
       final Offset toOffset = new Offset(
-        bounds.width * _parseDecimalOrPercentage(x2),
-        bounds.height * _parseDecimalOrPercentage(y2),
+        _parseDecimalOrPercentage(x2),
+        _parseDecimalOrPercentage(y2),
       );
 
       from = new Vector3(
-        bounds.left + fromOffset.dx,
-        bounds.top + fromOffset.dy,
+        fromOffset.dx,
+        fromOffset.dy,
         0.0,
       );
       to = new Vector3(
-        bounds.left + toOffset.dx,
-        bounds.top + toOffset.dy,
+        toOffset.dx,
+        toOffset.dy,
         0.0,
       );
     } else {
@@ -202,17 +207,22 @@ PaintServer parseRadialGradient(XmlElement el) {
   final List<double> offsets = new List<double>(stops.length);
   parseStops(stops, colors, offsets);
 
-  final Matrix4 transform = parseTransform(getAttribute(el, 'gradientTransform', def: null));
+  final Matrix4 originalTransform = parseTransform(getAttribute(el, 'gradientTransform', def: null));
 
   return (Rect bounds) {
     double cx, cy, r, fx, fy;
+    Matrix4 transform = originalTransform?.clone() ?? new Matrix4.identity();
 
     if (isObjectBoundingBox) {
-      cx = (bounds.width + bounds.left * 2) * _parseDecimalOrPercentage(rawCx);
-      cy = (bounds.height + bounds.top * 2) * _parseDecimalOrPercentage(rawCy);
-      r = ((bounds.width + bounds.height) / 2) * _parseDecimalOrPercentage(rawR);
-      fx = (bounds.width + bounds.left * 2) * _parseDecimalOrPercentage(rawFx);
-      fy = (bounds.height + bounds.top) * _parseDecimalOrPercentage(rawFy);
+      final Matrix4 scale = affineMatrix(bounds.width, 0.0, 0.0, bounds.height, 0.0, 0.0);
+      final Matrix4 translate = affineMatrix(1.0, 0.0, 0.0, 1.0, bounds.left, bounds.top);
+      transform = translate.multiplied(scale)..multiply(transform);
+
+      cx = _parseDecimalOrPercentage(rawCx);
+      cy = _parseDecimalOrPercentage(rawCy);
+      r = _parseDecimalOrPercentage(rawR);
+      fx = _parseDecimalOrPercentage(rawFx);
+      fy = _parseDecimalOrPercentage(rawFy);
     } else {
       if (_isPercentage(rawCx)
         || _isPercentage(rawCy)
