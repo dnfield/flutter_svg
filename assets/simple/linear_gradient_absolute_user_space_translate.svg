@@ -5,5 +5,5 @@
         <stop offset="1" stop-color="#3F2894" stop-opacity="0.01"/>
         </linearGradient>
     </defs>
-    <rect x="200" y="200" width="667" height="667" transform="translate(100 100)" fill="url(#paint0_linear)"/>
+    <rect x="200" y="200" width="667" height="667" transform="rotate(33, 400, 400)" fill="url(#paint0_linear)"/>
 </svg>
