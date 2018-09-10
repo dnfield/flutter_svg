@@ -241,6 +241,8 @@ class SvgPicture extends StatefulWidget {
       String package,
       this.width,
       this.height,
+      this.fit = BoxFit.contain,
+      this.alignment = Alignment.center,
       this.allowDrawingOutsideViewBox = false,
       this.placeholderBuilder,
       Color color,
@@ -286,6 +288,8 @@ class SvgPicture extends StatefulWidget {
       Map<String, String> headers,
       this.width,
       this.height,
+      this.fit = BoxFit.contain,
+      this.alignment = Alignment.center,
       this.matchTextDirection = false,
       this.allowDrawingOutsideViewBox = false,
       this.placeholderBuilder,
@@ -328,6 +332,8 @@ class SvgPicture extends StatefulWidget {
       {Key key,
       this.width,
       this.height,
+      this.fit = BoxFit.contain,
+      this.alignment = Alignment.center,
       this.matchTextDirection = false,
       this.allowDrawingOutsideViewBox = false,
       this.placeholderBuilder,
@@ -366,6 +372,8 @@ class SvgPicture extends StatefulWidget {
       {Key key,
       this.width,
       this.height,
+      this.fit = BoxFit.contain,
+      this.alignment = Alignment.center,
       this.matchTextDirection = false,
       this.allowDrawingOutsideViewBox = false,
       this.placeholderBuilder,
@@ -404,6 +412,8 @@ class SvgPicture extends StatefulWidget {
       {Key key,
       this.width,
       this.height,
+      this.fit = BoxFit.contain,
+      this.alignment = Alignment.center,
       this.matchTextDirection = false,
       this.allowDrawingOutsideViewBox = false,
       this.placeholderBuilder,
@@ -449,6 +459,10 @@ class SvgPicture extends StatefulWidget {
   /// If specified, the height to use for the SVG.  If unspecified, the SVG
   /// will take the height of its parent.
   final double height;
+
+  final BoxFit fit;
+
+  final Alignment alignment;
 
   /// The [PictureProvider] used to resolve the SVG.
   final PictureProvider pictureProvider;
@@ -554,16 +568,28 @@ class _SvgPictureState extends State<SvgPicture> {
   @override
   Widget build(BuildContext context) {
     if (_picture != null) {
-      final RawPicture picture = new RawPicture(
+      Widget picture = new RawPicture(
         _picture,
         matchTextDirection: widget.matchTextDirection,
         allowDrawingOutsideViewBox: widget.allowDrawingOutsideViewBox,
       );
-      return widget.width != null || widget.height != null
-          ? new SizedBox(
-              height: widget.height, width: widget.width, child: picture)
-          : picture;
+      picture = new SizedBox.fromSize(size: _picture.viewBox.size, child: picture,);
+      double width = widget.width;
+      double height = widget.height;
+      if (width == null && height == null) {
+        return picture;
+      }
+
+      if (height != null) {
+        width = height / _picture.viewBox.height * _picture.viewBox.width;
+      } else if (width != null) {
+        height = width / _picture.viewBox.width * _picture.viewBox.height;
+      }
+      picture = new FittedBox(fit: widget.fit, alignment:  widget.alignment, child: picture,);
+
+      return new SizedBox(width: width, height: height, child: picture,);
     }
+
     return widget.placeholderBuilder == null
         ? _getDefaultPlaceholder(context, widget.width, widget.height)
         : widget.placeholderBuilder(context);
