@@ -55,15 +55,15 @@ Rect parseViewBox(XmlElement svg) {
 
 String buildUrlIri(XmlElement def) => 'url(#${getAttribute(def, 'id')})';
 
-/// Parses a <def> element, extracting <linearGradient> and (TODO) <radialGradient> elements into the `paintServers` map.
+/// Parses a <def> element, extracting <linearGradient> and <radialGradient> elements into the `paintServers` map.
 ///
 /// Returns any elements it was not able to process.
 Iterable<XmlElement> parseDefs(
-    XmlElement el, DrawableDefinitionServer definitions) sync* {
+    XmlElement el, DrawableDefinitionServer definitions, Rect rootBounds) sync* {
   for (XmlNode def in el.children) {
     if (def is XmlElement) {
       if (def.name.local.endsWith('Gradient')) {
-        definitions.addPaintServer(buildUrlIri(def), parseGradient(def));
+        definitions.addPaintServer(buildUrlIri(def), parseGradient(def, rootBounds));
       } else if (def.name.local == 'clipPath') {
         definitions.addClipPath(buildUrlIri(def), parseClipPathDefinition(def));
       } else {
@@ -114,7 +114,7 @@ void parseStops(
 }
 
 /// Parses an SVG <linearGradient> element into a [Paint].
-PaintServer parseLinearGradient(XmlElement el) {
+PaintServer parseLinearGradient(XmlElement el, Rect rootBounds) {
   final String gradientUnits = getAttribute(el, 'gradientUnits', def: 'objectBoundingBox');
   final bool isObjectBoundingBox = gradientUnits == 'objectBoundingBox';
 
@@ -161,14 +161,24 @@ PaintServer parseLinearGradient(XmlElement el) {
         0.0,
       );
     } else {
-      if (_isPercentage(x1) || _isPercentage(x2) || _isPercentage(y1) || _isPercentage(y2)) {
-        // TODO: Support userSpaceOnUse with percentage values
-        print('Unsupported userSpaceOnUse with percentage values');
-        return const NoopShader();
-      }
+      final Offset fromOffset = new Offset(
+        _isPercentage(x1)
+          ? _parsePercentage(x1) * rootBounds.width + rootBounds.left
+          : double.parse(x1),
+        _isPercentage(y1)
+          ? _parsePercentage(y1) * rootBounds.height + rootBounds.top
+          : double.parse(y1),
+      );
 
-      final Offset fromOffset = new Offset(double.parse(x1), double.parse(y1));
-      final Offset toOffset = new Offset(double.parse(x2), double.parse(y2));
+
+      final Offset toOffset = new Offset(
+        _isPercentage(x2)
+          ? _parsePercentage(x2) * rootBounds.width + rootBounds.left
+          : double.parse(x2),
+        _isPercentage(y2)
+          ? _parsePercentage(y2) * rootBounds.height + rootBounds.top
+          : double.parse(y2),
+      );
 
       from = new Vector3(fromOffset.dx, fromOffset.dy, 0.0);
       to = new Vector3(toOffset.dx, toOffset.dy, 0.0);
@@ -190,7 +200,7 @@ PaintServer parseLinearGradient(XmlElement el) {
 }
 
 /// Parses a <radialGradient> into a [Paint].
-PaintServer parseRadialGradient(XmlElement el) {
+PaintServer parseRadialGradient(XmlElement el, Rect rootBounds) {
   final String gradientUnits = getAttribute(el, 'gradientUnits', def: 'objectBoundingBox');
   final bool isObjectBoundingBox = gradientUnits == 'objectBoundingBox';
 
@@ -224,21 +234,21 @@ PaintServer parseRadialGradient(XmlElement el) {
       fx = _parseDecimalOrPercentage(rawFx);
       fy = _parseDecimalOrPercentage(rawFy);
     } else {
-      if (_isPercentage(rawCx)
-        || _isPercentage(rawCy)
-        || _isPercentage(rawR)
-        || _isPercentage(rawFx)
-        || _isPercentage(rawFy)) {
-        // TODO: Support userSpaceOnUse with percentage values
-        print('Unsupported userSpaceOnUse with percentage values');
-        return const NoopShader();
-      }
-
-      cx = double.parse(rawCx);
-      cy = double.parse(rawCy);
-      r = double.parse(rawR);
-      fx = double.parse(rawFx);
-      fy = double.parse(rawFy);
+      cx = _isPercentage(rawCx)
+        ? _parsePercentage(rawCx) * rootBounds.width + rootBounds.left
+        : double.parse(rawCx);
+      cy = _isPercentage(rawCy)
+        ? _parsePercentage(rawCy) * rootBounds.height + rootBounds.top
+        : double.parse(rawCy);
+      r = _isPercentage(rawR)
+        ? _parsePercentage(rawR) * ((rootBounds.height + rootBounds.width) / 2)
+        : double.parse(rawR);
+      fx = _isPercentage(rawFx)
+        ? _parsePercentage(rawFx) * rootBounds.width + rootBounds.left
+        : double.parse(rawFx);
+      fy = _isPercentage(rawFy)
+        ? _parsePercentage(rawFy) * rootBounds.height + rootBounds.top
+        : double.parse(rawFy);
     }
 
     final Offset center = new Offset(cx, cy);
@@ -295,11 +305,11 @@ List<Path> parseClipPath(XmlElement el, DrawableDefinitionServer definitions) {
 }
 
 /// Parses a <linearGradient> or <radialGradient> into a [Paint].
-PaintServer parseGradient(XmlElement el) {
+PaintServer parseGradient(XmlElement el, Rect rootBounds) {
   if (el.name.local == 'linearGradient') {
-    return parseLinearGradient(el);
+    return parseLinearGradient(el, rootBounds);
   } else if (el.name.local == 'radialGradient') {
-    return parseRadialGradient(el);
+    return parseRadialGradient(el, rootBounds);
   }
   throw new StateError('Unknown gradient type ${el.name.local}');
 }
@@ -366,12 +376,6 @@ DrawablePaint _getDefinitionPaint(PaintingStyle paintingStyle, String iri,
         },
       ),
     );
-  }
-
-  // Handle unsupported shaders
-  if (shader is NoopShader) {
-    shader = null;
-    opacity = 0.0;
   }
 
   return new DrawablePaint(
@@ -549,10 +553,4 @@ Path applyTransformIfNeeded(Path path, XmlElement el) {
   } else {
     return path;
   }
-}
-
-/// Represents an unsupported shader. Trying to set this to any dart:ui method
-/// will make the engine crash.
-class NoopShader implements Shader {
-  const NoopShader();
 }
