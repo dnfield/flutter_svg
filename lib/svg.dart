@@ -155,6 +155,8 @@ class SvgPicture extends StatefulWidget {
       {Key key,
       this.width,
       this.height,
+      this.fit = BoxFit.contain,
+      this.alignment = Alignment.center,
       this.matchTextDirection = false,
       this.allowDrawingOutsideViewBox = false,
       this.placeholderBuilder})
