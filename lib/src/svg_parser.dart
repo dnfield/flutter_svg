@@ -101,6 +101,9 @@ void _unhandledElement(XmlElement el, String key) {
       library: 'SVG',
       context: 'in parseSvgElement',
     ));
+  } else if (el.name.local == 'title') {
+    print("WARNING: flutter_svg doesn't support the title tag.");
+    return;
   }
   assert(() {
     if (_unhandledElements.add(el.name.local)) {
