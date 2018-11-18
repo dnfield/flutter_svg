@@ -100,7 +100,7 @@ is deprecating the `SvgImage` widgets in favor of `SvgPicture` - it became very 
 to maintain that name, as `Picture`s are the underlying mechanism for rendering
 rather than `Image`s.
 
-See [main.dart](/../master/example/main.dart) for a complete sample.
+See [main.dart](/../master/example/lib/main.dart) for a complete sample.
 
 ## Use Cases
 
