@@ -6,7 +6,7 @@
 <img src="/../master/example/assets/flutter_logo.svg?sanitize=true" width="200px" alt="Flutter Logo which can be rendered by this package!">
 <!-- markdownlint-enable MD033 -->
 
-Draw SVG and Android VectorDrawable (XML) files on a Flutter Widget.
+Draw SVG (and _some_ Android VectorDrawable (XML)) files on a Flutter Widget.
 
 ## Getting Started
 
