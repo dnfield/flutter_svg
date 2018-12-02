@@ -11,17 +11,20 @@ import '../utilities/xml.dart';
 const String androidNS = 'http://schemas.android.com/apk/res/android';
 
 /// Parses an AVD @android:viewportWidth and @android:viewportHeight attributes to a [Rect].
-Rect parseViewBox(List<XmlAttribute> el) {
+DrawableViewport parseViewBox(List<XmlAttribute> el) {
   final String rawWidth =
       getAttribute(el, 'viewportWidth', def: '', namespace: androidNS);
   final String rawHeight =
       getAttribute(el, 'viewportHeight', def: '', namespace: androidNS);
   if (rawWidth == '' || rawHeight == '') {
-    return Rect.zero;
+    return const DrawableViewport(Size.zero, Size.zero);
   }
   final double width = double.parse(rawWidth);
   final double height = double.parse(rawHeight);
-  return new Rect.fromLTWH(0.0, 0.0, width, height);
+  return DrawableViewport(
+    Size(width, height),
+    Size(width, height),
+  );
 }
 
 Matrix4 parseTransform(List<XmlAttribute> el) {
@@ -40,7 +43,7 @@ Matrix4 parseTransform(List<XmlAttribute> el) {
   final double translateY = double.parse(
       getAttribute(el, 'translateY', def: '0', namespace: androidNS));
 
-  return new Matrix4.identity()
+  return Matrix4.identity()
     ..translate(pivotX, pivotY)
     ..rotateZ(rotation * pi / 180)
     ..scale(scaleX, scaleY)
@@ -53,7 +56,7 @@ DrawablePaint parseStroke(List<XmlAttribute> el, Rect bounds) {
   if (rawStroke == null) {
     return null;
   }
-  return new DrawablePaint(
+  return DrawablePaint(
     PaintingStyle.stroke,
     color: parseColor(rawStroke).withOpacity(double.parse(
         getAttribute(el, 'strokeAlpha', def: '1', namespace: androidNS))),
@@ -106,7 +109,7 @@ DrawablePaint parseFill(List<XmlAttribute> el, Rect bounds) {
   if (rawFill == null) {
     return null;
   }
-  return new DrawablePaint(
+  return DrawablePaint(
     PaintingStyle.fill,
     color: parseColor(rawFill)
         .withOpacity(double.parse(getAttribute(el, 'fillAlpha', def: '1'))),

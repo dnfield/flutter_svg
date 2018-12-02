@@ -10,10 +10,9 @@ import '../vector_drawable.dart';
 import 'colors.dart';
 import 'parsers.dart';
 
-typedef Path SvgPathFactory(XmlElement el);
+typedef SvgPathFactory = Path Function(List<XmlAttribute> attributes);
 
-const Map<String, SvgPathFactory> svgPathParsers =
-    const <String, SvgPathFactory>{
+const Map<String, SvgPathFactory> svgPathParsers = <String, SvgPathFactory>{
   'circle': parsePathFromCircle,
   'path': parsePathFromPath,
   'rect': parsePathFromRect,
@@ -23,51 +22,100 @@ const Map<String, SvgPathFactory> svgPathParsers =
   'line': parsePathFromLine,
 };
 
+double _parseRawWidthHeight(String raw) {
+  if (raw == '100%' || raw == '') {
+    return double.infinity;
+  }
+  assert(() {
+    final RegExp notDigits = RegExp(r'[^\d\.]');
+    if (!raw.endsWith('px') && raw.contains(notDigits)) {
+      print(
+          'Warning: Flutter SVG only supports the following formats for `width` and `height` on the SVG root:\n'
+          '  width="100%"\n'
+          '  width="100px"\n'
+          '  width="100" (where the number will be treated as pixels).\n'
+          'The supplied value ($raw) will be discarded and treated as if it had not been specified.');
+    }
+    return true;
+  }());
+  return double.tryParse(raw.replaceAll('px', '')) ?? double.infinity;
+}
+
 /// Parses an SVG @viewBox attribute (e.g. 0 0 100 100) to a [Rect].
-Rect parseViewBox(List<XmlAttribute> svgAttributes) {
-  //final String viewBox = getAttribute(svg, 'viewBox');
-  final String viewBox = getAttribute(svgAttributes, 'viewBox');
+///
+/// The [nullOk] parameter controls whether this function should throw if there is no
+/// viewBox or width/height parameters.
+///
+/// The [respectWidthHeight] parameter specifies whether `width` and `height` attributes
+/// on the root SVG element should be treated in accordance with the specification.
+DrawableViewport parseViewBox(
+  List<XmlAttribute> svg, {
+  bool nullOk = false,
+}) {
+  final String viewBox = getAttribute(svg, 'viewBox');
+  final String rawWidth = getAttribute(svg, 'width');
+  final String rawHeight = getAttribute(svg, 'height');
+
+  if (viewBox == '' && rawWidth == '' && rawHeight == '') {
+    if (nullOk) {
+      return null;
+    }
+    throw StateError('SVG did not specify dimensions\n\n'
+        'The SVG library looks for a `viewBox` or `width` and `height` attribute '
+        'to determine the viewport boundary of the SVG.  Note that these attributes, '
+        'as with all SVG attributes, are case sensitive.\n'
+        'During processing, the following attributes were found:\n'
+        '  $svg');
+  }
+
+  final double width = _parseRawWidthHeight(rawWidth);
+  final double height = _parseRawWidthHeight(rawHeight);
 
   if (viewBox == '') {
-    final RegExp notDigits = new RegExp(r'[^\d\.]');
-    final String rawWidth =
-        getAttribute(svgAttributes, 'width').replaceAll(notDigits, '');
-    final String rawHeight =
-        getAttribute(svgAttributes, 'height').replaceAll(notDigits, '');
-    if (rawWidth == '' || rawHeight == '') {
-      return Rect.zero;
-    }
-    final double width = double.parse(rawWidth);
-    final double height = double.parse(rawHeight);
-    return new Rect.fromLTWH(0.0, 0.0, width, height);
+    return DrawableViewport(
+      Size(width, height),
+      Size(width, height),
+    );
   }
 
-  final List<String> parts = viewBox.split(new RegExp(r'[ ,]+'));
+  final List<String> parts = viewBox.split(RegExp(r'[ ,]+'));
   if (parts.length < 4) {
-    throw new StateError('viewBox element must be 4 elements long');
+    throw StateError('viewBox element must be 4 elements long');
   }
-  return new Rect.fromLTWH(
-    double.parse(parts[0]),
-    double.parse(parts[1]),
-    double.parse(parts[2]),
-    double.parse(parts[3]),
+
+  return DrawableViewport(
+    Size(width, height),
+    Size(
+      double.parse(parts[2]),
+      double.parse(parts[3]),
+    ),
+    viewBoxOffset: Offset(
+      -double.parse(parts[0]),
+      -double.parse(parts[1]),
+    ),
   );
 }
 
 String buildUrlIri(List<XmlAttribute> attributes) =>
     'url(#${getAttribute(attributes, 'id')})';
 
+const String emptyUrlIri = 'url(#)';
+
 /// Parses a <def> element, extracting <linearGradient> and <radialGradient> elements into the `paintServers` map.
 ///
 /// Returns any elements it was not able to process.
-Iterable<XmlElement> parseDefs(
-    XmlElement el, DrawableDefinitionServer definitions) sync* {
+Iterable<XmlElement> parseDefs(XmlElement el,
+    DrawableDefinitionServer definitions, Rect rootBounds) sync* {
   for (XmlNode def in el.children) {
     if (def is XmlElement) {
       if (def.name.local.endsWith('Gradient')) {
-        definitions.addPaintServer(buildUrlIri(def.attributes), parseGradient(def));
+        definitions.addPaintServer(
+          buildUrlIri(def.attributes),
+          parseGradient(def, rootBounds),
+        );
       } else if (def.name.local == 'clipPath') {
-        definitions.addClipPath(buildUrlIri(def.attributes), parseClipPathDefinition(def));
+        definitions.addClipPath(
+            buildUrlIri(def.attributes), parseClipPathDefinition(def));
       } else {
         yield def;
       }
@@ -76,12 +124,18 @@ Iterable<XmlElement> parseDefs(
 }
 
 double _parseDecimalOrPercentage(String val, {double multiplier = 1.0}) {
-  if (val.endsWith('%')) {
-    return double.parse(val.substring(0, val.length - 1)) / 100 * multiplier;
+  if (_isPercentage(val)) {
+    return _parsePercentage(val, multiplier: multiplier);
   } else {
     return double.parse(val);
   }
 }
+
+double _parsePercentage(String val, {double multiplier = 1.0}) {
+  return double.parse(val.substring(0, val.length - 1)) / 100 * multiplier;
+}
+
+bool _isPercentage(String val) => val.endsWith('%');
 
 TileMode parseTileMode(List<XmlAttribute> attributes) {
   final String spreadMethod =
@@ -106,42 +160,95 @@ void parseStops(
     colors[i] = parseColor(getAttribute(stops[i].attributes, 'stop-color'))
         .withOpacity(double.parse(rawOpacity));
 
-    final String rawOffset = getAttribute(stops[i].attributes, 'offset');
+    final String rawOffset =
+        getAttribute(stops[i].attributes, 'offset', def: '0%');
     offsets[i] = _parseDecimalOrPercentage(rawOffset);
   }
 }
 
 /// Parses an SVG <linearGradient> element into a [Paint].
-PaintServer parseLinearGradient(XmlElement el) {
-  final double x1 =
-      _parseDecimalOrPercentage(getAttribute(el.attributes, 'x1', def: '0%'));
-  final double x2 =
-      _parseDecimalOrPercentage(getAttribute(el.attributes, 'x2', def: '100%'));
-  final double y1 =
-      _parseDecimalOrPercentage(getAttribute(el.attributes, 'y1', def: '0%'));
-  final double y2 =
-      _parseDecimalOrPercentage(getAttribute(el.attributes, 'y2', def: '0%'));
+PaintServer parseLinearGradient(XmlElement el, Rect rootBounds) {
+  final String gradientUnits =
+      getAttribute(el.attributes, 'gradientUnits', def: 'objectBoundingBox');
+  final bool isObjectBoundingBox = gradientUnits == 'objectBoundingBox';
+
+  final String x1 = getAttribute(el.attributes, 'x1', def: '0%');
+  final String x2 = getAttribute(el.attributes, 'x2', def: '100%');
+  final String y1 = getAttribute(el.attributes, 'y1', def: '0%');
+  final String y2 = getAttribute(el.attributes, 'y2', def: '0%');
 
   final TileMode spreadMethod = parseTileMode(el.attributes);
   final List<XmlElement> stops = el.findElements('stop').toList();
-  final List<Color> colors = new List<Color>(stops.length);
-  final List<double> offsets = new List<double>(stops.length);
+  final List<Color> colors = List<Color>(stops.length);
+  final List<double> offsets = List<double>(stops.length);
 
   parseStops(stops, colors, offsets);
 
-  return (Rect bounds) {
-    final Offset from = new Offset(
-      bounds.left + (bounds.width * x1),
-      bounds.left + (bounds.height * y1),
-    );
-    final Offset to = new Offset(
-      bounds.left + (bounds.width * x2),
-      bounds.left + (bounds.height * y2),
-    );
+  final Matrix4 originalTransform = parseTransform(
+    getAttribute(el.attributes, 'gradientTransform', def: null),
+  );
 
-    return new Gradient.linear(
-      from,
-      to,
+  return (Rect bounds) {
+    Vector3 from, to;
+    Matrix4 transform = originalTransform?.clone() ?? Matrix4.identity();
+
+    if (isObjectBoundingBox) {
+      final Matrix4 scale =
+          affineMatrix(bounds.width, 0.0, 0.0, bounds.height, 0.0, 0.0);
+      final Matrix4 translate =
+          affineMatrix(1.0, 0.0, 0.0, 1.0, bounds.left, bounds.top);
+      transform = translate.multiplied(scale)..multiply(transform);
+
+      final Offset fromOffset = Offset(
+        _parseDecimalOrPercentage(x1),
+        _parseDecimalOrPercentage(y1),
+      );
+      final Offset toOffset = Offset(
+        _parseDecimalOrPercentage(x2),
+        _parseDecimalOrPercentage(y2),
+      );
+
+      from = Vector3(
+        fromOffset.dx,
+        fromOffset.dy,
+        0.0,
+      );
+      to = Vector3(
+        toOffset.dx,
+        toOffset.dy,
+        0.0,
+      );
+    } else {
+      final Offset fromOffset = Offset(
+        _isPercentage(x1)
+            ? _parsePercentage(x1) * rootBounds.width + rootBounds.left
+            : double.parse(x1),
+        _isPercentage(y1)
+            ? _parsePercentage(y1) * rootBounds.height + rootBounds.top
+            : double.parse(y1),
+      );
+
+      final Offset toOffset = Offset(
+        _isPercentage(x2)
+            ? _parsePercentage(x2) * rootBounds.width + rootBounds.left
+            : double.parse(x2),
+        _isPercentage(y2)
+            ? _parsePercentage(y2) * rootBounds.height + rootBounds.top
+            : double.parse(y2),
+      );
+
+      from = Vector3(fromOffset.dx, fromOffset.dy, 0.0);
+      to = Vector3(toOffset.dx, toOffset.dy, 0.0);
+    }
+
+    if (transform != null) {
+      from = transform.transform3(from);
+      to = transform.transform3(to);
+    }
+
+    return Gradient.linear(
+      Offset(from.x, from.y),
+      Offset(to.x, to.y),
       colors,
       offsets,
       spreadMethod,
@@ -150,50 +257,76 @@ PaintServer parseLinearGradient(XmlElement el) {
 }
 
 /// Parses a <radialGradient> into a [Paint].
-PaintServer parseRadialGradient(XmlElement el) {
+PaintServer parseRadialGradient(XmlElement el, Rect rootBounds) {
+
+  final String gradientUnits =
+      getAttribute(el.attributes, 'gradientUnits', def: 'objectBoundingBox');
+  final bool isObjectBoundingBox = gradientUnits == 'objectBoundingBox';
+
   final String rawCx = getAttribute(el.attributes, 'cx', def: '50%');
   final String rawCy = getAttribute(el.attributes, 'cy', def: '50%');
+  final String rawR = getAttribute(el.attributes, 'r', def: '50%');
+  final String rawFx = getAttribute(el.attributes, 'fx', def: rawCx);
+  final String rawFy = getAttribute(el.attributes, 'fy', def: rawCy);
   final TileMode spreadMethod = parseTileMode(el.attributes);
 
   final List<XmlElement> stops = el.findElements('stop').toList();
 
-  final List<Color> colors = new List<Color>(stops.length);
-  final List<double> offsets = new List<double>(stops.length);
+  final List<Color> colors = List<Color>(stops.length);
+  final List<double> offsets = List<double>(stops.length);
   parseStops(stops, colors, offsets);
+print(colors);
+print(offsets);
+  final Matrix4 originalTransform = parseTransform(
+    getAttribute(el.attributes, 'gradientTransform', def: null),
+  );
 
   return (Rect bounds) {
-    final double cx = _parseDecimalOrPercentage(
-      rawCx,
-      multiplier: bounds.width + bounds.left + bounds.left,
-    );
-    final double cy = _parseDecimalOrPercentage(
-      rawCy,
-      multiplier: bounds.height + bounds.top + bounds.top,
-    );
-    final double r = _parseDecimalOrPercentage(
-      getAttribute(el.attributes, 'r', def: '50%'),
-      multiplier: (bounds.width + bounds.height) / 2,
-    );
-    final double fx = _parseDecimalOrPercentage(
-      getAttribute(el.attributes, 'fx', def: rawCx),
-      multiplier: bounds.width + (bounds.left * 2),
-    );
-    final double fy = _parseDecimalOrPercentage(
-      getAttribute(el.attributes, 'fy', def: rawCy),
-      multiplier: bounds.height + (bounds.top),
-    );
+    double cx, cy, r, fx, fy;
+    Matrix4 transform = originalTransform?.clone() ?? Matrix4.identity();
 
-    final Offset center = new Offset(cx, cy);
+    if (isObjectBoundingBox) {
+      final Matrix4 scale =
+          affineMatrix(bounds.width, 0.0, 0.0, bounds.height, 0.0, 0.0);
+      final Matrix4 translate =
+          affineMatrix(1.0, 0.0, 0.0, 1.0, bounds.left, bounds.top);
+      transform = translate.multiplied(scale)..multiply(transform);
+
+      cx = _parseDecimalOrPercentage(rawCx);
+      cy = _parseDecimalOrPercentage(rawCy);
+      r = _parseDecimalOrPercentage(rawR);
+      fx = _parseDecimalOrPercentage(rawFx);
+      fy = _parseDecimalOrPercentage(rawFy);
+    } else {
+      cx = _isPercentage(rawCx)
+          ? _parsePercentage(rawCx) * rootBounds.width + rootBounds.left
+          : double.parse(rawCx);
+      cy = _isPercentage(rawCy)
+          ? _parsePercentage(rawCy) * rootBounds.height + rootBounds.top
+          : double.parse(rawCy);
+      r = _isPercentage(rawR)
+          ? _parsePercentage(rawR) *
+              ((rootBounds.height + rootBounds.width) / 2)
+          : double.parse(rawR);
+      fx = _isPercentage(rawFx)
+          ? _parsePercentage(rawFx) * rootBounds.width + rootBounds.left
+          : double.parse(rawFx);
+      fy = _isPercentage(rawFy)
+          ? _parsePercentage(rawFy) * rootBounds.height + rootBounds.top
+          : double.parse(rawFy);
+    }
+
+    final Offset center = Offset(cx, cy);
     final Offset focal =
-        (fx != cx || fy != cy) ? new Offset(fx, fy) : new Offset(cx, cy);
+        (fx != cx || fy != cy) ? Offset(fx, fy) : Offset(cx, cy);
 
-    return new Gradient.radial(
+    return Gradient.radial(
       center,
       r,
       colors,
       offsets,
       spreadMethod,
-      null,
+      transform?.storage,
       focal,
       0.0,
     );
@@ -207,7 +340,8 @@ List<Path> parseClipPathDefinition(XmlElement el) {
     if (child is XmlElement) {
       final SvgPathFactory pathFn = svgPathParsers[child.name.local];
       if (pathFn != null) {
-        final Path nextPath = applyTransformIfNeeded(pathFn(child), child.attributes);
+        final Path nextPath =
+            applyTransformIfNeeded(pathFn(child.attributes), child.attributes);
         nextPath.fillType = parseFillRule(child.attributes, 'clip-rule');
         if (currentPath != null && nextPath.fillType != currentPath.fillType) {
           currentPath = nextPath;
@@ -238,13 +372,13 @@ List<Path> parseClipPath(
 }
 
 /// Parses a <linearGradient> or <radialGradient> into a [Paint].
-PaintServer parseGradient(XmlElement el) {
+PaintServer parseGradient(XmlElement el, Rect rootBounds) {
   if (el.name.local == 'linearGradient') {
-    return parseLinearGradient(el);
+    return parseLinearGradient(el, rootBounds);
   } else if (el.name.local == 'radialGradient') {
-    return parseRadialGradient(el);
+    return parseRadialGradient(el, rootBounds);
   }
-  throw new StateError('Unknown gradient type ${el.name.local}');
+  throw StateError('Unknown gradient type ${el.name.local}');
 }
 
 /// Parses an @stroke-dasharray attribute into a [CircularIntervalList]
@@ -258,8 +392,8 @@ CircularIntervalList<double> parseDashArray(List<XmlAttribute> attributes) {
     return DrawableStyle.emptyDashArray;
   }
 
-  final List<String> parts = rawDashArray.split(new RegExp(r'[ ,]+'));
-  return new CircularIntervalList<double>(
+  final List<String> parts = rawDashArray.split(RegExp(r'[ ,]+'));
+  return CircularIntervalList<double>(
       parts.map((String part) => double.parse(part)).toList());
 }
 
@@ -274,9 +408,9 @@ DashOffset parseDashOffset(List<XmlAttribute> attributes) {
     final double percentage =
         double.parse(rawDashOffset.substring(0, rawDashOffset.length - 1)) /
             100;
-    return new DashOffset.percentage(percentage);
+    return DashOffset.percentage(percentage);
   } else {
-    return new DashOffset.absolute(double.parse(rawDashOffset));
+    return DashOffset.absolute(double.parse(rawDashOffset));
   }
 }
 
@@ -295,8 +429,8 @@ DrawablePaint _getDefinitionPaint(PaintingStyle paintingStyle, String iri,
   final Shader shader = definitions.getPaint(iri, bounds);
   if (shader == null) {
     FlutterError.onError(
-      new FlutterErrorDetails(
-        exception: new StateError('Failed to find definition for $iri'),
+      FlutterErrorDetails(
+        exception: StateError('Failed to find definition for $iri'),
         context: 'in _getDefinitionPaint',
         library: 'SVG',
         informationCollector: (StringBuffer buff) {
@@ -310,36 +444,42 @@ DrawablePaint _getDefinitionPaint(PaintingStyle paintingStyle, String iri,
       ),
     );
   }
-  return new DrawablePaint(
+
+  return DrawablePaint(
     paintingStyle,
     shader: shader,
-    color: opacity != null ? new Color.fromRGBO(255, 255, 255, opacity) : null,
+    color: opacity != null ? Color.fromRGBO(255, 255, 255, opacity) : null,
   );
 }
 
 /// Parses a @stroke attribute into a [Paint].
-DrawablePaint parseStroke(List<XmlAttribute> attributes, Rect bounds,
-    DrawableDefinitionServer definitions, Color defaultStrokeIfNotSpecified) {
+DrawablePaint parseStroke(
+  List<XmlAttribute> attributes,
+  Rect bounds,
+  DrawableDefinitionServer definitions,
+  DrawablePaint parentStroke,
+) {
   final String rawStroke = getAttribute(attributes, 'stroke');
   final String rawOpacity = getAttribute(attributes, 'stroke-opacity');
 
-  final double opacity =
-      rawOpacity == '' ? 1.0 : double.parse(rawOpacity).clamp(0.0, 1.0);
-
-  if (rawStroke == '') {
-    if (defaultStrokeIfNotSpecified == null) {
-      return null;
-    }
-    return new DrawablePaint(PaintingStyle.stroke,
-        color: defaultStrokeIfNotSpecified.withOpacity(opacity));
-  } else if (rawStroke == 'none') {
-    return DrawablePaint.empty;
-  }
+  final double opacity = rawOpacity == ''
+      ? parentStroke?.color?.opacity ?? 1.0
+      : double.parse(rawOpacity).clamp(0.0, 1.0);
 
   if (rawStroke.startsWith('url')) {
     return _getDefinitionPaint(
-        PaintingStyle.stroke, rawStroke, definitions, bounds,
-        opacity: opacity);
+      PaintingStyle.stroke,
+      rawStroke,
+      definitions,
+      bounds,
+      opacity: opacity,
+    );
+  }
+  if (rawStroke == '' && DrawablePaint.isEmpty(parentStroke)) {
+    return null;
+  }
+  if (rawStroke == 'none') {
+    return DrawablePaint.empty;
   }
 
   final String rawStrokeCap = getAttribute(attributes, 'stroke-linecap');
@@ -347,51 +487,68 @@ DrawablePaint parseStroke(List<XmlAttribute> attributes, Rect bounds,
   final String rawMiterLimit = getAttribute(attributes, 'stroke-miterlimit');
   final String rawStrokeWidth = getAttribute(attributes, 'stroke-width');
 
-  final DrawablePaint paint = new DrawablePaint(
+  final DrawablePaint paint = DrawablePaint(
     PaintingStyle.stroke,
-    color: parseColor(rawStroke).withOpacity(opacity),
+    color: rawStroke == ''
+        ? (parentStroke?.color ?? colorBlack).withOpacity(opacity)
+        : parseColor(rawStroke).withOpacity(opacity),
     strokeCap: rawStrokeCap == 'null'
-        ? StrokeCap.butt
+        ? parentStroke?.strokeCap ?? StrokeCap.butt
         : StrokeCap.values.firstWhere(
             (StrokeCap sc) => sc.toString() == 'StrokeCap.$rawStrokeCap',
-            orElse: () => StrokeCap.butt),
+            orElse: () => StrokeCap.butt,
+          ),
     strokeJoin: rawLineJoin == ''
-        ? StrokeJoin.miter
+        ? parentStroke?.strokeJoin ?? StrokeJoin.miter
         : StrokeJoin.values.firstWhere(
             (StrokeJoin sj) => sj.toString() == 'StrokeJoin.$rawLineJoin',
-            orElse: () => StrokeJoin.miter),
-    strokeMiterLimit: rawMiterLimit == '' ? 4.0 : double.parse(rawMiterLimit),
-    strokeWidth: rawStrokeWidth == '' ? 1.0 : double.parse(rawStrokeWidth),
+            orElse: () => StrokeJoin.miter,
+          ),
+    strokeMiterLimit: rawMiterLimit == ''
+        ? parentStroke?.strokeMiterLimit ?? 4.0
+        : double.parse(rawMiterLimit),
+    strokeWidth: rawStrokeWidth == ''
+        ? parentStroke?.strokeWidth ?? 1.0
+        : double.parse(rawStrokeWidth),
   );
   return paint;
 }
 
-DrawablePaint parseFill(List<XmlAttribute> attributes, Rect bounds,
-    DrawableDefinitionServer definitions, Color defaultFillIfNotSpecified) {
-  final String rawFill = getAttribute(attributes, 'fill');
-  final String rawOpacity = getAttribute(attributes, 'fill-opacity');
+DrawablePaint parseFill(
+  List<XmlAttribute> el,
+  Rect bounds,
+  DrawableDefinitionServer definitions,
+  DrawablePaint parentFill,
+) {
+  final String rawFill = getAttribute(el, 'fill');
+  final String rawOpacity = getAttribute(el, 'fill-opacity');
 
-  final double opacity =
-      rawOpacity == '' ? 1.0 : double.parse(rawOpacity).clamp(0.0, 1.0);
+  final double opacity = rawOpacity == ''
+      ? parentFill?.color?.opacity ?? 1.0
+      : double.parse(rawOpacity).clamp(0.0, 1.0);
 
-  if (rawFill == '') {
-    if (defaultFillIfNotSpecified == null) {
-      return null;
-    }
-    return new DrawablePaint(PaintingStyle.fill,
-        color: defaultFillIfNotSpecified.withOpacity(opacity));
-  } else if (rawFill == 'none') {
+  if (rawFill.startsWith('url')) {
+    return _getDefinitionPaint(
+      PaintingStyle.fill,
+      rawFill,
+      definitions,
+      bounds,
+      opacity: opacity,
+    );
+  }
+  if (rawFill == '' && parentFill == DrawablePaint.empty) {
+    return null;
+  }
+  if (rawFill == 'none') {
     return DrawablePaint.empty;
   }
 
-  if (rawFill.startsWith('url')) {
-    return _getDefinitionPaint(PaintingStyle.fill, rawFill, definitions, bounds,
-        opacity: opacity);
-  }
-
-  final Color fill = parseColor(rawFill).withOpacity(opacity);
-
-  return new DrawablePaint(PaintingStyle.fill, color: fill);
+  return DrawablePaint(
+    PaintingStyle.fill,
+    color: rawFill == ''
+        ? (parentFill?.color ?? colorBlack).withOpacity(opacity)
+        : parseColor(rawFill).withOpacity(opacity),
+  );
 }
 
 PathFillType parseFillRule(List<XmlAttribute> attributes,
@@ -400,15 +557,15 @@ PathFillType parseFillRule(List<XmlAttribute> attributes,
   return parseRawFillRule(rawFillRule);
 }
 
-Path parsePathFromRect(XmlElement el) {
-  final double x = double.parse(getAttribute(el.attributes, 'x', def: '0'));
-  final double y = double.parse(getAttribute(el.attributes, 'y', def: '0'));
-  final double w = double.parse(getAttribute(el.attributes, 'width', def: '0'));
+Path parsePathFromRect(List<XmlAttribute> attributes) {
+  final double x = double.parse(getAttribute(attributes, 'x', def: '0'));
+  final double y = double.parse(getAttribute(attributes, 'y', def: '0'));
+  final double w = double.parse(getAttribute(attributes, 'width', def: '0'));
   final double h =
-      double.parse(getAttribute(el.attributes, 'height', def: '0'));
-  final Rect rect = new Rect.fromLTWH(x, y, w, h);
-  String rxRaw = getAttribute(el.attributes, 'rx', def: null);
-  String ryRaw = getAttribute(el.attributes, 'ry', def: null);
+      double.parse(getAttribute(attributes, 'height', def: '0'));
+  final Rect rect = Rect.fromLTWH(x, y, w, h);
+  String rxRaw = getAttribute(attributes, 'rx', def: null);
+  String ryRaw = getAttribute(attributes, 'ry', def: null);
   rxRaw ??= ryRaw;
   ryRaw ??= rxRaw;
 
@@ -416,33 +573,33 @@ Path parsePathFromRect(XmlElement el) {
     final double rx = double.parse(rxRaw);
     final double ry = double.parse(ryRaw);
 
-    return new Path()..addRRect(new RRect.fromRectXY(rect, rx, ry));
+    return Path()..addRRect(RRect.fromRectXY(rect, rx, ry));
   }
 
-  return new Path()..addRect(rect);
+  return Path()..addRect(rect);
 }
 
-Path parsePathFromLine(XmlElement el) {
-  final double x1 = double.parse(getAttribute(el.attributes, 'x1', def: '0'));
-  final double x2 = double.parse(getAttribute(el.attributes, 'x2', def: '0'));
-  final double y1 = double.parse(getAttribute(el.attributes, 'y1', def: '0'));
-  final double y2 = double.parse(getAttribute(el.attributes, 'y2', def: '0'));
+Path parsePathFromLine(List<XmlAttribute> attributes) {
+  final double x1 = double.parse(getAttribute(attributes, 'x1', def: '0'));
+  final double x2 = double.parse(getAttribute(attributes, 'x2', def: '0'));
+  final double y1 = double.parse(getAttribute(attributes, 'y1', def: '0'));
+  final double y2 = double.parse(getAttribute(attributes, 'y2', def: '0'));
 
-  return new Path()
+  return Path()
     ..moveTo(x1, y1)
     ..lineTo(x2, y2);
 }
 
-Path parsePathFromPolygon(XmlElement el) {
-  return parsePathFromPoints(el, true);
+Path parsePathFromPolygon(List<XmlAttribute> attributes) {
+  return parsePathFromPoints(attributes, true);
 }
 
-Path parsePathFromPolyline(XmlElement el) {
-  return parsePathFromPoints(el, false);
+Path parsePathFromPolyline(List<XmlAttribute> attributes) {
+  return parsePathFromPoints(attributes, false);
 }
 
-Path parsePathFromPoints(XmlElement el, bool close) {
-  final String points = getAttribute(el.attributes, 'points');
+Path parsePathFromPoints(List<XmlAttribute> attributes, bool close) {
+  final String points = getAttribute(attributes, 'points');
   if (points == '') {
     return null;
   }
@@ -451,27 +608,27 @@ Path parsePathFromPoints(XmlElement el, bool close) {
   return parseSvgPathData(path);
 }
 
-Path parsePathFromPath(XmlElement el) {
-  final String d = getAttribute(el.attributes, 'd');
+Path parsePathFromPath(List<XmlAttribute> attributes) {
+  final String d = getAttribute(attributes, 'd');
   return parseSvgPathData(d);
 }
 
-Path parsePathFromCircle(XmlElement el) {
-  final double cx = double.parse(getAttribute(el.attributes, 'cx', def: '0'));
-  final double cy = double.parse(getAttribute(el.attributes, 'cy', def: '0'));
-  final double r = double.parse(getAttribute(el.attributes, 'r', def: '0'));
-  final Rect oval = new Rect.fromCircle(center: new Offset(cx, cy), radius: r);
-  return new Path()..addOval(oval);
+Path parsePathFromCircle(List<XmlAttribute> attributes) {
+  final double cx = double.parse(getAttribute(attributes, 'cx', def: '0'));
+  final double cy = double.parse(getAttribute(attributes, 'cy', def: '0'));
+  final double r = double.parse(getAttribute(attributes, 'r', def: '0'));
+  final Rect oval = Rect.fromCircle(center: Offset(cx, cy), radius: r);
+  return Path()..addOval(oval);
 }
 
-Path parsePathFromEllipse(XmlElement el) {
-  final double cx = double.parse(getAttribute(el.attributes, 'cx', def: '0'));
-  final double cy = double.parse(getAttribute(el.attributes, 'cy', def: '0'));
-  final double rx = double.parse(getAttribute(el.attributes, 'rx', def: '0'));
-  final double ry = double.parse(getAttribute(el.attributes, 'ry', def: '0'));
+Path parsePathFromEllipse(List<XmlAttribute> attributes) {
+  final double cx = double.parse(getAttribute(attributes, 'cx', def: '0'));
+  final double cy = double.parse(getAttribute(attributes, 'cy', def: '0'));
+  final double rx = double.parse(getAttribute(attributes, 'rx', def: '0'));
+  final double ry = double.parse(getAttribute(attributes, 'ry', def: '0'));
 
-  final Rect r = new Rect.fromLTWH(cx - rx, cy - ry, rx * 2, ry * 2);
-  return new Path()..addOval(r);
+  final Rect r = Rect.fromLTWH(cx - rx, cy - ry, rx * 2, ry * 2);
+  return Path()..addOval(r);
 }
 
 Path applyTransformIfNeeded(Path path, List<XmlAttribute> attributes) {

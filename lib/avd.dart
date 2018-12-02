@@ -15,7 +15,7 @@ import 'src/picture_provider.dart';
 import 'src/picture_stream.dart';
 import 'src/vector_drawable.dart';
 
-final Avd avd = new Avd._();
+final Avd avd = Avd._();
 
 class Avd {
   Avd._();
@@ -29,21 +29,23 @@ class Avd {
     final Picture pic = avdRoot.toPicture(
         clipToViewBox: allowDrawingOutsideOfViewBox == true ? false : true,
         colorFilter: colorFilter);
-    return new PictureInfo(picture: pic, viewBox: avdRoot.viewBox);
+    return PictureInfo(picture: pic, viewport: avdRoot.viewport.viewBoxRect);
   }
 
   FutureOr<PictureInfo> avdPictureStringDecoder(String raw,
       bool allowDrawingOutsideOfViewBox, ColorFilter colorFilter, String key) {
-    final DrawableRoot svg = fromAvdString(raw, key);
-    return new PictureInfo(
-        picture: svg.toPicture(
-            clipToViewBox: allowDrawingOutsideOfViewBox == true ? false : true,
-            colorFilter: colorFilter),
-        viewBox: svg.viewBox);
+    final DrawableRoot avd = fromAvdString(raw, key);
+    return PictureInfo(
+      picture: avd.toPicture(
+          clipToViewBox: allowDrawingOutsideOfViewBox == true ? false : true,
+          colorFilter: colorFilter),
+      viewport: avd.viewport.viewBoxRect,
+      size: avd.viewport.size,
+    );
   }
 
   FutureOr<DrawableRoot> fromAvdBytes(Uint8List raw, String key) async {
-    // TODO - do utf decoding in another thread?
+    // TODO(dnfield): do utf decoding in another thread?
     // Might just have to live with potentially slow(ish) decoding, this is causing errors.
     // See: https://github.com/dart-lang/sdk/issues/31954
     // See: https://github.com/flutter/flutter/blob/bf3bd7667f07709d0b817ebfcb6972782cfef637/packages/flutter/lib/src/services/asset_bundle.dart#L66
@@ -63,17 +65,13 @@ class Avd {
   /// Creates a [DrawableRoot] from a string of Android Vector Drawable data.
   DrawableRoot fromAvdString(String rawSvg, String key) {
     final XmlElement svg = xml.parse(rawSvg).rootElement;
-    final Rect viewBox = parseViewBox(svg.attributes);
+    final DrawableViewport viewBox = parseViewBox(svg.attributes);
     final List<Drawable> children = svg.children
-        .where((XmlNode child) => child is XmlElement)
-        .map((XmlNode child) => parseAvdElement(
-            child,
-            new Rect.fromPoints(
-                Offset.zero, new Offset(viewBox.width, viewBox.height))))
+        .whereType<XmlElement>()
+        .map((XmlElement child) => parseAvdElement(child, viewBox.viewBoxRect))
         .toList();
     // todo : style on root
-    return new DrawableRoot(
-        viewBox, children, new DrawableDefinitionServer(), null);
+    return DrawableRoot(viewBox, children, DrawableDefinitionServer(), null);
   }
 }
 
@@ -98,7 +96,7 @@ class AvdPicture extends SvgPicture {
       BlendMode colorBlendMode = BlendMode.srcIn,
       Key key})
       : this(
-            new StringPicture(
+            StringPicture(
                 allowDrawingOutsideViewBox == true
                     ? avdStringDecoderOutsideViewBox
                     : avdStringDecoder,
@@ -119,10 +117,10 @@ class AvdPicture extends SvgPicture {
       Color color,
       BlendMode colorBlendMode = BlendMode.srcIn})
       : this(
-            new ExactAssetPicture(
+            ExactAssetPicture(
                 allowDrawingOutsideViewBox == true
-                    ? avdByteDecoderOutsideViewBox
-                    : avdByteDecoder,
+                    ? avdStringDecoderOutsideViewBox
+                    : avdStringDecoder,
                 assetName,
                 bundle: bundle,
                 package: package,
@@ -135,7 +133,7 @@ class AvdPicture extends SvgPicture {
   static ColorFilter _getColorFilter(Color color, BlendMode colorBlendMode) =>
       color == null
           ? null
-          : new ColorFilter.mode(color, colorBlendMode ?? BlendMode.srcIn);
+          : ColorFilter.mode(color, colorBlendMode ?? BlendMode.srcIn);
 
   static final PictureInfoDecoder<Uint8List> avdByteDecoder =
       (Uint8List bytes, ColorFilter colorFilter, String key) =>
@@ -152,17 +150,13 @@ class AvdPicture extends SvgPicture {
 }
 
 /// Creates a [DrawableRoot] from a string of SVG data.
-DrawableRoot fromAvdString(String rawSvg, Size size) {
+DrawableRoot fromAvdString(String rawSvg, Rect size) {
   final XmlElement svg = xml.parse(rawSvg).rootElement;
-  final Rect viewBox = parseViewBox(svg.attributes);
+  final DrawableViewport viewBox = parseViewBox(svg.attributes);
   final List<Drawable> children = svg.children
-      .where((XmlNode child) => child is XmlElement)
-      .map((XmlNode child) => parseAvdElement(
-          child,
-          new Rect.fromPoints(
-              Offset.zero, new Offset(size.width, size.height))))
+      .whereType<XmlElement>()
+      .map((XmlElement child) => parseAvdElement(child, size))
       .toList();
   // todo : style on root
-  return new DrawableRoot(
-      viewBox, children, new DrawableDefinitionServer(), null);
+  return DrawableRoot(viewBox, children, DrawableDefinitionServer(), null);
 }

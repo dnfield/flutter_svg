@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:ui' show window;
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
@@ -9,7 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:mockito/mockito.dart';
 
-Future<Null> _checkWidgetAndGolden(Key key, String filename) async {
+Future<void> _checkWidgetAndGolden(Key key, String filename) async {
   final Finder widgetFinder = find.byKey(key);
   expect(widgetFinder, findsOneWidget);
 
@@ -42,23 +43,26 @@ void main() {
 
   testWidgets('SvgPicture can work with a FittedBox',
       (WidgetTester tester) async {
-    final GlobalKey key = new GlobalKey();
+    final GlobalKey key = GlobalKey();
     await tester.pumpWidget(
-      new Row(
-        key: key,
-        textDirection: TextDirection.ltr,
-        children: <Widget>[
-          new Flexible(
-            child: new FittedBox(
-              fit: BoxFit.fitWidth,
-              child: new SvgPicture.string(
-                svgStr,
-                width: 20.0,
-                height: 14.0,
+      MediaQuery(
+        data: MediaQueryData.fromWindow(window),
+        child: Row(
+          key: key,
+          textDirection: TextDirection.ltr,
+          children: <Widget>[
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.fitWidth,
+                child: SvgPicture.string(
+                  svgStr,
+                  width: 20.0,
+                  height: 14.0,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -67,32 +71,40 @@ void main() {
   });
 
   testWidgets('SvgPicture.string', (WidgetTester tester) async {
-    final GlobalKey key = new GlobalKey();
-    await tester.pumpWidget(new RepaintBoundary(
-        key: key,
-        child: new SvgPicture.string(
-          svgStr,
-          // key: key,
-          width: 100.0,
-          height: 100.0,
-        )));
+    final GlobalKey key = GlobalKey();
+    await tester.pumpWidget(
+      MediaQuery(
+        data: MediaQueryData.fromWindow(window),
+        child: RepaintBoundary(
+          key: key,
+          child: SvgPicture.string(
+            svgStr,
+            width: 100.0,
+            height: 100.0,
+          ),
+        ),
+      ),
+    );
 
     await tester.pumpAndSettle();
     await _checkWidgetAndGolden(key, 'flutter_logo.string.png');
   });
 
   testWidgets('SvgPicture.string rtl', (WidgetTester tester) async {
-    final GlobalKey key = new GlobalKey();
+    final GlobalKey key = GlobalKey();
     await tester.pumpWidget(
-      new RepaintBoundary(
-        key: key,
-        child: new Directionality(
-          textDirection: TextDirection.rtl,
-          child: new SvgPicture.string(
-            svgStr,
-            matchTextDirection: true,
-            width: 100.0,
-            height: 100.0,
+      MediaQuery(
+        data: MediaQueryData.fromWindow(window),
+        child: RepaintBoundary(
+          key: key,
+          child: Directionality(
+            textDirection: TextDirection.rtl,
+            child: SvgPicture.string(
+              svgStr,
+              matchTextDirection: true,
+              width: 100.0,
+              height: 100.0,
+            ),
           ),
         ),
       ),
@@ -103,12 +115,15 @@ void main() {
   });
 
   testWidgets('SvgPicture.memory', (WidgetTester tester) async {
-    final GlobalKey key = new GlobalKey();
+    final GlobalKey key = GlobalKey();
     await tester.pumpWidget(
-      new RepaintBoundary(
-        key: key,
-        child: new SvgPicture.memory(
-          svg,
+      MediaQuery(
+        data: MediaQueryData.fromWindow(window),
+        child: RepaintBoundary(
+          key: key,
+          child: SvgPicture.memory(
+            svg,
+          ),
         ),
       ),
     );
@@ -118,17 +133,20 @@ void main() {
   });
 
   testWidgets('SvgPicture.asset', (WidgetTester tester) async {
-    final MockAssetBundle mockAsset = new MockAssetBundle();
-    when(mockAsset.load('test.svg')).thenAnswer(
-        (_) => new Future<ByteData>.value(new ByteData.view(svg.buffer)));
+    final MockAssetBundle mockAsset = MockAssetBundle();
+    when(mockAsset.loadString('test.svg'))
+        .thenAnswer((_) => Future<String>.value(svgStr));
 
-    final GlobalKey key = new GlobalKey();
+    final GlobalKey key = GlobalKey();
     await tester.pumpWidget(
-      new RepaintBoundary(
-        key: key,
-        child: new SvgPicture.asset(
-          'test.svg',
-          bundle: mockAsset,
+      MediaQuery(
+        data: MediaQueryData.fromWindow(window),
+        child: RepaintBoundary(
+          key: key,
+          child: SvgPicture.asset(
+            'test.svg',
+            bundle: mockAsset,
+          ),
         ),
       ),
     );
@@ -136,29 +154,29 @@ void main() {
     await _checkWidgetAndGolden(key, 'flutter_logo.asset.png');
   });
 
-  final MockHttpClient mockHttpClient = new MockHttpClient();
-  final MockHttpClientRequest mockRequest = new MockHttpClientRequest();
-  final MockHttpClientResponse mockResponse = new MockHttpClientResponse();
+  final MockHttpClient mockHttpClient = MockHttpClient();
+  final MockHttpClientRequest mockRequest = MockHttpClientRequest();
+  final MockHttpClientResponse mockResponse = MockHttpClientResponse();
 
-  when(mockHttpClient.getUrl(typed(any)))
-      .thenAnswer((_) => new Future<MockHttpClientRequest>.value(mockRequest));
+  when(mockHttpClient.getUrl(any))
+      .thenAnswer((_) => Future<MockHttpClientRequest>.value(mockRequest));
 
-  when(mockRequest.close()).thenAnswer(
-      (_) => new Future<MockHttpClientResponse>.value(mockResponse));
+  when(mockRequest.close())
+      .thenAnswer((_) => Future<MockHttpClientResponse>.value(mockResponse));
 
-  when(mockResponse.transform<Uint8List>(typed(any)))
-      .thenAnswer((_) => new Stream<Uint8List>.fromIterable(<Uint8List>[svg]));
-  when(mockResponse.listen(typed(any),
-          onDone: typed(any, named: 'onDone'),
-          onError: typed(any, named: 'onError'),
-          cancelOnError: typed(any, named: 'cancelOnError')))
+  when(mockResponse.transform<Uint8List>(any))
+      .thenAnswer((_) => Stream<Uint8List>.fromIterable(<Uint8List>[svg]));
+  when(mockResponse.listen(any,
+          onDone: anyNamed('onDone'),
+          onError: anyNamed('onError'),
+          cancelOnError: anyNamed('cancelOnError')))
       .thenAnswer((Invocation invocation) {
     final void Function(Uint8List) onData = invocation.positionalArguments[0];
     final void Function(Object) onError = invocation.namedArguments[#onError];
     final void Function() onDone = invocation.namedArguments[#onDone];
     final bool cancelOnError = invocation.namedArguments[#cancelOnError];
 
-    return new Stream<Uint8List>.fromIterable(<Uint8List>[svg]).listen(
+    return Stream<Uint8List>.fromIterable(<Uint8List>[svg]).listen(
       onData,
       onDone: onDone,
       onError: onError,
@@ -169,12 +187,15 @@ void main() {
   testWidgets('SvgPicture.network', (WidgetTester tester) async {
     HttpOverrides.runZoned(() async {
       when(mockResponse.statusCode).thenReturn(200);
-      final GlobalKey key = new GlobalKey();
+      final GlobalKey key = GlobalKey();
       await tester.pumpWidget(
-        new RepaintBoundary(
-          key: key,
-          child: new SvgPicture.network(
-            'test.svg',
+        MediaQuery(
+          data: MediaQueryData.fromWindow(window),
+          child: RepaintBoundary(
+            key: key,
+            child: SvgPicture.network(
+              'test.svg',
+            ),
           ),
         ),
       );
@@ -183,16 +204,39 @@ void main() {
     }, createHttpClient: (SecurityContext c) => mockHttpClient);
   });
 
-  // // TODO: Why isn't this working when I just use SvgPicture.network?
-  // testWidgets('SvgPicture.network HTTP exception', (WidgetTester tester) async {
-  //   HttpOverrides.runZoned(() async {
-  //     when(mockResponse.statusCode).thenReturn(400);
-  //     expect(() async {
-  //       Future<Null> t = await tester
-  //           .pumpWidget(new SvgPicture.network('test.svg', 100.0, 100.0));
-  //     }, throwsA(const isInstanceOf<HttpException>()));
-  //   }, createHttpClient: (SecurityContext c) => mockHttpClient);
-  // });
+  testWidgets('SvgPicture can be created without a MediaQuery',
+      (WidgetTester tester) async {
+    final GlobalKey key = GlobalKey();
+    await tester.pumpWidget(
+      RepaintBoundary(
+        key: key,
+        child: SvgPicture.string(
+          svgStr,
+          width: 100.0,
+          height: 100.0,
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    await _checkWidgetAndGolden(key, 'flutter_logo.string.png');
+  });
+
+  testWidgets('SvgPicture.network HTTP exception', (WidgetTester tester) async {
+    HttpOverrides.runZoned(() async {
+      expect(() async {
+        when(mockResponse.statusCode).thenReturn(400);
+        await tester.pumpWidget(
+          MediaQuery(
+            data: MediaQueryData.fromWindow(window),
+            child: SvgPicture.network(
+              'notFound.svg',
+            ),
+          ),
+        );
+      }, isNotNull);
+    }, createHttpClient: (SecurityContext c) => mockHttpClient);
+  });
 }
 
 class MockAssetBundle extends Mock implements AssetBundle {}

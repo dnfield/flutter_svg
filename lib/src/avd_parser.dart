@@ -9,7 +9,7 @@ import 'utilities/xml.dart';
 import 'vector_drawable.dart';
 
 class DrawableAvdRoot extends DrawableRoot {
-  const DrawableAvdRoot(Rect viewBox, List<Drawable> children,
+  const DrawableAvdRoot(DrawableViewport viewBox, List<Drawable> children,
       DrawableDefinitionServer definitions, DrawableStyle style)
       : super(viewBox, children, definitions, style);
 }
@@ -29,9 +29,9 @@ class DrawableAvdPath extends DrawableShape {
     final DrawablePaint stroke = parseStroke(el.attributes, path.getBounds());
     final DrawablePaint fill = parseFill(el.attributes, path.getBounds());
 
-    return new DrawableAvdPath(
+    return DrawableAvdPath(
       path,
-      new DrawableStyle(stroke: stroke, fill: fill),
+      DrawableStyle(stroke: stroke, fill: fill),
     );
   }
 }
@@ -41,13 +41,13 @@ class DrawableAvdPath extends DrawableShape {
 /// If an unsupported element is encountered, it will be created as a [DrawableNoop].
 Drawable parseAvdElement(XmlElement el, Rect bounds) {
   if (el.name.local == 'path') {
-    return new DrawableAvdPath.fromXml(el);
+    return DrawableAvdPath.fromXml(el);
   } else if (el.name.local == 'group') {
     return parseAvdGroup(el, bounds);
   }
-  // TODO: clipPath
+  // TODO(dnfield): clipPath
   print('Unhandled element ${el.name.local}');
-  return new DrawableNoop(el.name.local);
+  return DrawableNoop(el.name.local);
 }
 
 /// Parses an AVD <group> element.
@@ -67,9 +67,9 @@ Drawable parseAvdGroup(XmlElement el, Rect bounds) {
   final DrawablePaint fill = parseFill(el.attributes, bounds);
   final DrawablePaint stroke = parseStroke(el.attributes, bounds);
 
-  return new DrawableGroup(
+  return DrawableGroup(
     children,
-    new DrawableStyle(
+    DrawableStyle(
       transform: transform?.storage,
       stroke: stroke,
       fill: fill,

@@ -2,14 +2,16 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-import 'dart:ui' show Picture;
+import 'dart:ui' show Picture, window;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show AssetBundle;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/parser.dart';
-// import 'package:xml/xml.dart' hide parse;
-// import 'package:xml/xml.dart' as xml show parse;
+import 'package:flutter_svg/src/svg/xml_parsers.dart';
+import 'package:flutter_svg/src/svg_parser.dart';
+import 'package:xml/xml.dart' hide parse;
+import 'package:xml/xml.dart' as xml show parse;
 
 import 'src/picture_provider.dart';
 import 'src/picture_stream.dart';
@@ -20,7 +22,7 @@ import 'src/vector_drawable.dart';
 
 /// Instance for [Svg]'s utility methods, which can produce a [DrawableRoot]
 /// or [PictureInfo] from [String] or [Uint8List].
-final Svg svg = new Svg._();
+final Svg svg = Svg._();
 
 /// A utility class for decoding SVG data to a [DrawableRoot] or a [PictureInfo].
 ///
@@ -49,7 +51,11 @@ class Svg {
     final Picture pic = svgRoot.toPicture(
         clipToViewBox: allowDrawingOutsideOfViewBox == true ? false : true,
         colorFilter: colorFilter);
-    return new PictureInfo(picture: pic, viewBox: svgRoot.viewBox);
+    return PictureInfo(
+      picture: pic,
+      viewport: svgRoot.viewport.viewBoxRect,
+      size: svgRoot.viewport.size,
+    );
   }
 
   /// Produces a [PictureInfo] from a [String] of SVG data.
@@ -62,21 +68,27 @@ class Svg {
   /// The `colorFilter` property will be applied to any [Paint] objects used during drawing.
   ///
   /// The [key] will be used for debugging purposes.
-  FutureOr<PictureInfo> svgPictureStringDecoder(String raw,
-      bool allowDrawingOutsideOfViewBox, ColorFilter colorFilter, String key) {
-    final DrawableRoot svg = fromSvgString(raw, key);
-    return new PictureInfo(
-        picture: svg.toPicture(
-            clipToViewBox: allowDrawingOutsideOfViewBox == true ? false : true,
-            colorFilter: colorFilter),
-        viewBox: svg.viewBox);
+  FutureOr<PictureInfo> svgPictureStringDecoder(
+      String raw,
+      bool allowDrawingOutsideOfViewBox,
+      ColorFilter colorFilter,
+      String key) async {
+    final DrawableRoot svg = await fromSvgString(raw, key);
+    return PictureInfo(
+      picture: svg.toPicture(
+        clipToViewBox: allowDrawingOutsideOfViewBox == true ? false : true,
+        colorFilter: colorFilter,
+      ),
+      viewport: svg.viewport.viewBoxRect,
+      size: svg.viewport.size,
+    );
   }
 
   /// Produces a [Drawableroot] from a [Uint8List] of SVG byte data (assumes UTF8 encoding).
   ///
   /// The [key] will be used for debugging purposes.
   FutureOr<DrawableRoot> fromSvgBytes(Uint8List raw, String key) async {
-    // TODO - do utf decoding in another thread?
+    // TODO(dnfield): do utf decoding in another thread?
     // Might just have to live with potentially slow(ish) decoding, this is causing errors.
     // See: https://github.com/dart-lang/sdk/issues/31954
     // See: https://github.com/flutter/flutter/blob/bf3bd7667f07709d0b817ebfcb6972782cfef637/packages/flutter/lib/src/services/asset_bundle.dart#L66
@@ -96,33 +108,31 @@ class Svg {
   /// Creates a [DrawableRoot] from a string of SVG data.
   ///
   /// The `key` is used for debugging purposes.
-  DrawableRoot fromSvgString(String rawSvg, String key) {
-    final SvgParser parser = new SvgParser();
-    return parser.parse(rawSvg);
+  Future<DrawableRoot> fromSvgString(String rawSvg, String key) async {
+    final SvgParser parser = SvgParser();
+    return await parser.parse(rawSvg);
     // final XmlElement svg = xml.parse(rawSvg).rootElement;
-    // final Rect viewBox = parseViewBox(svg.attributes);
-    // //final Map<String, PaintServer> paintServers = <String, PaintServer>{};
-    // final DrawableDefinitionServer definitions = new DrawableDefinitionServer();
+    // final DrawableViewport viewBox = parseViewBox(svg.attributes);
+    // final DrawableDefinitionServer definitions = DrawableDefinitionServer();
     // final DrawableStyle style =
-    //     parseStyle(svg.attributes, definitions, viewBox, null);
+    //     parseStyle(svg.attributes, definitions, viewBox.viewBoxRect, null);
 
-    // final List<Drawable> children = svg.children
-    //     .where((XmlNode child) => child is XmlElement)
-    //     .map(
-    //       (XmlNode child) => parseSvgElement(
-    //             child,
-    //             definitions,
-    //             viewBox,
-    //             style,
-    //             key,
-    //           ),
-    //     )
-    //     .toList();
-    // return new DrawableRoot(
+    // final List<Drawable> children = <Drawable>[];
+    // for (XmlElement child in svg.children.whereType<XmlElement>()) {
+    //   children.add(await parseSvgElement(
+    //     child,
+    //     definitions,
+    //     viewBox.viewBoxRect,
+    //     style,
+    //     key,
+    //   ));
+    // }
+
+    // return DrawableRoot(
     //   viewBox,
     //   children,
     //   definitions,
-    //   parseStyle(svg.attributes, definitions, viewBox, null),
+    //   parseStyle(svg.attributes, definitions, viewBox.viewBoxRect, null),
     // );
   }
 }
@@ -130,19 +140,15 @@ class Svg {
 /// A widget that will parse SVG data into a [Picture] using a [PictureProvider].
 ///
 /// The picture will be cached using the [PictureCache], incorporating any color
-/// filterting used into the key (meaning the same SVG with two different `color`
+/// filtering used into the key (meaning the same SVG with two different `color`
 /// arguments applied would be two cache entries).
 class SvgPicture extends StatefulWidget {
-  /// The default placeholder for a SVG that may take time to parse or
-  /// retreieve, e.g. from a network location.
-  static WidgetBuilder defaultPlaceholderBuilder =
-      (BuildContext ctx) => const LimitedBox();
-
   /// Instantiates a widget that renders an SVG picture using the `pictureProvider`.
   ///
-  /// If `width` or `height` are specified, a [SizedBox] will be used to dictate
-  /// the width and height of the rendered output.  Otherwise, the picture will
-  /// be sized to its parent.
+  /// Either the [width] and [height] arguments should be specified, or the
+  /// widget should be placed in a context that sets tight layout constraints.
+  /// Otherwise, the image dimensions will change as the image is loaded, which
+  /// will result in ugly layout changes.
   ///
   /// If `matchTextDirection` is set to true, the picture will be flipped
   /// horizontally in [TextDirection.rtl] contexts.
@@ -154,14 +160,17 @@ class SvgPicture extends StatefulWidget {
   ///
   /// A custom `placeholderBuilder` can be specified for cases where decoding or
   /// acquiring data may take a noticeably long time, e.g. for a network picture.
-  const SvgPicture(this.pictureProvider,
-      {Key key,
-      this.width,
-      this.height,
-      this.matchTextDirection = false,
-      this.allowDrawingOutsideViewBox = false,
-      this.placeholderBuilder})
-      : super(key: key);
+  const SvgPicture(
+    this.pictureProvider, {
+    Key key,
+    this.width,
+    this.height,
+    this.fit = BoxFit.contain,
+    this.alignment = Alignment.center,
+    this.matchTextDirection = false,
+    this.allowDrawingOutsideViewBox = false,
+    this.placeholderBuilder,
+  }) : super(key: key);
 
   /// Instantiates a widget that renders an SVG picture from an [AssetBundle].
   ///
@@ -170,9 +179,10 @@ class SvgPicture extends StatefulWidget {
   /// from a package and null otherwise. See the `Assets in packages` section for
   /// details.
   ///
-  /// If `width` or `height` are specified, a [SizedBox] will be used to dictate
-  /// the width and height of the rendered output.  Otherwise, the picture will
-  /// be sized to its parent.
+  /// Either the [width] and [height] arguments should be specified, or the
+  /// widget should be placed in a context that sets tight layout constraints.
+  /// Otherwise, the image dimensions will change as the image is loaded, which
+  /// will result in ugly layout changes.
   ///
   /// If `matchTextDirection` is set to true, the picture will be flipped
   /// horizontally in [TextDirection.rtl] contexts.
@@ -197,7 +207,7 @@ class SvgPicture extends StatefulWidget {
   /// Then to display the image, use:
   ///
   /// ```dart
-  /// new SvgPicture.asset('icons/heart.svg', package: 'my_icons')
+  /// SvgPicture.asset('icons/heart.svg', package: 'my_icons')
   /// ```
   ///
   /// Assets used by the package itself should also be displayed using the
@@ -237,21 +247,24 @@ class SvgPicture extends StatefulWidget {
   ///    scale is present.
   ///  * <https://flutter.io/assets-and-images/>, an introduction to assets in
   ///    Flutter.
-  SvgPicture.asset(String assetName,
-      {Key key,
-      this.matchTextDirection = false,
-      AssetBundle bundle,
-      String package,
-      this.width,
-      this.height,
-      this.allowDrawingOutsideViewBox = false,
-      this.placeholderBuilder,
-      Color color,
-      BlendMode colorBlendMode = BlendMode.srcIn})
-      : pictureProvider = new ExactAssetPicture(
+  SvgPicture.asset(
+    String assetName, {
+    Key key,
+    this.matchTextDirection = false,
+    AssetBundle bundle,
+    String package,
+    this.width,
+    this.height,
+    this.fit = BoxFit.contain,
+    this.alignment = Alignment.center,
+    this.allowDrawingOutsideViewBox = false,
+    this.placeholderBuilder,
+    Color color,
+    BlendMode colorBlendMode = BlendMode.srcIn,
+  })  : pictureProvider = ExactAssetPicture(
             allowDrawingOutsideViewBox == true
-                ? svgByteDecoderOutsideViewBox
-                : svgByteDecoder,
+                ? svgStringDecoderOutsideViewBox
+                : svgStringDecoder,
             assetName,
             bundle: bundle,
             package: package,
@@ -260,11 +273,12 @@ class SvgPicture extends StatefulWidget {
 
   /// Creates a widget that displays a [PictureStream] obtained from the network.
   ///
-  /// The `url` argument must not be null.
+  /// The [url] argument must not be null.
   ///
-  /// If `width` or `height` are specified, a [SizedBox] will be used to dictate
-  /// the width and height of the rendered output.  Otherwise, the picture will
-  /// be sized to its parent.
+  /// Either the [width] and [height] arguments should be specified, or the
+  /// widget should be placed in a context that sets tight layout constraints.
+  /// Otherwise, the image dimensions will change as the image is loaded, which
+  /// will result in ugly layout changes.
   ///
   /// If `matchTextDirection` is set to true, the picture will be flipped
   /// horizontally in [TextDirection.rtl] contexts.
@@ -284,17 +298,20 @@ class SvgPicture extends StatefulWidget {
   ///
   /// An optional `headers` argument can be used to send custom HTTP headers
   /// with the image request.
-  SvgPicture.network(String url,
-      {Key key,
-      Map<String, String> headers,
-      this.width,
-      this.height,
-      this.matchTextDirection = false,
-      this.allowDrawingOutsideViewBox = false,
-      this.placeholderBuilder,
-      Color color,
-      BlendMode colorBlendMode = BlendMode.srcIn})
-      : pictureProvider = new NetworkPicture(
+  SvgPicture.network(
+    String url, {
+    Key key,
+    Map<String, String> headers,
+    this.width,
+    this.height,
+    this.fit = BoxFit.contain,
+    this.alignment = Alignment.center,
+    this.matchTextDirection = false,
+    this.allowDrawingOutsideViewBox = false,
+    this.placeholderBuilder,
+    Color color,
+    BlendMode colorBlendMode = BlendMode.srcIn,
+  })  : pictureProvider = NetworkPicture(
             allowDrawingOutsideViewBox == true
                 ? svgByteDecoderOutsideViewBox
                 : svgByteDecoder,
@@ -307,9 +324,10 @@ class SvgPicture extends StatefulWidget {
   ///
   /// The [file] argument must not be null.
   ///
-  /// If `width` or `height` are specified, a [SizedBox] will be used to dictate
-  /// the width and height of the rendered output.  Otherwise, the picture will
-  /// be sized to its parent.
+  /// Either the [width] and [height] arguments should be specified, or the
+  /// widget should be placed in a context that sets tight layout constraints.
+  /// Otherwise, the image dimensions will change as the image is loaded, which
+  /// will result in ugly layout changes.
   ///
   /// If `matchTextDirection` is set to true, the picture will be flipped
   /// horizontally in [TextDirection.rtl] contexts.
@@ -327,16 +345,19 @@ class SvgPicture extends StatefulWidget {
   ///
   /// On Android, this may require the
   /// `android.permission.READ_EXTERNAL_STORAGE` permission.
-  SvgPicture.file(File file,
-      {Key key,
-      this.width,
-      this.height,
-      this.matchTextDirection = false,
-      this.allowDrawingOutsideViewBox = false,
-      this.placeholderBuilder,
-      Color color,
-      BlendMode colorBlendMode = BlendMode.srcIn})
-      : pictureProvider = new FilePicture(
+  SvgPicture.file(
+    File file, {
+    Key key,
+    this.width,
+    this.height,
+    this.fit = BoxFit.contain,
+    this.alignment = Alignment.center,
+    this.matchTextDirection = false,
+    this.allowDrawingOutsideViewBox = false,
+    this.placeholderBuilder,
+    Color color,
+    BlendMode colorBlendMode = BlendMode.srcIn,
+  })  : pictureProvider = FilePicture(
             allowDrawingOutsideViewBox == true
                 ? svgByteDecoderOutsideViewBox
                 : svgByteDecoder,
@@ -348,9 +369,10 @@ class SvgPicture extends StatefulWidget {
   ///
   /// The [bytes] argument must not be null.
   ///
-  /// If `width` or `height` are specified, a [SizedBox] will be used to dictate
-  /// the width and height of the rendered output.  Otherwise, the picture will
-  /// be sized to its parent.
+  /// Either the [width] and [height] arguments should be specified, or the
+  /// widget should be placed in a context that sets tight layout constraints.
+  /// Otherwise, the image dimensions will change as the image is loaded, which
+  /// will result in ugly layout changes.
   ///
   /// If `matchTextDirection` is set to true, the picture will be flipped
   /// horizontally in [TextDirection.rtl] contexts.
@@ -365,16 +387,19 @@ class SvgPicture extends StatefulWidget {
   ///
   /// The `color` and `colorBlendMode` arguments, if specified, will be used to set a
   /// [ColorFilter] on any [Paint]s created for this drawing.
-  SvgPicture.memory(Uint8List bytes,
-      {Key key,
-      this.width,
-      this.height,
-      this.matchTextDirection = false,
-      this.allowDrawingOutsideViewBox = false,
-      this.placeholderBuilder,
-      Color color,
-      BlendMode colorBlendMode = BlendMode.srcIn})
-      : pictureProvider = new MemoryPicture(
+  SvgPicture.memory(
+    Uint8List bytes, {
+    Key key,
+    this.width,
+    this.height,
+    this.fit = BoxFit.contain,
+    this.alignment = Alignment.center,
+    this.matchTextDirection = false,
+    this.allowDrawingOutsideViewBox = false,
+    this.placeholderBuilder,
+    Color color,
+    BlendMode colorBlendMode = BlendMode.srcIn,
+  })  : pictureProvider = MemoryPicture(
             allowDrawingOutsideViewBox == true
                 ? svgByteDecoderOutsideViewBox
                 : svgByteDecoder,
@@ -386,9 +411,10 @@ class SvgPicture extends StatefulWidget {
   ///
   /// The [bytes] argument must not be null.
   ///
-  /// If `width` or `height` are specified, a [SizedBox] will be used to dictate
-  /// the width and height of the rendered output.  Otherwise, the picture will
-  /// be sized to its parent.
+  /// Either the [width] and [height] arguments should be specified, or the
+  /// widget should be placed in a context that sets tight layout constraints.
+  /// Otherwise, the image dimensions will change as the image is loaded, which
+  /// will result in ugly layout changes.
   ///
   /// If `matchTextDirection` is set to true, the picture will be flipped
   /// horizontally in [TextDirection.rtl] contexts.
@@ -403,16 +429,19 @@ class SvgPicture extends StatefulWidget {
   ///
   /// The `color` and `colorBlendMode` arguments, if specified, will be used to set a
   /// [ColorFilter] on any [Paint]s created for this drawing.
-  SvgPicture.string(String bytes,
-      {Key key,
-      this.width,
-      this.height,
-      this.matchTextDirection = false,
-      this.allowDrawingOutsideViewBox = false,
-      this.placeholderBuilder,
-      Color color,
-      BlendMode colorBlendMode = BlendMode.srcIn})
-      : pictureProvider = new StringPicture(
+  SvgPicture.string(
+    String bytes, {
+    Key key,
+    this.width,
+    this.height,
+    this.fit = BoxFit.contain,
+    this.alignment = Alignment.center,
+    this.matchTextDirection = false,
+    this.allowDrawingOutsideViewBox = false,
+    this.placeholderBuilder,
+    Color color,
+    BlendMode colorBlendMode = BlendMode.srcIn,
+  })  : pictureProvider = StringPicture(
             allowDrawingOutsideViewBox == true
                 ? svgStringDecoderOutsideViewBox
                 : svgStringDecoder,
@@ -420,10 +449,15 @@ class SvgPicture extends StatefulWidget {
             colorFilter: _getColorFilter(color, colorBlendMode)),
         super(key: key);
 
+  /// The default placeholder for a SVG that may take time to parse or
+  /// retrieve, e.g. from a network location.
+  static WidgetBuilder defaultPlaceholderBuilder =
+      (BuildContext ctx) => const LimitedBox();
+
   static ColorFilter _getColorFilter(Color color, BlendMode colorBlendMode) =>
       color == null
           ? null
-          : new ColorFilter.mode(color, colorBlendMode ?? BlendMode.srcIn);
+          : ColorFilter.mode(color, colorBlendMode ?? BlendMode.srcIn);
 
   /// A [PictureInfoDecoder] for [Uint8List]s that will clip to the viewBox.
   static final PictureInfoDecoder<Uint8List> svgByteDecoder =
@@ -453,6 +487,34 @@ class SvgPicture extends StatefulWidget {
   /// will take the height of its parent.
   final double height;
 
+  /// How to inscribe the picture into the space allocated during layout.
+  /// The default is [BoxFit.contain].
+  final BoxFit fit;
+
+  /// How to align the picture within its parent widget.
+  ///
+  /// The alignment aligns the given position in the picture to the given position
+  /// in the layout bounds. For example, an [Alignment] alignment of (-1.0,
+  /// -1.0) aligns the image to the top-left corner of its layout bounds, while a
+  /// [Alignment] alignment of (1.0, 1.0) aligns the bottom right of the
+  /// picture with the bottom right corner of its layout bounds. Similarly, an
+  /// alignment of (0.0, 1.0) aligns the bottom middle of the image with the
+  /// middle of the bottom edge of its layout bounds.
+  ///
+  /// If the [alignment] is [TextDirection]-dependent (i.e. if it is a
+  /// [AlignmentDirectional]), then a [TextDirection] must be available
+  /// when the picture is painted.
+  ///
+  /// Defaults to [Alignment.center].
+  ///
+  /// See also:
+  ///
+  ///  * [Alignment], a class with convenient constants typically used to
+  ///    specify an [AlignmentGeometry].
+  ///  * [AlignmentDirectional], like [Alignment] for specifying alignments
+  ///    relative to text direction.
+  final Alignment alignment;
+
   /// The [PictureProvider] used to resolve the SVG.
   final PictureProvider pictureProvider;
 
@@ -467,7 +529,7 @@ class SvgPicture extends StatefulWidget {
   final bool allowDrawingOutsideViewBox;
 
   @override
-  State<SvgPicture> createState() => new _SvgPictureState();
+  State<SvgPicture> createState() => _SvgPictureState();
 }
 
 class _SvgPictureState extends State<SvgPicture> {
@@ -557,16 +619,41 @@ class _SvgPictureState extends State<SvgPicture> {
   @override
   Widget build(BuildContext context) {
     if (_picture != null) {
-      final RawPicture picture = new RawPicture(
-        _picture,
-        matchTextDirection: widget.matchTextDirection,
-        allowDrawingOutsideViewBox: widget.allowDrawingOutsideViewBox,
+      final double devicePixelRatio =
+          MediaQuery.of(context, nullOk: true)?.devicePixelRatio ??
+              window.devicePixelRatio;
+      final Rect viewport =
+          Offset.zero & (_picture.viewport.size * devicePixelRatio);
+
+      double width = widget.width;
+      double height = widget.height;
+      if (width == null && height == null) {
+        width = viewport.width;
+        height = viewport.height;
+      } else if (height != null) {
+        width = height / viewport.height * viewport.width;
+      } else if (width != null) {
+        height = width / viewport.width * viewport.height;
+      }
+
+      return SizedBox(
+        width: width,
+        height: height,
+        child: FittedBox(
+          fit: widget.fit,
+          alignment: widget.alignment,
+          child: SizedBox.fromSize(
+            size: viewport.size,
+            child: RawPicture(
+              _picture,
+              matchTextDirection: widget.matchTextDirection,
+              allowDrawingOutsideViewBox: widget.allowDrawingOutsideViewBox,
+            ),
+          ),
+        ),
       );
-      return widget.width != null || widget.height != null
-          ? new SizedBox(
-              height: widget.height, width: widget.width, child: picture)
-          : picture;
     }
+
     return widget.placeholderBuilder == null
         ? _getDefaultPlaceholder(context, widget.width, widget.height)
         : widget.placeholderBuilder(context);
@@ -575,7 +662,7 @@ class _SvgPictureState extends State<SvgPicture> {
   Widget _getDefaultPlaceholder(
       BuildContext context, double width, double height) {
     if (width != null || height != null) {
-      return new SizedBox(width: width, height: height);
+      return SizedBox(width: width, height: height);
     }
 
     return SvgPicture.defaultPlaceholderBuilder(context);
@@ -585,6 +672,6 @@ class _SvgPictureState extends State<SvgPicture> {
   void debugFillProperties(DiagnosticPropertiesBuilder description) {
     super.debugFillProperties(description);
     description
-        .add(new DiagnosticsProperty<PictureStream>('stream', _pictureStream));
+        .add(DiagnosticsProperty<PictureStream>('stream', _pictureStream));
   }
 }

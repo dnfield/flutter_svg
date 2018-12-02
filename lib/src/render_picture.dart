@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' show window;
 
 import 'package:flutter/widgets.dart';
 import 'package:meta/meta.dart';
@@ -21,11 +22,15 @@ class RawPicture extends LeafRenderObjectWidget {
 
   @override
   RenderPicture createRenderObject(BuildContext context) {
-    return new RenderPicture(
-        picture: picture,
-        matchTextDirection: matchTextDirection,
-        textDirection: matchTextDirection ? Directionality.of(context) : null,
-        allowDrawingOutsideViewBox: allowDrawingOutsideViewBox);
+    return RenderPicture(
+      picture: picture,
+      matchTextDirection: matchTextDirection,
+      textDirection: matchTextDirection ? Directionality.of(context) : null,
+      allowDrawingOutsideViewBox: allowDrawingOutsideViewBox,
+      devicePixelRatio:
+          MediaQuery.of(context, nullOk: true)?.devicePixelRatio ??
+              window.devicePixelRatio,
+    );
   }
 
   @override
@@ -34,7 +39,10 @@ class RawPicture extends LeafRenderObjectWidget {
       ..picture = picture
       ..matchTextDirection = matchTextDirection
       ..allowDrawingOutsideViewBox = allowDrawingOutsideViewBox
-      ..textDirection = matchTextDirection ? Directionality.of(context) : null;
+      ..textDirection = matchTextDirection ? Directionality.of(context) : null
+      ..devicePixelRatio =
+          MediaQuery.of(context, nullOk: true)?.devicePixelRatio ??
+              window.devicePixelRatio;
   }
 }
 
@@ -51,13 +59,34 @@ class RawPicture extends LeafRenderObjectWidget {
 class RenderPicture extends RenderBox {
   RenderPicture({
     PictureInfo picture,
-    bool matchTextDirection: false,
+    bool matchTextDirection = false,
     TextDirection textDirection,
     bool allowDrawingOutsideViewBox,
+    double devicePixelRatio,
   })  : _picture = picture,
         _matchTextDirection = matchTextDirection,
         _textDirection = textDirection,
-        _allowDrawingOutsideViewBox = allowDrawingOutsideViewBox;
+        _allowDrawingOutsideViewBox = allowDrawingOutsideViewBox,
+        _devicePixelRatio = devicePixelRatio;
+
+  /// Optional color to use to draw a thin rectangle around the canvas.
+  ///
+  /// Only applied if asserts are enabled (e.g. debug mode).
+  static Color debugRectColor;
+
+  /// The ratio of device pixels to logical pixels.
+  ///
+  /// This value will be used to appropriately scale the picture, if necessary.
+  double get devicePixelRatio => _devicePixelRatio;
+  double _devicePixelRatio;
+  set devicePixelRatio(double value) {
+    assert(value != null);
+    if (value == _devicePixelRatio) {
+      return;
+    }
+    _devicePixelRatio = value;
+    markNeedsPaint();
+  }
 
   /// Whether to paint the picture in the direction of the [TextDirection].
   ///
@@ -146,27 +175,51 @@ class RenderPicture extends RenderBox {
       context.canvas.scale(-1.0, 1.0);
     }
 
-    // this is sometimes useful for debugging, will remove
-    // creates a red border around the drawing
-    // context.canvas.drawRect(
-    //     Offset.zero & size,
-    //     new Paint()
-    //       ..color = const Color(0xFFFA0000)
-    //       ..style = PaintingStyle.stroke);
-
-    scaleCanvasToViewBox(context.canvas, size, picture.viewBox);
+    // this is sometimes useful for debugging, e.g. to draw
+    // a thin red border around the drawing.
+    assert(() {
+      if (RenderPicture.debugRectColor != null &&
+          RenderPicture.debugRectColor.alpha > 0) {
+        context.canvas.drawRect(
+            Offset.zero & size,
+            Paint()
+              ..color = debugRectColor
+              ..style = PaintingStyle.stroke);
+      }
+      return true;
+    }());
+    final Rect viewportRect =
+        Offset.zero & (_picture.viewport.size * _devicePixelRatio);
+    scaleCanvasToViewBox(
+      context.canvas,
+      size,
+      _picture.viewport,
+      _picture.size,
+    );
     if (allowDrawingOutsideViewBox != true) {
-      context.canvas.clipRect(picture.viewBox);
+      context.canvas.clipRect(viewportRect);
     }
     context.canvas.drawPicture(picture.picture);
     context.canvas.restore();
   }
 }
 
-void scaleCanvasToViewBox(Canvas canvas, Size desiredSize, Rect viewBox) {
-  final double scale = math.min(
-      desiredSize.width / viewBox.width, desiredSize.height / viewBox.height);
-  final Offset shift = desiredSize / 2.0 - viewBox.size * scale / 2.0;
-  canvas.translate(shift.dx, shift.dy);
-  canvas.scale(scale, scale);
+void scaleCanvasToViewBox(
+  Canvas canvas,
+  Size desiredSize,
+  Rect viewBox,
+  Size pictureSize,
+) {
+  if (pictureSize.isFinite) {
+    final Offset shift = desiredSize / 2.0 - pictureSize / 2.0;
+    canvas.translate(shift.dx, shift.dy);
+  } else if (desiredSize != viewBox.size) {
+    final double scale = math.min(
+      desiredSize.width / viewBox.width,
+      desiredSize.height / viewBox.height,
+    );
+    final Offset shift = desiredSize / 2.0 - viewBox.size * scale / 2.0;
+    canvas.translate(shift.dx, shift.dy);
+    canvas.scale(scale, scale);
+  }
 }

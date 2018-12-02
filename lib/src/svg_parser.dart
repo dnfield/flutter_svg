@@ -1,82 +1,188 @@
+import 'dart:async';
+import 'dart:convert' hide Codec;
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:xml/xml.dart';
 import 'package:vector_math/vector_math_64.dart';
 
-import 'svg/colors.dart';
 import 'svg/parsers.dart';
 import 'svg/xml_parsers.dart';
+import 'utilities/http.dart';
 import 'utilities/xml.dart';
 import 'vector_drawable.dart';
 
 /// An SVG Shape element that will be drawn to the canvas.
 class DrawableSvgShape extends DrawableShape {
-  const DrawableSvgShape(Path path, DrawableStyle style) : super(path, style);
+  const DrawableSvgShape(Path path, DrawableStyle style, this.transform)
+      : super(path, style);
 
   /// Applies the transformation in the @transform attribute to the path.
   factory DrawableSvgShape.parse(
       SvgPathFactory pathFactory,
       DrawableDefinitionServer definitions,
-      XmlElement el,
+      List<XmlAttribute> attributes,
       DrawableStyle parentStyle) {
     assert(pathFactory != null);
 
-    final Color defaultFill = parentStyle == null || parentStyle.fill == null
-        ? colorBlack
-        : identical(parentStyle.fill, DrawablePaint.empty)
-            ? null
-            : parentStyle.fill.color;
-
-    final Color defaultStroke =
-        identical(parentStyle.stroke, DrawablePaint.empty)
-            ? null
-            : parentStyle?.stroke?.color;
-
-    final Path path = pathFactory(el);
-    return new DrawableSvgShape(
-      applyTransformIfNeeded(path, el.attributes),
-      parseStyle(el.attributes, definitions, path.getBounds(), parentStyle,
-          defaultFillIfNotSpecified: defaultFill,
-          defaultStrokeIfNotSpecified: defaultStroke),
+    final Path path = pathFactory(attributes);
+    return DrawableSvgShape(
+      path,
+      parseStyle(
+        attributes,
+        definitions,
+        path.getBounds(),
+        parentStyle,
+      ),
+      parseTransform(getAttribute(attributes, 'transform', def: null)),
     );
+  }
+
+  /// The transformation matrix, if any, to apply to the [Canvas] before
+  /// [draw]ing this shape.
+  final Matrix4 transform;
+
+  @override
+  void draw(Canvas canvas, ColorFilter colorFilter) {
+    if (transform != null) {
+      canvas.save();
+      canvas.transform(transform.storage);
+      super.draw(canvas, colorFilter);
+      canvas.restore();
+    } else {
+      super.draw(canvas, colorFilter);
+    }
   }
 }
 
 /// Creates a [Drawable] from an SVG <g> or shape element.  Also handles parsing <defs> and gradients.
 ///
 /// If an unsupported element is encountered, it will be created as a [DrawableNoop].
-Drawable parseSvgElement(XmlElement el, DrawableDefinitionServer definitions,
-    Rect bounds, DrawableStyle parentStyle, String key) {
+Future<Drawable> parseSvgElement(
+  XmlElement el,
+  DrawableDefinitionServer definitions,
+  Rect rootBounds,
+  DrawableStyle parentStyle,
+  String key, {
+  bool isDef = false,
+}) async {
+  assert(isDef != null);
   final Function unhandled = (XmlElement e) => _unhandledElement(e, key);
+  final Function createDefinition = (String iri, XmlElement defEl) async {
+    assert(iri != emptyUrlIri);
+    definitions.addDrawable(
+      iri,
+      await parseSvgElement(
+        defEl,
+        definitions,
+        rootBounds,
+        parentStyle,
+        key,
+        isDef: true,
+      ),
+    );
+  };
 
   final SvgPathFactory shapeFn = svgPathParsers[el.name.local];
   if (shapeFn != null) {
-    return new DrawableSvgShape.parse(shapeFn, definitions, el, parentStyle);
+    final DrawableShape shape =
+        DrawableSvgShape.parse(shapeFn, definitions, el.attributes, parentStyle);
+    final String iri = buildUrlIri(el.attributes);
+    if (iri != emptyUrlIri) {
+      definitions.addDrawable(iri, shape);
+    }
+    return shape;
   } else if (el.name.local == 'defs') {
-    parseDefs(el, definitions).forEach(unhandled);
-    return new DrawableNoop(el.name.local);
+    final Iterable<XmlElement> unhandledDefs = parseDefs(
+      el,
+      definitions,
+      rootBounds,
+    );
+    for (XmlElement unhandledDef in unhandledDefs) {
+      String iri = buildUrlIri(unhandledDef.attributes);
+      if (iri == emptyUrlIri) {
+        for (XmlElement child
+            in unhandledDef.children.whereType<XmlElement>()) {
+          iri = buildUrlIri(child.attributes);
+          if (iri != emptyUrlIri) {
+            await createDefinition(iri, child);
+          }
+        }
+      } else {
+        await createDefinition(iri, unhandledDef);
+      }
+    }
+    return DrawableNoop(el.name.local);
   } else if (el.name.local.endsWith('Gradient')) {
     definitions.addPaintServer(
-        'url(#${getAttribute(el.attributes, 'id')})', parseGradient(el));
-    return new DrawableNoop(el.name.local);
-  } else if (el.name.local == 'g' || el.name.local == 'a') {
-    return parseSvgGroup(el, definitions, bounds, parentStyle, key);
+      'url(#${getAttribute(el.attributes, 'id')})',
+      parseGradient(el, rootBounds),
+    );
+    return DrawableNoop(el.name.local);
+  } else if (el.name.local == 'g' ||
+      el.name.local == 'a' ||
+      el.name.local == 'symbol') {
+    final DrawableGroup group = await parseSvgGroup(
+      el,
+      definitions,
+      rootBounds,
+      parentStyle,
+      key,
+    );
+    final String iri = buildUrlIri(el.attributes);
+    if (iri != emptyUrlIri) {
+      definitions.addDrawable(iri, group);
+    }
+    return el.name.local == 'symbol' && !isDef
+        ? const DrawableNoop('symbol')
+        : group;
   } else if (el.name.local == 'text') {
-    return parseSvgText(el, definitions, bounds, parentStyle);
+    return parseSvgText(el, definitions, rootBounds, parentStyle);
   } else if (el.name.local == 'svg') {
-    throw new UnsupportedError(
-        'Nested SVGs not supported in this implementation.');
+    throw UnsupportedError('Nested SVGs not supported in this implementation.');
+  } else if (el.name.local == 'image') {
+    final String href = getHrefAttribute(el.attributes);
+    final Offset offset = Offset(
+      double.parse(getAttribute(el.attributes, 'x', def: '0')),
+      double.parse(getAttribute(el.attributes, 'y', def: '0')),
+    );
+    final Size size = Size(
+      double.parse(getAttribute(el.attributes, 'width', def: '0')),
+      double.parse(getAttribute(el.attributes, 'height', def: '0')),
+    );
+    final Image image = await _resolveImage(href);
+    return DrawableRasterImage(image, offset, size: size);
+  } else if (el.name.local == 'use') {
+    final String xlinkHref = getHrefAttribute(el.attributes);
+    final DrawableStyle style = parseStyle(
+      el.attributes,
+      definitions,
+      rootBounds,
+      null,
+    );
+    final Matrix4 transform = Matrix4.identity()
+      ..translate(
+        double.parse(getAttribute(el.attributes, 'x', def: '0')),
+        double.parse(getAttribute(el.attributes, 'y', def: '0')),
+      );
+    final DrawableStyleable ref = definitions.getDrawable('url($xlinkHref)');
+    return DrawableGroup(
+      <Drawable>[ref.mergeStyle(style)],
+      DrawableStyle(transform: transform.storage),
+    );
   }
 
   unhandled(el);
-  return new DrawableNoop(el.name.local);
+  return DrawableNoop(el.name.local);
 }
+
+Set<String> _unhandledElements = Set<String>();
 
 void _unhandledElement(XmlElement el, String key) {
   if (el.name.local == 'style') {
-    FlutterError.reportError(new FlutterErrorDetails(
-      exception: new UnimplementedError(
+    FlutterError.reportError(FlutterErrorDetails(
+      exception: UnimplementedError(
           'The <style> element is not implemented in this library.'),
       informationCollector: (StringBuffer buff) {
         buff.writeln(
@@ -91,13 +197,17 @@ void _unhandledElement(XmlElement el, String key) {
       library: 'SVG',
       context: 'in parseSvgElement',
     ));
-  } else if (el.name.local != 'desc') {
-    // no plans to handle these
-    print('unhandled element ${el.name.local}; Picture key: $key');
   }
+  assert(() {
+    if (_unhandledElements.add(el.name.local)) {
+      print('unhandled element ${el.name.local}; Picture key: $key');
+    }
+    return true;
+  }());
 }
 
-Paint _transparentPaint = new Paint()..color = const Color(0x0);
+const DrawablePaint _transparentStroke =
+    DrawablePaint(PaintingStyle.stroke, color: Color(0x0));
 void _appendParagraphs(ParagraphBuilder fill, ParagraphBuilder stroke,
     String text, DrawableStyle style) {
   fill
@@ -108,12 +218,12 @@ void _appendParagraphs(ParagraphBuilder fill, ParagraphBuilder stroke,
   stroke
     ..pushStyle(style.textStyle.toFlutterTextStyle(
         foregroundOverride:
-            style.stroke == null ? _transparentPaint : style.stroke))
+            style.stroke == null ? _transparentStroke : style.stroke))
     ..addText(text);
 }
 
 final ParagraphConstraints _infiniteParagraphConstraints =
-    new ParagraphConstraints(width: double.infinity);
+    ParagraphConstraints(width: double.infinity);
 
 Paragraph _finishParagraph(ParagraphBuilder paragraphBuilder) {
   final Paragraph paragraph = paragraphBuilder.build();
@@ -149,15 +259,14 @@ void _paragraphParser(
 
 Drawable parseSvgText(XmlElement el, DrawableDefinitionServer definitions,
     Rect bounds, DrawableStyle parentStyle) {
-  final Offset offset = new Offset(
-      double.parse(getAttribute(el.attributes, 'x', def: '0')),
+  final Offset offset = Offset(double.parse(getAttribute(el.attributes, 'x', def: '0')),
       double.parse(getAttribute(el.attributes, 'y', def: '0')));
 
   final DrawableStyle style =
       parseStyle(el.attributes, definitions, bounds, parentStyle);
 
-  final ParagraphBuilder fill = new ParagraphBuilder(new ParagraphStyle());
-  final ParagraphBuilder stroke = new ParagraphBuilder(new ParagraphStyle());
+  final ParagraphBuilder fill = ParagraphBuilder(ParagraphStyle());
+  final ParagraphBuilder stroke = ParagraphBuilder(ParagraphStyle());
 
   final DrawableTextAnchorPosition textAnchor =
       parseTextAnchor(getAttribute(el.attributes, 'text-anchor', def: 'start'));
@@ -165,7 +274,7 @@ Drawable parseSvgText(XmlElement el, DrawableDefinitionServer definitions,
   if (el.children.length == 1) {
     _appendParagraphs(fill, stroke, el.text, style);
 
-    return new DrawableText(
+    return DrawableText(
       _finishParagraph(fill),
       _finishParagraph(stroke),
       offset,
@@ -175,7 +284,7 @@ Drawable parseSvgText(XmlElement el, DrawableDefinitionServer definitions,
 
   _paragraphParser(fill, stroke, definitions, bounds, el, style);
 
-  return new DrawableText(
+  return DrawableText(
     _finishParagraph(fill),
     _finishParagraph(stroke),
     offset,
@@ -184,60 +293,85 @@ Drawable parseSvgText(XmlElement el, DrawableDefinitionServer definitions,
 }
 
 /// Parses an SVG <g> element.
-Drawable parseSvgGroup(XmlElement el, DrawableDefinitionServer definitions,
-    Rect bounds, DrawableStyle parentStyle, String key) {
+Future<Drawable> parseSvgGroup(
+    XmlElement el,
+    DrawableDefinitionServer definitions,
+    Rect bounds,
+    DrawableStyle parentStyle,
+    String key) async {
   final List<Drawable> children = <Drawable>[];
-  final DrawableStyle style = parseStyle(
-      el.attributes, definitions, bounds, parentStyle,
-      needsTransform: true);
-  for (XmlNode child in el.children) {
-    if (child is XmlElement) {
-      final Drawable el =
-          parseSvgElement(child, definitions, bounds, style, key);
-      if (el != null) {
-        children.add(el);
-      }
-    }
+  final DrawableStyle style =
+      parseStyle(el.attributes, definitions, bounds, parentStyle, needsTransform: true);
+  for (XmlNode child in el.children.whereType<XmlElement>()) {
+    children.add(await parseSvgElement(
+      child,
+      definitions,
+      bounds,
+      style,
+      key,
+    ));
   }
 
-  return new DrawableGroup(
-      children,
-      //TODO: when Dart2 is around use this instead of above
-      // el.children
-      //     .whereType<XmlElement>()
-      //     .map((child) => new SvgBaseElement.fromXml(child)),
-      style);
+  return DrawableGroup(children, style);
 }
 
 /// Parses style attributes or @style attribute.
 ///
 /// Remember that @style attribute takes precedence.
 DrawableStyle parseStyle(
-    List<XmlAttribute> el,
-    DrawableDefinitionServer definitions,
-    Rect bounds,
-    DrawableStyle parentStyle,
-    {bool needsTransform = false,
-    Color defaultFillIfNotSpecified,
-    Color defaultStrokeIfNotSpecified}) {
+  List<XmlAttribute> el,
+  DrawableDefinitionServer definitions,
+  Rect bounds,
+  DrawableStyle parentStyle, {
+  bool needsTransform = false,
+}) {
   final Matrix4 transform =
       needsTransform ? parseTransform(getAttribute(el, 'transform')) : null;
 
   return DrawableStyle.mergeAndBlend(
     parentStyle,
     transform: transform?.storage,
-    stroke: parseStroke(el, bounds, definitions, defaultStrokeIfNotSpecified),
+    stroke: parseStroke(el, bounds, definitions, parentStyle?.stroke),
     dashArray: parseDashArray(el),
     dashOffset: parseDashOffset(el),
-    fill: parseFill(el, bounds, definitions, defaultFillIfNotSpecified),
-    pathFillType: parseFillRule(el),
+    fill: parseFill(el, bounds, definitions, parentStyle?.fill),
+    pathFillType: parseFillRule(
+      el,
+      'fill-rule',
+      parentStyle != null ? null : 'nonzero',
+    ),
     groupOpacity: parseOpacity(el),
     clipPath: parseClipPath(el, definitions),
-    textStyle: new DrawableTextStyle(
+    textStyle: DrawableTextStyle(
       fontFamily: getAttribute(el, 'font-family'),
       fontSize: parseFontSize(getAttribute(el, 'font-size'),
           parentValue: parentStyle?.textStyle?.fontSize),
       height: -1.0,
     ),
   );
+}
+
+Future<Image> _resolveImage(String href) async {
+  if (href == null || href == '') {
+    return null;
+  }
+
+  final Function decodeImage = (Uint8List bytes) async {
+    final Codec codec = await instantiateImageCodec(bytes);
+    final FrameInfo frame = await codec.getNextFrame();
+    return frame.image;
+  };
+
+  if (href.startsWith('http')) {
+    final Uint8List bytes = await httpGet(href);
+    return decodeImage(bytes);
+  }
+
+  if (href.startsWith('data:')) {
+    final int commaLocation = href.indexOf(',') + 1;
+    final Uint8List bytes = base64.decode(href.substring(commaLocation));
+    return decodeImage(bytes);
+  }
+
+  throw UnsupportedError('Could not resolve image href: $href');
 }

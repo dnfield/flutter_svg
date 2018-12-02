@@ -10,9 +10,12 @@ import '../tool/gen_golden.dart' as golden;
 Iterable<File> getGoldenFileNames() sync* {
   final String root = dirname(Platform.script.toFilePath());
   final Directory dir =
-      new Directory(join(root, root.endsWith('test') ? '..' : '', 'golden'));
+      Directory(join(root, root.endsWith('test') ? '..' : '', 'golden'));
   for (FileSystemEntity fe in dir.listSync(recursive: true)) {
     if (fe is File && fe.path.toLowerCase().endsWith('.png')) {
+      if (fe.path.toLowerCase().contains('text') && !Platform.isLinux) {
+        continue;
+      }
       yield fe;
     }
   }
@@ -20,15 +23,15 @@ Iterable<File> getGoldenFileNames() sync* {
 
 String getSvgAssetName(String goldenFileName) {
   return goldenFileName
-      .replaceAll('/golden/', '/assets/')
-      .replaceAll('\\golden\\', '\\assets\\')
+      .replaceAll('/golden/', '/example/assets/')
+      .replaceAll('\\golden\\', '\\example\\assets\\')
       .replaceAll('.png', '.svg');
 }
 
 void main() {
   test('SVG Rendering matches golden files', () async {
     for (File goldenFile in getGoldenFileNames()) {
-      final File svgAssetFile = new File(getSvgAssetName(goldenFile.path));
+      final File svgAssetFile = File(getSvgAssetName(goldenFile.path));
       final Uint8List bytes =
           await golden.getSvgPngBytes(await svgAssetFile.readAsString());
 

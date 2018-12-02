@@ -1,5 +1,19 @@
 import 'package:xml/xml.dart';
 
+/// The namespace for xlink from the SVG 1.1 spec.
+const String kXlinkNamespace = 'http://www.w3.org/1999/xlink';
+
+/// Get the `xlink:href` or `href` attribute, preferring `xlink`.
+///
+/// SVG 1.1 specifies that these attributes should be in the xlink namespace.
+/// SVG 2 deprecates that namespace.
+String getHrefAttribute(List<XmlAttribute> attributes) => getAttribute(
+      attributes,
+      'href',
+      namespace: kXlinkNamespace,
+      def: getAttribute(attributes, 'href'),
+    );
+
 /// Gets the attribute, trims it, and returns the attribute or default if the attribute
 /// is null or ''.
 ///

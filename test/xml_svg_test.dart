@@ -7,18 +7,35 @@ import 'package:flutter_svg/src/svg/xml_parsers.dart';
 import 'package:flutter_svg/src/utilities/xml.dart';
 
 void main() {
-  test('Attribute and style tests', () {
-    final XmlElement el = parse(
-            '<test stroke="#fff" fill="#eee" stroke-dashpattern="1 2" style="stroke-opacity:1;fill-opacity:.23" />')
+  test('Xlink href tests', () {
+    final XmlElement el = parse('<test href="http://localhost" />').rootElement;
+
+    final XmlElement elXlink = parse('<test xmlns:xlink="$kXlinkNamespace" '
+            'xlink:href="http://localhost" />')
         .rootElement;
 
-    expect(getAttribute(el.attributes, 'stroke'), '#fff');
-    expect(getAttribute(el.attributes, 'fill'), '#eee');
-    expect(getAttribute(el.attributes, 'stroke-dashpattern'), '1 2');
-    expect(getAttribute(el.attributes, 'stroke-opacity'), '1');
-    expect(getAttribute(el.attributes, 'stroke-another'), '');
-    expect(getAttribute(el.attributes, 'fill-opacity'), '.23');
+    expect(getHrefAttribute(el.attributes), 'http://localhost');
+    expect(getHrefAttribute(elXlink.attributes), 'http://localhost');
   });
+
+  test('Attribute and style tests', () {
+    final List<XmlAttribute> el =
+        parse('<test stroke="#fff" fill="#eee" stroke-dashpattern="1 2" '
+                'style="stroke-opacity:1;fill-opacity:.23" />')
+            .rootElement
+            .attributes;
+
+    expect(getAttribute(el, 'stroke'), '#fff');
+    expect(getAttribute(el, 'fill'), '#eee');
+    expect(getAttribute(el, 'stroke-dashpattern'), '1 2');
+    expect(getAttribute(el, 'stroke-opacity'), '1');
+    expect(getAttribute(el, 'stroke-another'), '');
+    expect(getAttribute(el, 'fill-opacity'), '.23');
+
+    expect(getAttribute(el, 'fill-opacity', checkStyle: false), '');
+    expect(getAttribute(el, 'fill', checkStyle: false), '#eee');
+  });
+
   // if the parsing logic changes, we can simplify some methods.  for now assert that whitespace in attributes is preserved
   test('Attribute WhiteSpace test', () {
     final XmlDocument xd =
@@ -39,21 +56,31 @@ void main() {
   });
 
   test('viewBox tests', () {
-    final Rect rect = new Rect.fromLTWH(0.0, 0.0, 100.0, 100.0);
+    final Rect rect = Rect.fromLTWH(0.0, 0.0, 100.0, 100.0);
 
-    final XmlElement svgWithViewBox =
-        parse('<svg viewBox="0 0 100 100" />').rootElement;
-    final XmlElement svgWithViewBoxAndWidthHeight =
-        parse('<svg width="50cm" height="50cm" viewBox="0 0 100 100" />')
-            .rootElement;
-    final XmlElement svgWithWidthHeight =
-        parse('<svg width="100cm" height="100cm" />').rootElement;
+    final List<XmlAttribute> svgWithViewBox =
+        parse('<svg viewBox="0 0 100 100" />').rootElement.attributes;
+    final List<XmlAttribute> svgWithViewBoxAndWidthHeight =
+        parse('<svg width="50px" height="50px" viewBox="0 0 100 100" />')
+            .rootElement
+            .attributes;
+    final List<XmlAttribute> svgWithWidthHeight =
+        parse('<svg width="100" height="100" />').rootElement.attributes;
+    final List<XmlAttribute> svgWithViewBoxMinXMinY =
+        parse('<svg viewBox="42 56 100 100" />').rootElement.attributes;
+    final List<XmlAttribute> svgWithNoSizeInfo =
+        parse('<svg />').rootElement.attributes;
 
-    final XmlElement svgWithNoSizeInfo = parse('<svg />').rootElement;
-    expect(parseViewBox(svgWithViewBox.attributes), rect);
-    expect(parseViewBox(svgWithViewBoxAndWidthHeight.attributes), rect);
-    expect(parseViewBox(svgWithWidthHeight.attributes), rect);
-    expect(parseViewBox(svgWithNoSizeInfo.attributes), Rect.zero);
+    expect(parseViewBox(svgWithViewBoxAndWidthHeight).size, const Size(50, 50));
+    expect(parseViewBox(svgWithViewBox).viewBoxRect, rect);
+    expect(parseViewBox(svgWithViewBox).viewBoxOffset, Offset.zero);
+    expect(parseViewBox(svgWithViewBoxAndWidthHeight).viewBoxRect, rect);
+    expect(parseViewBox(svgWithWidthHeight).viewBoxRect, rect);
+    expect(parseViewBox(svgWithNoSizeInfo, nullOk: true), null);
+    expect(() => parseViewBox(svgWithNoSizeInfo), throwsStateError);
+    expect(parseViewBox(svgWithViewBoxMinXMinY).viewBoxRect, rect);
+    expect(parseViewBox(svgWithViewBoxMinXMinY).viewBoxOffset,
+        const Offset(-42.0, -56.0));
   });
 
   test('TileMode tests', () {
@@ -82,7 +109,7 @@ void main() {
     final XmlElement pct =
         parse('<stroke stroke-dashoffset="20%" />').rootElement;
 
-    // TODO: DashOffset is completely opaque right now, maybe expose the raw value?
+    // TODO(dnfield): DashOffset is completely opaque right now, maybe expose the raw value?
     expect(parseDashOffset(abs.attributes), isNotNull);
     expect(parseDashOffset(pct.attributes), isNotNull);
   });
