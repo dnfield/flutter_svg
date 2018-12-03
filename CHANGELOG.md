@@ -1,5 +1,10 @@
 # CHANGES
 
+## 0.9.0
+
+- Rewrite parsing to be more space efficient.
+- Refactor parsing to enable more output possibilities.
+
 ## 0.8.0
 
 - Made parsing `async` to support image loading.

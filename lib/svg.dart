@@ -7,17 +7,11 @@ import 'dart:ui' show Picture, window;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show AssetBundle;
 import 'package:flutter/widgets.dart';
-import 'package:flutter_svg/parser.dart';
-import 'package:flutter_svg/src/svg/xml_parsers.dart';
-import 'package:flutter_svg/src/svg_parser.dart';
-import 'package:xml/xml.dart' hide parse;
-import 'package:xml/xml.dart' as xml show parse;
 
+import 'parser.dart';
 import 'src/picture_provider.dart';
 import 'src/picture_stream.dart';
 import 'src/render_picture.dart';
-// import 'src/svg/xml_parsers.dart';
-// import 'src/svg_parser.dart';
 import 'src/vector_drawable.dart';
 
 /// Instance for [Svg]'s utility methods, which can produce a [DrawableRoot]
@@ -110,30 +104,7 @@ class Svg {
   /// The `key` is used for debugging purposes.
   Future<DrawableRoot> fromSvgString(String rawSvg, String key) async {
     final SvgParser parser = SvgParser();
-    return await parser.parse(rawSvg);
-    // final XmlElement svg = xml.parse(rawSvg).rootElement;
-    // final DrawableViewport viewBox = parseViewBox(svg.attributes);
-    // final DrawableDefinitionServer definitions = DrawableDefinitionServer();
-    // final DrawableStyle style =
-    //     parseStyle(svg.attributes, definitions, viewBox.viewBoxRect, null);
-
-    // final List<Drawable> children = <Drawable>[];
-    // for (XmlElement child in svg.children.whereType<XmlElement>()) {
-    //   children.add(await parseSvgElement(
-    //     child,
-    //     definitions,
-    //     viewBox.viewBoxRect,
-    //     style,
-    //     key,
-    //   ));
-    // }
-
-    // return DrawableRoot(
-    //   viewBox,
-    //   children,
-    //   definitions,
-    //   parseStyle(svg.attributes, definitions, viewBox.viewBoxRect, null),
-    // );
+    return await parser.parse(rawSvg, key: key);
   }
 }
 

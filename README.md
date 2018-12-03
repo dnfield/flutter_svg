@@ -130,9 +130,6 @@ of something that's broken.
 - Filters/effects (will require upstream engine changes, but doable).
 - Android Vector Drawable support beyond PoC - I'm willing to put more time into
   this if there's actually demand, but it doesn't come up often.
-- The XML parsing implementation is heavy for what this really needs. I've made
-  efforts to keep the API forward-reading-only compatible to eventually be able
-  to use a SAX/XMLReader streaming style parser.
 
 ## Probably out of scope/non-goals.
 

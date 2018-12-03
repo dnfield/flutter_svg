@@ -1,39 +1,39 @@
+import 'dart:async';
 import 'dart:collection';
+import 'dart:convert' hide Codec;
+import 'dart:typed_data';
 import 'dart:ui';
 
-import 'package:flutter_svg/src/svg/colors.dart';
-import 'package:flutter_svg/src/svg/parsers.dart';
-import 'package:flutter_svg/src/svg/xml_parsers.dart';
-import 'package:flutter_svg/src/svg_parser.dart';
-import 'package:flutter_svg/src/utilities/xml.dart';
-import 'package:flutter_svg/src/vector_drawable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path_drawing/path_drawing.dart';
 import 'package:vector_math/vector_math_64.dart';
 import 'package:xml/xml.dart'
     show XmlPushReader, XmlPushReaderNodeType, XmlAttribute;
 
-final Set<String> _groupNames = Set<String>.from(
-  <String>[
-    'svg',
-    'g',
-    'text',
-    'symbol',
-    'a',
-  ],
-);
+import 'src/svg/colors.dart';
+import 'src/svg/parsers.dart';
+import 'src/svg/xml_parsers.dart';
+import 'src/svg_parser.dart';
+import 'src/utilities/http.dart';
+import 'src/utilities/xml.dart';
+import 'src/vector_drawable.dart';
 
-typedef _ParseFunc = void Function(_SvgParserState parserState);
+final Set<String> _unhandledElements = Set<String>();
+
+typedef _ParseFunc = Future<void> Function(_SvgParserState parserState);
 typedef _PathFunc = Path Function(List<XmlAttribute> attributes);
 
 const Map<String, _ParseFunc> _parsers = <String, _ParseFunc>{
-  'svg': _GroupElements.svg,
-  'g': _GroupElements.g,
-  'a': _GroupElements.g, // treat as group
-  'use': _GroupElements.use,
-  'symbol': _GroupElements.symbol,
+  'svg': _Elements.svg,
+  'g': _Elements.g,
+  'a': _Elements.g, // treat as group
+  'use': _Elements.use,
+  'symbol': _Elements.symbol,
   'radialGradient': _Elements.radialGradient,
   'linearGradient': _Elements.linearGradient,
   'clipPath': _Elements.clipPath,
+  'image': _Elements.image,
+  'text': _Elements.text,
 };
 
 const Map<String, _PathFunc> _pathFuncs = <String, _PathFunc>{
@@ -67,43 +67,44 @@ double _parsePercentage(String val, {double multiplier = 1.0}) {
 
 bool _isPercentage(String val) => val.endsWith('%');
 
-class _GroupElements {
-  static void svg(_SvgParserState parserState) {
+class _Elements {
+  static Future<void> svg(_SvgParserState parserState) {
     final DrawableViewport viewBox = parseViewBox(parserState.attributes);
 
     parserState.root = DrawableRoot(
       viewBox,
       <Drawable>[],
       parserState.definitions,
-      parseStyle(parserState.attributes, parserState.definitions,
+      _parseStyle(parserState.attributes, parserState.definitions,
           viewBox.viewBoxRect, null),
     );
-    parserState.parentDrawables.add(parserState.root);
+    parserState.addGroup(parserState.root);
+    return null;
   }
 
-  static void g(_SvgParserState parserState) {
-    final DrawableParent parent = parserState.parentDrawables.last;
+  static Future<void> g(_SvgParserState parserState) {
+    final DrawableParent parent = parserState.currentGroup;
     final DrawableGroup group = DrawableGroup(
       <Drawable>[],
-      parseStyle(
+      _parseStyle(
         parserState.attributes,
         parserState.definitions,
-        null,
+        parserState.rootBounds,
         parent.style,
         needsTransform: true,
       ),
     );
     parent.children.add(group);
-    parserState.parentDrawables.add(group);
+    parserState.addGroup(group);
     _checkForIri(group, parserState);
+    return null;
   }
 
-  static void symbol(_SvgParserState parserState) {
-    print(parserState.attributes);
-    final DrawableParent parent = parserState.parentDrawables.last;
+  static Future<void> symbol(_SvgParserState parserState) {
+    final DrawableParent parent = parserState.currentGroup;
     final DrawableGroup group = DrawableGroup(
       <Drawable>[],
-      parseStyle(
+      _parseStyle(
         parserState.attributes,
         parserState.definitions,
         null,
@@ -111,16 +112,17 @@ class _GroupElements {
         needsTransform: true,
       ),
     );
-    parserState.parentDrawables.add(group);
+    parserState.addGroup(group);
     _checkForIri(group, parserState);
+    return null;
   }
 
-  static void use(_SvgParserState parserState) {
+  static Future<void> use(_SvgParserState parserState) {
     final String xlinkHref = getHrefAttribute(parserState.attributes);
-    final DrawableStyle style = parseStyle(
+    final DrawableStyle style = _parseStyle(
       parserState.attributes,
       parserState.definitions,
-      parserState.root.viewport.viewBoxRect,
+      parserState.rootBounds,
       null,
     );
     final Matrix4 transform = Matrix4.identity()
@@ -130,17 +132,16 @@ class _GroupElements {
       );
     final DrawableStyleable ref =
         parserState.definitions.getDrawable('url($xlinkHref)');
-    final DrawableParent parent = parserState.parentDrawables.last;
+    final DrawableParent parent = parserState.currentGroup;
     final DrawableGroup group = DrawableGroup(
       <Drawable>[ref.mergeStyle(style)],
       DrawableStyle(transform: transform.storage),
     );
     parent.children.add(group);
+    return null;
   }
-}
 
-class _Elements {
-  static void parseStops(
+  static Future<void> parseStops(
       XmlPushReader reader, List<Color> colors, List<double> offsets) {
     final int depth = reader.depth;
 
@@ -160,9 +161,10 @@ class _Elements {
       );
       offsets.add(_parseDecimalOrPercentage(rawOffset));
     }
+    return null;
   }
 
-  static void radialGradient(_SvgParserState parserState) {
+  static Future<void> radialGradient(_SvgParserState parserState) {
     final String gradientUnits = getAttribute(
         parserState.attributes, 'gradientUnits',
         def: 'objectBoundingBox');
@@ -183,7 +185,12 @@ class _Elements {
     final List<Color> colors = <Color>[];
     parseStops(parserState.reader, colors, offsets);
 
-    final Rect rootBounds = parserState.root.viewport.viewBoxRect;
+    final Rect rootBounds = Rect.fromLTRB(
+      parserState.rootBounds.left,
+      parserState.rootBounds.top,
+      parserState.rootBounds.right,
+      parserState.rootBounds.bottom,
+    );
 
     final PaintServer shaderFunc = (Rect bounds) {
       double cx, cy, r, fx, fy;
@@ -240,9 +247,10 @@ class _Elements {
       id,
       shaderFunc,
     );
+    return null;
   }
 
-  static void linearGradient(_SvgParserState parserState) {
+  static Future<void> linearGradient(_SvgParserState parserState) {
     final String gradientUnits = getAttribute(
         parserState.attributes, 'gradientUnits',
         def: 'objectBoundingBox');
@@ -263,7 +271,12 @@ class _Elements {
     final Matrix4 originalTransform = parseTransform(
       getAttribute(parserState.attributes, 'gradientTransform', def: null),
     );
-    final Rect rootBounds = parserState.root.viewport.viewBoxRect;
+    final Rect rootBounds = Rect.fromLTRB(
+      parserState.rootBounds.left,
+      parserState.rootBounds.top,
+      parserState.rootBounds.right,
+      parserState.rootBounds.bottom,
+    );
     final PaintServer shaderFunc = (Rect bounds) {
       Vector3 from, to;
       Matrix4 transform = originalTransform?.clone() ?? Matrix4.identity();
@@ -335,9 +348,10 @@ class _Elements {
       id,
       shaderFunc,
     );
+    return null;
   }
 
-  static void clipPath(_SvgParserState parserState) {
+  static Future<void> clipPath(_SvgParserState parserState) {
     final String id = buildUrlIri(parserState.attributes);
 
     final List<Path> paths = <Path>[];
@@ -360,11 +374,84 @@ class _Elements {
           currentPath.addPath(nextPath, Offset.zero);
         }
       } else {
-        print('Unsupported clipPath child ${parserState.reader.name.local}');
+        FlutterError.reportError(FlutterErrorDetails(
+          exception: UnsupportedError(
+              'Unsupported clipPath child ${parserState.reader.name.local}'),
+          informationCollector: (StringBuffer buff) {
+            buff.writeln(
+                'The <clipPath> element contained an unsupported child ${parserState.reader.name.local}');
+            if (parserState.key != null) {
+              buff.writeln();
+              buff.writeln('Picture key: ${parserState.key}');
+            }
+          },
+          library: 'SVG',
+          context: 'in _Element.clipPath',
+        ));
       }
     }
 
     parserState.definitions.addClipPath(id, paths);
+    return null;
+  }
+
+  static Future<void> image(_SvgParserState parserState) async {
+    final String href = getHrefAttribute(parserState.attributes);
+    final Offset offset = Offset(
+      double.parse(getAttribute(parserState.attributes, 'x', def: '0')),
+      double.parse(getAttribute(parserState.attributes, 'y', def: '0')),
+    );
+    final Size size = Size(
+      double.parse(getAttribute(parserState.attributes, 'width', def: '0')),
+      double.parse(getAttribute(parserState.attributes, 'height', def: '0')),
+    );
+    final Image image = await _resolveImage(href);
+    DrawableRasterImage(image, offset, size: size);
+  }
+
+  static Future<void> text(_SvgParserState parserState) async {
+    final Offset offset = Offset(
+        double.parse(getAttribute(parserState.attributes, 'x', def: '0')),
+        double.parse(getAttribute(parserState.attributes, 'y', def: '0')));
+    final DrawableStyle style = _parseStyle(
+      parserState.attributes,
+      parserState.definitions,
+      parserState.rootBounds,
+      parserState.currentGroup.style,
+    );
+
+    final ParagraphBuilder fill = ParagraphBuilder(ParagraphStyle());
+    final ParagraphBuilder stroke = ParagraphBuilder(ParagraphStyle());
+
+    final DrawableTextAnchorPosition textAnchor = parseTextAnchor(
+      getAttribute(parserState.attributes, 'text-anchor', def: 'start'),
+    );
+
+    final int depth = parserState.reader.depth;
+    DrawableStyle childStyle = style;
+    while (parserState.reader.read() && depth <= parserState.reader.depth) {
+      switch (parserState.reader.nodeType) {
+        case XmlPushReaderNodeType.CDATA:
+        case XmlPushReaderNodeType.TEXT:
+          _appendParagraphs(fill, stroke, parserState.reader.value, childStyle);
+          break;
+        case XmlPushReaderNodeType.ELEMENT:
+          childStyle = _parseStyle(parserState.attributes,
+              parserState.definitions, parserState.rootBounds, childStyle);
+          fill.pop();
+          stroke.pop();
+          break;
+        default:
+          break;
+      }
+    }
+
+    parserState.currentGroup.children.add(DrawableText(
+      _finishParagraph(fill),
+      _finishParagraph(stroke),
+      offset,
+      textAnchor,
+    ));
   }
 }
 
@@ -443,24 +530,48 @@ class _Paths {
   }
 }
 
+class _SvgGroupTuple {
+  _SvgGroupTuple(this.name, this.drawable);
+
+  final String name;
+  final DrawableParent drawable;
+}
+
 class _SvgParserState {
-  _SvgParserState(this.reader) : assert(reader != null);
+  _SvgParserState(this.reader, this.key) : assert(reader != null);
 
   final XmlPushReader reader;
+  final String key;
   final DrawableDefinitionServer definitions = DrawableDefinitionServer();
-  final Queue<DrawableParent> parentDrawables = ListQueue<DrawableParent>(10);
+  final Queue<_SvgGroupTuple> parentDrawables = ListQueue<_SvgGroupTuple>(10);
   DrawableRoot root;
 
   List<XmlAttribute> get attributes => reader.attributes;
 
-  void addShape(_PathFunc pathFunc) {
-    assert(pathFunc != null);
-    final DrawableParent parent = parentDrawables.last;
+  DrawableParent get currentGroup => parentDrawables.last.drawable;
+
+  Rect get rootBounds {
+    assert(root != null, 'Cannot get rootBounds with null root');
+    assert(root.viewport != null);
+    return root.viewport.viewBoxRect;
+  }
+
+  void addGroup(DrawableParent drawable) {
+    parentDrawables.addLast(_SvgGroupTuple(reader.name.local, drawable));
+  }
+
+  bool addShape() {
+    final _PathFunc pathFunc = _pathFuncs[reader.name.local];
+    if (pathFunc == null) {
+      return false;
+    }
+
+    final DrawableParent parent = parentDrawables.last.drawable;
     final DrawableStyle parentStyle = parent.style;
     final Path path = pathFunc(attributes);
     final DrawableStyleable drawable = DrawableSvgShape(
       path,
-      parseStyle(
+      _parseStyle(
         attributes,
         definitions,
         path.getBounds(),
@@ -472,33 +583,61 @@ class _SvgParserState {
     parent.children.add(drawable);
 
     _checkForIri(drawable, this);
+    return true;
+  }
+
+  void maybePopGroup() {
+    if (reader.name.local == parentDrawables.last.name) {
+      parentDrawables.removeLast();
+    }
+  }
+
+  void unhandledElement() {
+    if (reader.name.local == 'style') {
+      FlutterError.reportError(FlutterErrorDetails(
+        exception: UnimplementedError(
+            'The <style> element is not implemented in this library.'),
+        informationCollector: (StringBuffer buff) {
+          buff.writeln(
+              'Style elements are not supported by this library and the requested SVG may not '
+              'render as intended.\n'
+              'If possible, ensure the SVG uses inline styles and/or attributes (which are '
+              'supported), or use a preprocessing utility such as svgcleaner to inline the '
+              'styles for you.');
+          buff.writeln();
+          buff.writeln('Picture key: $key');
+        },
+        library: 'SVG',
+        context: 'in parseSvgElement',
+      ));
+    } else if (_unhandledElements.add(reader.name.local)) {
+      print('unhandled element ${reader.name.local}; Picture key: $key');
+    }
   }
 }
 
 class SvgParser {
   _SvgParserState _state;
 
-  Future<DrawableRoot> parse(String str) async {
-    _state = _SvgParserState(XmlPushReader(str));
+  Future<DrawableRoot> parse(String str, {String key}) async {
+    _state = _SvgParserState(XmlPushReader(str), key);
     while (_state.reader.read()) {
       switch (_state.reader.nodeType) {
         case XmlPushReaderNodeType.ELEMENT:
-          final _PathFunc pathFunc = _pathFuncs[_state.reader.name.local];
-          if (pathFunc != null) {
-            _state.addShape(pathFunc);
+          if (_state.addShape()) {
             continue;
           }
           final _ParseFunc parseFunc = _parsers[_state.reader.name.local];
-          if (parseFunc == null) {
-            print('Unhandled Element ${_state.reader.name}');
-          } else {
-            parseFunc(_state);
-          }
+          await parseFunc?.call(_state);
+          assert(() {
+            if (parseFunc == null && _state.reader.name.local != 'defs') {
+              _state.unhandledElement();
+            }
+            return true;
+          }());
           break;
         case XmlPushReaderNodeType.END_ELEMENT:
-          if (_groupNames.contains(_state.reader.name.local)) {
-            _state.parentDrawables.removeLast();
-          }
+          _state.maybePopGroup();
           break;
         // comments, doctype, and process instructions are ignored.
         case XmlPushReaderNodeType.COMMENT:
@@ -510,7 +649,93 @@ class SvgParser {
           break;
       }
     }
-
     return _state.root;
   }
+}
+
+Future<Image> _resolveImage(String href) async {
+  if (href == null || href == '') {
+    return null;
+  }
+
+  final Function decodeImage = (Uint8List bytes) async {
+    final Codec codec = await instantiateImageCodec(bytes);
+    final FrameInfo frame = await codec.getNextFrame();
+    return frame.image;
+  };
+
+  if (href.startsWith('http')) {
+    final Uint8List bytes = await httpGet(href);
+    return decodeImage(bytes);
+  }
+
+  if (href.startsWith('data:')) {
+    final int commaLocation = href.indexOf(',') + 1;
+    final Uint8List bytes = base64.decode(href.substring(commaLocation));
+    return decodeImage(bytes);
+  }
+
+  throw UnsupportedError('Could not resolve image href: $href');
+}
+
+const DrawablePaint _transparentStroke =
+    DrawablePaint(PaintingStyle.stroke, color: Color(0x0));
+void _appendParagraphs(ParagraphBuilder fill, ParagraphBuilder stroke,
+    String text, DrawableStyle style) {
+  fill
+    ..pushStyle(
+        style.textStyle.toFlutterTextStyle(foregroundOverride: style.fill))
+    ..addText(text);
+
+  stroke
+    ..pushStyle(style.textStyle.toFlutterTextStyle(
+        foregroundOverride:
+            style.stroke == null ? _transparentStroke : style.stroke))
+    ..addText(text);
+}
+
+final ParagraphConstraints _infiniteParagraphConstraints =
+    ParagraphConstraints(width: double.infinity);
+
+Paragraph _finishParagraph(ParagraphBuilder paragraphBuilder) {
+  final Paragraph paragraph = paragraphBuilder.build();
+  paragraph.layout(_infiniteParagraphConstraints);
+  return paragraph;
+}
+
+/// Parses style attributes or @style attribute.
+///
+/// Remember that @style attribute takes precedence.
+DrawableStyle _parseStyle(
+  List<XmlAttribute> attributes,
+  DrawableDefinitionServer definitions,
+  Rect bounds,
+  DrawableStyle parentStyle, {
+  bool needsTransform = false,
+}) {
+  final Matrix4 transform = needsTransform
+      ? parseTransform(getAttribute(attributes, 'transform'))
+      : null;
+
+  return DrawableStyle.mergeAndBlend(
+    parentStyle,
+    transform: transform?.storage,
+    stroke: parseStroke(attributes, bounds, definitions, parentStyle?.stroke),
+    dashArray: parseDashArray(attributes),
+    dashOffset: parseDashOffset(attributes),
+    fill: parseFill(attributes, bounds, definitions, parentStyle?.fill),
+    pathFillType: parseFillRule(
+      attributes,
+      'fill-rule',
+      parentStyle != null ? null : 'nonzero',
+    ),
+    groupOpacity: parseOpacity(attributes),
+    clipPath: parseClipPath(attributes, definitions),
+    textStyle: DrawableTextStyle(
+      fontFamily: getAttribute(attributes, 'font-family'),
+      fontSize: parseFontSize(getAttribute(attributes, 'font-size'),
+          parentValue: parentStyle?.textStyle?.fontSize),
+      height: -1.0,
+    ),
+  );
 }
