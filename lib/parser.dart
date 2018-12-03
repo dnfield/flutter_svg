@@ -46,13 +46,6 @@ const Map<String, _PathFunc> _pathFuncs = <String, _PathFunc>{
   'line': _Paths.line,
 };
 
-void _checkForIri(DrawableStyleable drawable, _SvgParserState parserState) {
-  final String iri = buildUrlIri(parserState.attributes);
-  if (iri != emptyUrlIri) {
-    parserState.definitions.addDrawable(iri, drawable);
-  }
-}
-
 double _parseDecimalOrPercentage(String val, {double multiplier = 1.0}) {
   if (_isPercentage(val)) {
     return _parsePercentage(val, multiplier: multiplier);
@@ -94,9 +87,10 @@ class _Elements {
         needsTransform: true,
       ),
     );
-    parent.children.add(group);
+    if (!parserState.inDefs) {
+      parent.children.add(group);
+    }
     parserState.addGroup(group);
-    _checkForIri(group, parserState);
     return null;
   }
 
@@ -113,7 +107,6 @@ class _Elements {
       ),
     );
     parserState.addGroup(group);
-    _checkForIri(group, parserState);
     return null;
   }
 
@@ -261,22 +254,21 @@ class _Elements {
     final String y1 = getAttribute(parserState.attributes, 'y1', def: '0%');
     final String y2 = getAttribute(parserState.attributes, 'y2', def: '0%');
     final String id = buildUrlIri(parserState.attributes);
-
+    final Matrix4 originalTransform = parseTransform(
+      getAttribute(parserState.attributes, 'gradientTransform', def: null),
+    );
     final TileMode spreadMethod = parseTileMode(parserState.attributes);
 
     final List<Color> colors = <Color>[];
     final List<double> offsets = <double>[];
     parseStops(parserState.reader, colors, offsets);
-
-    final Matrix4 originalTransform = parseTransform(
-      getAttribute(parserState.attributes, 'gradientTransform', def: null),
-    );
     final Rect rootBounds = Rect.fromLTRB(
       parserState.rootBounds.left,
       parserState.rootBounds.top,
       parserState.rootBounds.right,
       parserState.rootBounds.bottom,
     );
+
     final PaintServer shaderFunc = (Rect bounds) {
       Vector3 from, to;
       Matrix4 transform = originalTransform?.clone() ?? Matrix4.identity();
@@ -406,7 +398,9 @@ class _Elements {
       double.parse(getAttribute(parserState.attributes, 'height', def: '0')),
     );
     final Image image = await _resolveImage(href);
-    DrawableRasterImage(image, offset, size: size);
+    parserState.currentGroup.children.add(
+      DrawableRasterImage(image, offset, size: size),
+    );
   }
 
   static Future<void> text(_SvgParserState parserState) async {
@@ -545,6 +539,7 @@ class _SvgParserState {
   final DrawableDefinitionServer definitions = DrawableDefinitionServer();
   final Queue<_SvgGroupTuple> parentDrawables = ListQueue<_SvgGroupTuple>(10);
   DrawableRoot root;
+  bool inDefs = false;
 
   List<XmlAttribute> get attributes => reader.attributes;
 
@@ -556,8 +551,18 @@ class _SvgParserState {
     return root.viewport.viewBoxRect;
   }
 
+  bool checkForIri(DrawableStyleable drawable) {
+    final String iri = buildUrlIri(attributes);
+    if (iri != emptyUrlIri) {
+      definitions.addDrawable(iri, drawable);
+      return true;
+    }
+    return false;
+  }
+
   void addGroup(DrawableParent drawable) {
     parentDrawables.addLast(_SvgGroupTuple(reader.name.local, drawable));
+    checkForIri(drawable);
   }
 
   bool addShape() {
@@ -579,16 +584,27 @@ class _SvgParserState {
       ),
       parseTransform(getAttribute(attributes, 'transform')),
     );
-
-    parent.children.add(drawable);
-
-    _checkForIri(drawable, this);
+    final bool isIri = checkForIri(drawable);
+    if (!inDefs || !isIri) {
+      parent.children.add(drawable);
+    }
     return true;
   }
 
-  void maybePopGroup() {
+  bool startElement() {
+    if (reader.name.local == 'defs') {
+      inDefs = true;
+      return true;
+    }
+    return addShape();
+  }
+
+  void endElement() {
     if (reader.name.local == parentDrawables.last.name) {
       parentDrawables.removeLast();
+    }
+    if (reader.name.local == 'defs') {
+      inDefs = false;
     }
   }
 
@@ -624,20 +640,20 @@ class SvgParser {
     while (_state.reader.read()) {
       switch (_state.reader.nodeType) {
         case XmlPushReaderNodeType.ELEMENT:
-          if (_state.addShape()) {
+          if (_state.startElement()) {
             continue;
           }
           final _ParseFunc parseFunc = _parsers[_state.reader.name.local];
           await parseFunc?.call(_state);
           assert(() {
-            if (parseFunc == null && _state.reader.name.local != 'defs') {
+            if (parseFunc == null) {
               _state.unhandledElement();
             }
             return true;
           }());
           break;
         case XmlPushReaderNodeType.END_ELEMENT:
-          _state.maybePopGroup();
+          _state.endElement();
           break;
         // comments, doctype, and process instructions are ignored.
         case XmlPushReaderNodeType.COMMENT:
