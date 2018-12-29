@@ -157,7 +157,7 @@ have also come or been adapted from issues raised in this repository.
 
 SVGs in `/assets/wikimedia` are pulled from [Wikimedia Commons](https://commons.wikimedia.org/wiki/Main_Page)
 
-Android Drawables in `assets/android_vd` are pulled from Android Documentation
+Android Drawables in `/assets/android_vd` are pulled from Android Documentation
 and examples.
 
 The Flutter Logo created based on the Flutter Logo Widget © Google.
@@ -166,7 +166,7 @@ The Dart logo is from
 [dartlang.org](https://github.com/dart-lang/site-shared/blob/master/src/_assets/images/dart/logo%2Btext/horizontal/original.svg)
 © Google
 
-SVGs in `/assets/noto-emoji` are from (Google i18n noto-emoji)[https://github.com/googlei18n/noto-emoji],
+SVGs in `/assets/noto-emoji` are from [Google i18n noto-emoji](https://github.com/googlei18n/noto-emoji),
 licensed under the Apache license.
 
 Please submit SVGs this can't render properly (e.g. that don't render here the
