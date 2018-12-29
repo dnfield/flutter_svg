@@ -124,7 +124,7 @@ of something that's broken.
   specific interactivity, which isn't supported or planned.
 - Inheritance of inheritable properties (~~necessary? preprocess?~~ significant
   progress, still some rough edges, particularly for definitions).
-- Support for minimal CSS/styles? See also [svgcleaner](https://github.com/razrfalcon/svgcleaner)
+- Support for minimal CSS/styles? See also [usvg](https://github.com/RazrFalcon/resvg/tree/master/usvg)
   (partial style attribute mostly supported).
 - Markers.
 - Filters/effects (will require upstream engine changes, but doable).
@@ -139,7 +139,7 @@ of something that's broken.
 - SMIL animations. That just seems crazy. I think it'll be possible to animate
   the SVG but probably in a more Flutter driven way.
 - Interactivity/events in SVG.
-- Full (any?) CSS support - preprocess your SVGs (perhaps with svgcleaner to get
+- Full (any?) CSS support - preprocess your SVGs (perhaps with [usvg](https://github.com/RazrFalcon/resvg/tree/master/usvg) to get
   rid of all CSS?).
 - Scripting in SVGs
 - Foreign elements
