@@ -230,8 +230,9 @@ void _appendParagraphs(ParagraphBuilder fill, ParagraphBuilder stroke,
 
   stroke
     ..pushStyle(style.textStyle.toFlutterTextStyle(
-        foregroundOverride:
-          DrawablePaint.isEmpty(style.stroke) ? _transparentStroke : style.stroke))
+        foregroundOverride: DrawablePaint.isEmpty(style.stroke)
+            ? _transparentStroke
+            : style.stroke))
     ..addText(text);
 }
 
@@ -258,7 +259,7 @@ Drawable _paragraphParser(
   for (XmlNode child in parent.children) {
     switch (child.nodeType) {
       case XmlNodeType.CDATA:
-          _appendParagraphs(fill, stroke, child.text, style);
+        _appendParagraphs(fill, stroke, child.text, style);
         break;
       case XmlNodeType.TEXT:
         if (child.text.trim().isNotEmpty) {
@@ -272,20 +273,24 @@ Drawable _paragraphParser(
         final ParagraphBuilder stroke = ParagraphBuilder(ParagraphStyle());
         final String x = getAttribute(child, 'x', def: null);
         final String y = getAttribute(child, 'y', def: null);
-        final Offset staticOffset = Offset(x!=null ? double.parse(x) : null,
-            y!=null ? double.parse(y) : null);
-        final Offset relativeOffset = Offset(double.parse(getAttribute(child, 'dx', def: '0')),
+        final Offset staticOffset = Offset(x != null ? double.parse(x) : null,
+            y != null ? double.parse(y) : null);
+        final Offset relativeOffset = Offset(
+            double.parse(getAttribute(child, 'dx', def: '0')),
             double.parse(getAttribute(child, 'dy', def: '0')));
-        final Offset offset = Offset(staticOffset.dx ?? (currentOffset.dx + relativeOffset.dx),
+        final Offset offset = Offset(
+            staticOffset.dx ?? (currentOffset.dx + relativeOffset.dx),
             staticOffset.dy ?? (currentOffset.dy + relativeOffset.dy));
-        final Drawable drawable = _paragraphParser(fill, stroke, offset, textAnchor, definitions,
-            bounds, child, childStyle);
+        final Drawable drawable = _paragraphParser(fill, stroke, offset,
+            textAnchor, definitions, bounds, child, childStyle);
         fill.pop();
         stroke.pop();
         children.add(drawable);
-        if (drawable is DrawableText){
+        if (drawable is DrawableText) {
           drawable.fill.layout(ParagraphConstraints(width: double.infinity));
-          currentOffset = Offset(currentOffset.dx + drawable.fill.maxIntrinsicWidth, currentOffset.dy);
+          currentOffset = Offset(
+              currentOffset.dx + drawable.fill.maxIntrinsicWidth,
+              currentOffset.dy);
         }
         break;
       default:
@@ -298,7 +303,7 @@ Drawable _paragraphParser(
     parentOffset,
     textAnchor,
   ));
-  if (children.length==1){
+  if (children.length == 1) {
     return children.elementAt(0);
   }
   return DrawableGroup(children, style);
@@ -317,9 +322,8 @@ Drawable parseSvgText(XmlElement el, DrawableDefinitionServer definitions,
   final DrawableTextAnchorPosition textAnchor =
       parseTextAnchor(getAttribute(el, 'text-anchor', def: 'start'));
 
-  return _paragraphParser(fill, stroke, offset, textAnchor, definitions, bounds, el, style);
-
-
+  return _paragraphParser(
+      fill, stroke, offset, textAnchor, definitions, bounds, el, style);
 }
 
 /// Parses an SVG <g> element.
@@ -374,18 +378,19 @@ DrawableStyle parseStyle(
     clipPath: parseClipPath(el, definitions),
     textStyle: DrawableTextStyle(
       fontFamily: getAttribute(el, 'font-family', def: null),
-      fontWeight: getFontWeightByName(getAttribute(el, 'font-weight', def: null)),
+      fontWeight:
+          getFontWeightByName(getAttribute(el, 'font-weight', def: null)),
       fontSize: parseFontSize(getAttribute(el, 'font-size'),
           parentValue: parentStyle?.textStyle?.fontSize),
     ),
   );
 }
 
-FontWeight getFontWeightByName(String fontWeight){
-  if (fontWeight==null) {
+FontWeight getFontWeightByName(String fontWeight) {
+  if (fontWeight == null) {
     return null;
   }
-  switch(fontWeight){
+  switch (fontWeight) {
     case '100':
       return FontWeight.w100;
     case '200':
