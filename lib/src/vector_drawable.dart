@@ -58,7 +58,7 @@ class DrawableStyle {
   /// Used where 'dasharray' is 'none'
   ///
   /// This will not result in a drawing operation, but will clear out
-  /// inheritence.
+  /// inheritance.
   static final CircularIntervalList<double> emptyDashArray =
       CircularIntervalList<double>(const <double>[]);
 
@@ -317,6 +317,7 @@ class DrawableTextStyle {
     this.height,
     this.locale,
     this.textBaseline,
+    this.anchor,
   });
 
   factory DrawableTextStyle.merge(DrawableTextStyle a, DrawableTextStyle b) {
@@ -341,6 +342,8 @@ class DrawableTextStyle {
       locale: a.locale ?? b.locale,
       background: a.background ?? b.background,
       foreground: a.foreground ?? b.foreground,
+      // anchor: a.anchor != DrawableTextAnchorPosition.start ? a.anchor ?? b.anchor : b.anchor,
+      anchor: a.anchor ?? b.anchor,
     );
   }
 
@@ -358,6 +361,7 @@ class DrawableTextStyle {
   final Locale locale;
   final DrawablePaint background;
   final DrawablePaint foreground;
+  final DrawableTextAnchorPosition anchor;
 
   TextStyle toFlutterTextStyle({DrawablePaint foregroundOverride}) {
     return TextStyle(
@@ -380,22 +384,29 @@ class DrawableTextStyle {
   }
 
   @override
-  String toString() {
-    return 'DrawableTextStyle{$decoration,$decorationColor,$decorationStyle,$fontWeight,$fontFamily,$fontSize,$fontStyle,$foreground,$background,$letterSpacing,$wordSpacing,$height,$locale,$textBaseline}';
-  }
+  String toString() =>
+      'DrawableTextStyle{$decoration,$decorationColor,$decorationStyle,$fontWeight,'
+      '$fontFamily,$fontSize,$fontStyle,$foreground,$background,$letterSpacing,$wordSpacing,$height,'
+      '$locale,$textBaseline,$anchor}';
 }
 
 enum DrawableTextAnchorPosition { start, middle, end }
 
 // WIP.  This only handles very, very minimal use cases right now.
 class DrawableText implements Drawable {
-  DrawableText(this.fill, this.stroke, this.offset, this.anchor)
-      : assert(fill != null || stroke != null);
+  DrawableText(
+    this.fill,
+    this.stroke,
+    this.offset,
+    this.anchor, {
+    this.transform,
+  }) : assert(fill != null || stroke != null);
 
   final Offset offset;
   final DrawableTextAnchorPosition anchor;
   final Paragraph fill;
   final Paragraph stroke;
+  final Float64List transform;
 
   @override
   bool get hasDrawableContent =>
@@ -406,11 +417,18 @@ class DrawableText implements Drawable {
     if (!hasDrawableContent) {
       return;
     }
+    if (transform != null) {
+      canvas.save();
+      canvas.transform(transform);
+    }
     if (fill != null) {
       canvas.drawParagraph(fill, resolveOffset(fill, anchor, offset));
     }
     if (stroke != null) {
       canvas.drawParagraph(stroke, resolveOffset(stroke, anchor, offset));
+    }
+    if (transform != null) {
+      canvas.restore();
     }
   }
 
@@ -424,12 +442,23 @@ class DrawableText implements Drawable {
     assert(offset != null);
     switch (anchor) {
       case DrawableTextAnchorPosition.middle:
-        return Offset(offset.dx - paragraph.minIntrinsicWidth / 2, offset.dy);
+        return Offset(
+          offset.dx - paragraph.minIntrinsicWidth / 2,
+          offset.dy - paragraph.alphabeticBaseline,
+        );
         break;
       case DrawableTextAnchorPosition.end:
-        return Offset(offset.dx - paragraph.minIntrinsicWidth, offset.dy);
+        return Offset(
+          offset.dx - paragraph.minIntrinsicWidth,
+          offset.dy - paragraph.alphabeticBaseline,
+        );
         break;
       case DrawableTextAnchorPosition.start:
+        return Offset(
+          offset.dx,
+          offset.dy - paragraph.alphabeticBaseline,
+        );
+        break;
       default:
         return offset;
         break;
@@ -679,7 +708,7 @@ class DrawableRoot implements DrawableParent {
 /// Represents an element that is not rendered and has no chidlren, e.g.
 /// a descriptive element.
 // TODO(dnfield): tie some of this into semantics/accessibility
-class DrawableNoop implements Drawable {
+class DrawableNoop implements DrawableStyleable {
   const DrawableNoop(this.name);
 
   final String name;
@@ -689,6 +718,15 @@ class DrawableNoop implements Drawable {
 
   @override
   void draw(Canvas canvas, ColorFilter colorFilter) {}
+
+  @override
+  DrawableStyleable mergeStyle(DrawableStyle newStyle) => this;
+
+  @override
+  DrawableStyleable replaceStyle(DrawableStyle newStyle) => this;
+
+  @override
+  DrawableStyle get style => null;
 }
 
 /// Represents a group of drawing elements that may share a common `transform`,

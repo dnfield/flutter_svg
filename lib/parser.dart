@@ -349,12 +349,13 @@ class _Elements {
     final List<Path> paths = <Path>[];
     Path currentPath;
     final int depth = parserState.reader.depth;
-
     while (parserState.reader.read() && depth < parserState.reader.depth) {
       final _PathFunc pathFn = _pathFuncs[parserState.reader.name.local];
       if (pathFn != null) {
         final Path nextPath = applyTransformIfNeeded(
-            pathFn(parserState.attributes), parserState.attributes);
+          pathFn(parserState.attributes),
+          parserState.attributes,
+        );
         nextPath.fillType = parseFillRule(parserState.attributes, 'clip-rule');
         if (currentPath != null && nextPath.fillType != currentPath.fillType) {
           currentPath = nextPath;
@@ -365,6 +366,20 @@ class _Elements {
         } else {
           currentPath.addPath(nextPath, Offset.zero);
         }
+      } else if (parserState.reader.name.local == 'use') {
+        final String xlinkHref = getHrefAttribute(parserState.attributes);
+        final DrawableStyleable definitionDrawable =
+            parserState.definitions.getDrawable('url($xlinkHref)');
+
+        void extractPathsFromDrawable(Drawable target) {
+          if (target is DrawableShape) {
+            paths.add(target.path);
+          } else if (target is DrawableGroup) {
+            target.children.forEach(extractPathsFromDrawable);
+          }
+        }
+
+        extractPathsFromDrawable(definitionDrawable);
       } else {
         FlutterError.reportError(FlutterErrorDetails(
           exception: UnsupportedError(
@@ -382,7 +397,6 @@ class _Elements {
         ));
       }
     }
-
     parserState.definitions.addClipPath(id, paths);
     return null;
   }

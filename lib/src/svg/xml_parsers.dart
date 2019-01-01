@@ -280,7 +280,6 @@ PathFillType parseFillRule(List<XmlAttribute> attributes,
   return parseRawFillRule(rawFillRule);
 }
 
-
 Path applyTransformIfNeeded(Path path, List<XmlAttribute> attributes) {
   assert(path != null);
   assert(attributes != null);
@@ -296,7 +295,9 @@ Path applyTransformIfNeeded(Path path, List<XmlAttribute> attributes) {
 }
 
 List<Path> parseClipPath(
-    List<XmlAttribute> attributes, DrawableDefinitionServer definitions) {
+  List<XmlAttribute> attributes,
+  DrawableDefinitionServer definitions,
+) {
   final String rawClipAttribute = getAttribute(attributes, 'clip-path');
   if (rawClipAttribute != '') {
     return definitions.getClipPath(rawClipAttribute);

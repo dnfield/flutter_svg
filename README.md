@@ -124,7 +124,7 @@ of something that's broken.
   specific interactivity, which isn't supported or planned.
 - Inheritance of inheritable properties (~~necessary? preprocess?~~ significant
   progress, still some rough edges, particularly for definitions).
-- Support for minimal CSS/styles? See also [svgcleaner](https://github.com/razrfalcon/svgcleaner)
+- Support for minimal CSS/styles? See also [usvg](https://github.com/RazrFalcon/resvg/tree/master/usvg)
   (partial style attribute mostly supported).
 - Markers.
 - Filters/effects (will require upstream engine changes, but doable).
@@ -136,7 +136,7 @@ of something that's broken.
 - SMIL animations. That just seems crazy. I think it'll be possible to animate
   the SVG but probably in a more Flutter driven way.
 - Interactivity/events in SVG.
-- Full (any?) CSS support - preprocess your SVGs (perhaps with svgcleaner to get
+- Full (any?) CSS support - preprocess your SVGs (perhaps with [usvg](https://github.com/RazrFalcon/resvg/tree/master/usvg) to get
   rid of all CSS?).
 - Scripting in SVGs
 - Foreign elements
@@ -154,7 +154,7 @@ have also come or been adapted from issues raised in this repository.
 
 SVGs in `/assets/wikimedia` are pulled from [Wikimedia Commons](https://commons.wikimedia.org/wiki/Main_Page)
 
-Android Drawables in `assets/android_vd` are pulled from Android Documentation
+Android Drawables in `/assets/android_vd` are pulled from Android Documentation
 and examples.
 
 The Flutter Logo created based on the Flutter Logo Widget © Google.
@@ -162,6 +162,9 @@ The Flutter Logo created based on the Flutter Logo Widget © Google.
 The Dart logo is from
 [dartlang.org](https://github.com/dart-lang/site-shared/blob/master/src/_assets/images/dart/logo%2Btext/horizontal/original.svg)
 © Google
+
+SVGs in `/assets/noto-emoji` are from [Google i18n noto-emoji](https://github.com/googlei18n/noto-emoji),
+licensed under the Apache license.
 
 Please submit SVGs this can't render properly (e.g. that don't render here the
 way they do in chrome), as long as they're not using anything "probably out of

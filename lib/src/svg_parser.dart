@@ -25,4 +25,3 @@ class DrawableSvgShape extends DrawableShape {
     }
   }
 }
-
