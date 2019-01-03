@@ -59,9 +59,9 @@ final Widget svg = new SvgPicture.asset(
   assetName,
 );
 
-final Widget networkSvg = new SvgImage.network(
+final Widget networkSvg = new SvgPicture.network(
   'https://site-that-takes-a-while.com/image.svg',
-  loadingPlaceholderBuilder: (BuildContext context) => new Container(
+  placeholderBuilder: (BuildContext context) => new Container(
       padding: const EdgeInsets.all(30.0),
       child: const CircularProgressIndicator()),
 );
