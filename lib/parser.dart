@@ -453,36 +453,47 @@ class _Elements {
     // XmlPushReaderNodeType.TEXT/CDATA -> DrawableText
     // Track the style(s) and offset(s) for <text> and <tspan> elements
     final Queue<_TextInfo> textInfos = ListQueue<_TextInfo>();
+    double lastTextWidth = 0;
     final int depth = parserState.reader.depth;
     do {
       switch (parserState.reader.nodeType) {
         case XmlPushReaderNodeType.CDATA:
         case XmlPushReaderNodeType.TEXT:
-          assert(textInfos.isNotEmpty);
           final String value = parserState.reader.value.trim();
           if (value.isEmpty) {
             continue;
           }
-          final ParagraphBuilder fill = ParagraphBuilder(ParagraphStyle());
-          final ParagraphBuilder stroke = ParagraphBuilder(ParagraphStyle());
+          assert(textInfos.isNotEmpty);
           final _TextInfo lastTextInfo = textInfos.last;
-          _appendParagraphs(fill, stroke, value, lastTextInfo.style);
+          final Paragraph fill = _createParagraph(
+            value,
+            lastTextInfo.style,
+            lastTextInfo.style.fill,
+          );
+          final Paragraph stroke = _createParagraph(
+            value,
+            lastTextInfo.style,
+            DrawablePaint.isEmpty(lastTextInfo.style.stroke)
+                ? _transparentStroke
+                : lastTextInfo.style.stroke,
+          );
           parserState.currentGroup.children.add(DrawableText(
-            _finishParagraph(fill),
-            _finishParagraph(stroke),
+            fill,
+            stroke,
             lastTextInfo.offset,
             lastTextInfo.style.textStyle.anchor ??
                 DrawableTextAnchorPosition.start,
             transform: lastTextInfo.style.transform,
           ));
+          lastTextWidth = fill.maxIntrinsicWidth;
           break;
         case XmlPushReaderNodeType.ELEMENT:
           _TextInfo lastTextInfo;
           if (textInfos.isNotEmpty) {
             lastTextInfo = textInfos.last;
           }
-          final Offset currentOffset =
-              _parseCurrentOffset(parserState, lastTextInfo?.offset);
+          final Offset currentOffset = _parseCurrentOffset(
+              parserState, lastTextInfo?.offset?.translate(lastTextWidth, 0));
           textInfos.add(_TextInfo(
             _parseStyle(
               parserState.attributes,
@@ -756,30 +767,23 @@ Future<Image> _resolveImage(String href) async {
   throw UnsupportedError('Could not resolve image href: $href');
 }
 
-const DrawablePaint _transparentStroke =
-    DrawablePaint(PaintingStyle.stroke, color: Color(0x0));
-void _appendParagraphs(ParagraphBuilder fill, ParagraphBuilder stroke,
-    String text, DrawableStyle style) {
-  fill
-    ..pushStyle(
-        style.textStyle.toFlutterTextStyle(foregroundOverride: style.fill))
-    ..addText(text);
-
-  stroke
-    ..pushStyle(style.textStyle.toFlutterTextStyle(
-        foregroundOverride: DrawablePaint.isEmpty(style.stroke)
-            ? _transparentStroke
-            : style.stroke))
-    ..addText(text);
-}
-
 final ParagraphConstraints _infiniteParagraphConstraints =
     ParagraphConstraints(width: double.infinity);
-
-Paragraph _finishParagraph(ParagraphBuilder paragraphBuilder) {
-  final Paragraph paragraph = paragraphBuilder.build();
-  paragraph.layout(_infiniteParagraphConstraints);
-  return paragraph;
+const DrawablePaint _transparentStroke =
+    DrawablePaint(PaintingStyle.stroke, color: Color(0x0));
+Paragraph _createParagraph(
+  String text,
+  DrawableStyle style,
+  DrawablePaint foregroundOverride,
+) {
+  final ParagraphBuilder builder = ParagraphBuilder(ParagraphStyle())
+    ..pushStyle(
+      style.textStyle.toFlutterTextStyle(
+        foregroundOverride: foregroundOverride,
+      ),
+    )
+    ..addText(text);
+  return builder.build()..layout(_infiniteParagraphConstraints);
 }
 
 /// Parses style attributes or @style attribute.
