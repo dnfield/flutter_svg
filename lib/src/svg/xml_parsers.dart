@@ -326,11 +326,11 @@ FontWeight parseFontWeight(String fontWeight) {
       return FontWeight.w600;
     case 'bold':
     case '700':
-      return FontWeight.bold;
-    case '800':
       return FontWeight.w700;
-    case '900':
+    case '800':
       return FontWeight.w800;
+    case '900':
+      return FontWeight.w900;
   }
   throw UnsupportedError('Attribute value for font-weight="$fontWeight"'
       ' is not supported');

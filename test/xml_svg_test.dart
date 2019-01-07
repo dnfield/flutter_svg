@@ -113,4 +113,16 @@ void main() {
     expect(parseDashOffset(abs.attributes), isNotNull);
     expect(parseDashOffset(pct.attributes), isNotNull);
   });
+
+  test('font-weight tests', () {
+    expect(parseFontWeight('100'), FontWeight.w100);
+    expect(parseFontWeight('200'), FontWeight.w200);
+    expect(parseFontWeight('300'), FontWeight.w300);
+    expect(parseFontWeight('400'), FontWeight.w400);
+    expect(parseFontWeight('500'), FontWeight.w500);
+    expect(parseFontWeight('600'), FontWeight.w600);
+    expect(parseFontWeight('700'), FontWeight.w700);
+    expect(parseFontWeight('800'), FontWeight.w800);
+    expect(parseFontWeight('900'), FontWeight.w900);
+  });
 }
