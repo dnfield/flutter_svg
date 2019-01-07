@@ -810,9 +810,11 @@ class DrawableRasterImage implements Drawable {
 
 /// Represents a drawing element that will be rendered to the canvas.
 class DrawableShape implements DrawableStyleable {
-  const DrawableShape(this.path, this.style)
+  const DrawableShape(this.path, this.style, {this.transform})
       : assert(path != null),
         assert(style != null);
+
+  final Float64List transform;
 
   @override
   final DrawableStyle style;
@@ -837,6 +839,11 @@ class DrawableShape implements DrawableStyleable {
 
     // if we have multiple clips to apply, need to wrap this in a loop.
     final Function innerDraw = () {
+      if (transform != null) {
+        canvas.save();
+        canvas.transform(transform);
+      }
+
       if (style.fill?.style != null) {
         assert(style.fill.style == PaintingStyle.fill);
         canvas.drawPath(path, style.fill.toFlutterPaint(colorFilter));
@@ -856,6 +863,10 @@ class DrawableShape implements DrawableStyleable {
         } else {
           canvas.drawPath(path, style.stroke.toFlutterPaint(colorFilter));
         }
+      }
+
+      if (transform != null) {
+        canvas.restore();
       }
     };
 

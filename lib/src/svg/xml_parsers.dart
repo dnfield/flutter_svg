@@ -332,3 +332,47 @@ FontWeight parseFontWeight(String fontWeight) {
   throw UnsupportedError('Attribute value for font-weight="$fontWeight"'
       ' is not supported');
 }
+
+/// Parses style attributes or @style attribute.
+///
+/// Remember that @style attribute takes precedence.
+DrawableStyle parseStyle(
+  List<XmlAttribute> attributes,
+  DrawableDefinitionServer definitions,
+  Rect bounds,
+  DrawableStyle parentStyle, {
+  bool needsTransform = false,
+}) {
+  final Matrix4 transform = needsTransform
+      ? parseTransform(getAttribute(attributes, 'transform'))
+      : null;
+
+  return DrawableStyle.mergeAndBlend(
+    parentStyle,
+    transform: transform?.storage,
+    stroke: parseStroke(attributes, bounds, definitions, parentStyle?.stroke),
+    dashArray: parseDashArray(attributes),
+    dashOffset: parseDashOffset(attributes),
+    fill: parseFill(attributes, bounds, definitions, parentStyle?.fill),
+    pathFillType: parseFillRule(
+      attributes,
+      'fill-rule',
+      parentStyle != null ? null : 'nonzero',
+    ),
+    groupOpacity: parseOpacity(attributes),
+    clipPath: parseClipPath(attributes, definitions),
+    textStyle: DrawableTextStyle(
+      fontFamily: getAttribute(attributes, 'font-family'),
+      fontSize: parseFontSize(
+        getAttribute(attributes, 'font-size'),
+        parentValue: parentStyle?.textStyle?.fontSize,
+      ),
+      fontWeight: parseFontWeight(
+        getAttribute(attributes, 'font-weight', def: null),
+      ),
+      anchor: parseTextAnchor(
+        getAttribute(attributes, 'text-anchor', def: 'inherit'),
+      ),
+    ),
+  );
+}
