@@ -488,7 +488,8 @@ class _Elements {
               parserState.attributes,
               parserState.definitions,
               parserState.rootBounds,
-              lastTextInfo?.style,
+              lastTextInfo?.style ?? parserState.currentGroup.style,
+              needsTransform: true,
             ),
             currentOffset,
           ));
