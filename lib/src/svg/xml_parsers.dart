@@ -281,9 +281,6 @@ PathFillType parseFillRule(List<XmlAttribute> attributes,
 }
 
 Path applyTransformIfNeeded(Path path, List<XmlAttribute> attributes) {
-  assert(path != null);
-  assert(attributes != null);
-
   final Matrix4 transform =
       parseTransform(getAttribute(attributes, 'transform', def: null));
 

@@ -124,5 +124,10 @@ void main() {
     expect(parseFontWeight('700'), FontWeight.w700);
     expect(parseFontWeight('800'), FontWeight.w800);
     expect(parseFontWeight('900'), FontWeight.w900);
+
+    expect(parseFontWeight('normal'), FontWeight.normal);
+    expect(parseFontWeight('bold'), FontWeight.bold);
+
+    expect(() => parseFontWeight('invalid'), throwsUnsupportedError);
   });
 }

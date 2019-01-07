@@ -26,9 +26,6 @@ abstract class DrawableStyleable extends Drawable {
   /// The [DrawableStyle] for this object.
   DrawableStyle get style;
 
-  /// Creates an instance with new style information.
-  DrawableStyleable replaceStyle(DrawableStyle newStyle);
-
   /// Creates an instance with merged style information.
   DrawableStyleable mergeStyle(DrawableStyle newStyle);
 }
@@ -661,22 +658,6 @@ class DrawableRoot implements DrawableParent {
   }
 
   @override
-  DrawableRoot replaceStyle(DrawableStyle newStyle) {
-    assert(newStyle != null);
-    return DrawableRoot(
-      viewport,
-      children.map((Drawable child) {
-        if (child is DrawableStyleable) {
-          return child.replaceStyle(newStyle);
-        }
-        return child;
-      }).toList(),
-      definitions,
-      newStyle,
-    );
-  }
-
-  @override
   DrawableRoot mergeStyle(DrawableStyle newStyle) {
     assert(newStyle != null);
     final DrawableStyle mergedStyle = DrawableStyle.mergeAndBlend(
@@ -703,30 +684,6 @@ class DrawableRoot implements DrawableParent {
       mergedStyle,
     );
   }
-}
-
-/// Represents an element that is not rendered and has no chidlren, e.g.
-/// a descriptive element.
-// TODO(dnfield): tie some of this into semantics/accessibility
-class DrawableNoop implements DrawableStyleable {
-  const DrawableNoop(this.name);
-
-  final String name;
-
-  @override
-  bool get hasDrawableContent => false;
-
-  @override
-  void draw(Canvas canvas, ColorFilter colorFilter) {}
-
-  @override
-  DrawableStyleable mergeStyle(DrawableStyle newStyle) => this;
-
-  @override
-  DrawableStyleable replaceStyle(DrawableStyle newStyle) => this;
-
-  @override
-  DrawableStyle get style => null;
 }
 
 /// Represents a group of drawing elements that may share a common `transform`,
@@ -780,19 +737,6 @@ class DrawableGroup implements DrawableStyleable, DrawableParent {
     } else {
       innerDraw();
     }
-  }
-
-  @override
-  DrawableGroup replaceStyle(DrawableStyle newStyle) {
-    assert(newStyle != null);
-    return DrawableGroup(
-        children.map((Drawable child) {
-          if (child is DrawableStyleable) {
-            return child.replaceStyle(newStyle);
-          }
-          return child;
-        }).toList(),
-        newStyle);
   }
 
   @override
@@ -925,11 +869,6 @@ class DrawableShape implements DrawableStyleable {
     } else {
       innerDraw();
     }
-  }
-
-  @override
-  DrawableShape replaceStyle(DrawableStyle newStyle) {
-    return DrawableShape(path, newStyle);
   }
 
   @override
