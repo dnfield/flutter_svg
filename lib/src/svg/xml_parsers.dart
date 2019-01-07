@@ -305,3 +305,33 @@ List<Path> parseClipPath(
 
   return null;
 }
+
+FontWeight parseFontWeight(String fontWeight) {
+  if (fontWeight == null) {
+    return null;
+  }
+  switch (fontWeight) {
+    case '100':
+      return FontWeight.w100;
+    case '200':
+      return FontWeight.w200;
+    case '300':
+      return FontWeight.w300;
+    case 'normal':
+    case '400':
+      return FontWeight.w400;
+    case '500':
+      return FontWeight.w500;
+    case '600':
+      return FontWeight.w600;
+    case 'bold':
+    case '700':
+      return FontWeight.bold;
+    case '800':
+      return FontWeight.w700;
+    case '900':
+      return FontWeight.w800;
+  }
+  throw UnsupportedError('Attribute value for font-weight="$fontWeight"'
+      ' is not supported');
+}

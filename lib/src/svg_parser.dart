@@ -4,6 +4,7 @@ import 'package:vector_math/vector_math_64.dart';
 
 import 'vector_drawable.dart';
 
+// TOOD(dnfield): move this.
 /// An SVG Shape element that will be drawn to the canvas.
 class DrawableSvgShape extends DrawableShape {
   const DrawableSvgShape(Path path, DrawableStyle style, this.transform)

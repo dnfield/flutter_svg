@@ -60,6 +60,34 @@ double _parsePercentage(String val, {double multiplier = 1.0}) {
 
 bool _isPercentage(String val) => val.endsWith('%');
 
+Offset _parseCurrentOffset(_SvgParserState parserState, Offset lastOffset) {
+  final String x = parserState.attribute('x', def: null);
+  final String y = parserState.attribute('y', def: null);
+
+  return Offset(
+    x != null
+        ? double.parse(x)
+        : double.parse(parserState.attribute('dx', def: '0')) +
+            (lastOffset?.dx ?? 0),
+    y != null
+        ? double.parse(y)
+        : double.parse(parserState.attribute('dy', def: '0')) +
+            (lastOffset?.dy ?? 0),
+  );
+}
+
+class _TextInfo {
+  const _TextInfo(
+    this.style,
+    this.offset,
+  );
+  final DrawableStyle style;
+  final Offset offset;
+
+  @override
+  String toString() => '$runtimeType{$offset, $style}';
+}
+
 class _Elements {
   static Future<void> svg(_SvgParserState parserState) {
     final DrawableViewport viewBox = parseViewBox(parserState.attributes);
@@ -120,8 +148,8 @@ class _Elements {
     );
     final Matrix4 transform = Matrix4.identity()
       ..translate(
-        double.parse(getAttribute(parserState.attributes, 'x', def: '0')),
-        double.parse(getAttribute(parserState.attributes, 'y', def: '0')),
+        double.parse(parserState.attribute('x', def: '0')),
+        double.parse(parserState.attribute('y', def: '0')),
       );
     final DrawableStyleable ref =
         parserState.definitions.getDrawable('url($xlinkHref)');
@@ -163,15 +191,15 @@ class _Elements {
         def: 'objectBoundingBox');
     final bool isObjectBoundingBox = gradientUnits == 'objectBoundingBox';
 
-    final String rawCx = getAttribute(parserState.attributes, 'cx', def: '50%');
-    final String rawCy = getAttribute(parserState.attributes, 'cy', def: '50%');
-    final String rawR = getAttribute(parserState.attributes, 'r', def: '50%');
-    final String rawFx = getAttribute(parserState.attributes, 'fx', def: rawCx);
-    final String rawFy = getAttribute(parserState.attributes, 'fy', def: rawCy);
+    final String rawCx = parserState.attribute('cx', def: '50%');
+    final String rawCy = parserState.attribute('cy', def: '50%');
+    final String rawR = parserState.attribute('r', def: '50%');
+    final String rawFx = parserState.attribute('fx', def: rawCx);
+    final String rawFy = parserState.attribute('fy', def: rawCy);
     final TileMode spreadMethod = parseTileMode(parserState.attributes);
     final String id = buildUrlIri(parserState.attributes);
     final Matrix4 originalTransform = parseTransform(
-      getAttribute(parserState.attributes, 'gradientTransform', def: null),
+      parserState.attribute('gradientTransform', def: null),
     );
 
     final List<double> offsets = <double>[];
@@ -249,13 +277,13 @@ class _Elements {
         def: 'objectBoundingBox');
     final bool isObjectBoundingBox = gradientUnits == 'objectBoundingBox';
 
-    final String x1 = getAttribute(parserState.attributes, 'x1', def: '0%');
-    final String x2 = getAttribute(parserState.attributes, 'x2', def: '100%');
-    final String y1 = getAttribute(parserState.attributes, 'y1', def: '0%');
-    final String y2 = getAttribute(parserState.attributes, 'y2', def: '0%');
+    final String x1 = parserState.attribute('x1', def: '0%');
+    final String x2 = parserState.attribute('x2', def: '100%');
+    final String y1 = parserState.attribute('y1', def: '0%');
+    final String y2 = parserState.attribute('y2', def: '0%');
     final String id = buildUrlIri(parserState.attributes);
     final Matrix4 originalTransform = parseTransform(
-      getAttribute(parserState.attributes, 'gradientTransform', def: null),
+      parserState.attribute('gradientTransform', def: null),
     );
     final TileMode spreadMethod = parseTileMode(parserState.attributes);
 
@@ -404,12 +432,12 @@ class _Elements {
   static Future<void> image(_SvgParserState parserState) async {
     final String href = getHrefAttribute(parserState.attributes);
     final Offset offset = Offset(
-      double.parse(getAttribute(parserState.attributes, 'x', def: '0')),
-      double.parse(getAttribute(parserState.attributes, 'y', def: '0')),
+      double.parse(parserState.attribute('x', def: '0')),
+      double.parse(parserState.attribute('y', def: '0')),
     );
     final Size size = Size(
-      double.parse(getAttribute(parserState.attributes, 'width', def: '0')),
-      double.parse(getAttribute(parserState.attributes, 'height', def: '0')),
+      double.parse(parserState.attribute('width', def: '0')),
+      double.parse(parserState.attribute('height', def: '0')),
     );
     final Image image = await _resolveImage(href);
     parserState.currentGroup.children.add(
@@ -418,48 +446,60 @@ class _Elements {
   }
 
   static Future<void> text(_SvgParserState parserState) async {
-    final Offset offset = Offset(
-        double.parse(getAttribute(parserState.attributes, 'x', def: '0')),
-        double.parse(getAttribute(parserState.attributes, 'y', def: '0')));
-    final DrawableStyle style = _parseStyle(
-      parserState.attributes,
-      parserState.definitions,
-      parserState.rootBounds,
-      parserState.currentGroup.style,
-    );
-
-    final ParagraphBuilder fill = ParagraphBuilder(ParagraphStyle());
-    final ParagraphBuilder stroke = ParagraphBuilder(ParagraphStyle());
-
-    final DrawableTextAnchorPosition textAnchor = parseTextAnchor(
-      getAttribute(parserState.attributes, 'text-anchor', def: 'start'),
-    );
-
+    assert(parserState != null);
+    assert(parserState.currentGroup != null);
+    // <text>, <tspan> -> Collect styles
+    // <tref> TBD - looks like Inkscape supports it, but no browser does.
+    // XmlPushReaderNodeType.TEXT/CDATA -> DrawableText
+    // Track the style(s) and offset(s) for <text> and <tspan> elements
+    final Queue<_TextInfo> textInfos = ListQueue<_TextInfo>();
     final int depth = parserState.reader.depth;
-    DrawableStyle childStyle = style;
-    while (parserState.reader.read() && depth <= parserState.reader.depth) {
+    do {
       switch (parserState.reader.nodeType) {
         case XmlPushReaderNodeType.CDATA:
         case XmlPushReaderNodeType.TEXT:
-          _appendParagraphs(fill, stroke, parserState.reader.value, childStyle);
+          assert(textInfos.isNotEmpty);
+          final String value = parserState.reader.value.trim();
+          if (value.isEmpty) {
+            continue;
+          }
+          final ParagraphBuilder fill = ParagraphBuilder(ParagraphStyle());
+          final ParagraphBuilder stroke = ParagraphBuilder(ParagraphStyle());
+          final _TextInfo lastTextInfo = textInfos.last;
+          _appendParagraphs(fill, stroke, value, lastTextInfo.style);
+          parserState.currentGroup.children.add(DrawableText(
+            _finishParagraph(fill),
+            _finishParagraph(stroke),
+            lastTextInfo.offset,
+            lastTextInfo.style.textStyle.anchor ??
+                DrawableTextAnchorPosition.start,
+            transform: lastTextInfo.style.transform,
+          ));
           break;
         case XmlPushReaderNodeType.ELEMENT:
-          childStyle = _parseStyle(parserState.attributes,
-              parserState.definitions, parserState.rootBounds, childStyle);
-          fill.pop();
-          stroke.pop();
+          _TextInfo lastTextInfo;
+          if (textInfos.isNotEmpty) {
+            lastTextInfo = textInfos.last;
+          }
+          final Offset currentOffset =
+              _parseCurrentOffset(parserState, lastTextInfo?.offset);
+          textInfos.add(_TextInfo(
+            _parseStyle(
+              parserState.attributes,
+              parserState.definitions,
+              parserState.rootBounds,
+              lastTextInfo?.style,
+            ),
+            currentOffset,
+          ));
+          break;
+        case XmlPushReaderNodeType.END_ELEMENT:
+          textInfos.removeLast();
           break;
         default:
           break;
       }
-    }
-
-    parserState.currentGroup.children.add(DrawableText(
-      _finishParagraph(fill),
-      _finishParagraph(stroke),
-      offset,
-      textAnchor,
-    ));
+    } while (parserState.reader.read() && depth <= parserState.reader.depth);
   }
 }
 
@@ -557,7 +597,14 @@ class _SvgParserState {
 
   List<XmlAttribute> get attributes => reader.attributes;
 
-  DrawableParent get currentGroup => parentDrawables.last.drawable;
+  String attribute(String name, {String def, String namespace}) =>
+      getAttribute(attributes, name, def: def, namespace: namespace);
+
+  DrawableParent get currentGroup {
+    assert(parentDrawables != null);
+    assert(parentDrawables.isNotEmpty);
+    return parentDrawables.last.drawable;
+  }
 
   Rect get rootBounds {
     assert(root != null, 'Cannot get rootBounds with null root');
@@ -719,8 +766,9 @@ void _appendParagraphs(ParagraphBuilder fill, ParagraphBuilder stroke,
 
   stroke
     ..pushStyle(style.textStyle.toFlutterTextStyle(
-        foregroundOverride:
-            style.stroke == null ? _transparentStroke : style.stroke))
+        foregroundOverride: DrawablePaint.isEmpty(style.stroke)
+            ? _transparentStroke
+            : style.stroke))
     ..addText(text);
 }
 
@@ -763,9 +811,16 @@ DrawableStyle _parseStyle(
     clipPath: parseClipPath(attributes, definitions),
     textStyle: DrawableTextStyle(
       fontFamily: getAttribute(attributes, 'font-family'),
-      fontSize: parseFontSize(getAttribute(attributes, 'font-size'),
-          parentValue: parentStyle?.textStyle?.fontSize),
-      height: -1.0,
+      fontSize: parseFontSize(
+        getAttribute(attributes, 'font-size'),
+        parentValue: parentStyle?.textStyle?.fontSize,
+      ),
+      fontWeight: parseFontWeight(
+        getAttribute(attributes, 'font-weight', def: null),
+      ),
+      anchor: parseTextAnchor(
+        getAttribute(attributes, 'text-anchor', def: 'inherit'),
+      ),
     ),
   );
 }
