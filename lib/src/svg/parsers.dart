@@ -214,8 +214,10 @@ Future<Image> resolveImage(String href) async {
   throw UnsupportedError('Could not resolve image href: $href');
 }
 
+// eventually this can be const, but not while we have to support
+// older Flutter versions
 final ParagraphConstraints _infiniteParagraphConstraints =
-    ParagraphConstraints(width: double.infinity);
+    ParagraphConstraints(width: double.infinity); // ignore: prefer_const_constructors
 const DrawablePaint transparentStroke =
     DrawablePaint(PaintingStyle.stroke, color: Color(0x0));
 Paragraph createParagraph(
