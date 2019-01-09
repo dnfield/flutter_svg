@@ -69,6 +69,11 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_analysis_options:
+    dependency: transitive
+    description: flutter
+    source: sdk
+    version: "1.0.0"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -411,12 +416,10 @@ packages:
   xml:
     dependency: "direct main"
     description:
-      path: "."
-      ref: "7b738ca0fc81cc25083c693fe434708d4516089d"
-      resolved-ref: "7b738ca0fc81cc25083c693fe434708d4516089d"
-      url: "git://github.com/renggli/dart-xml.git"
-    source: git
-    version: "3.2.3"
+      name: xml
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "3.2.4"
   yaml:
     dependency: transitive
     description:
@@ -425,5 +428,5 @@ packages:
     source: hosted
     version: "2.1.15"
 sdks:
-  dart: ">2.0.0 <3.0.0"
+  dart: ">=2.1.0 <3.0.0"
   flutter: ">=0.7.3 <2.0.0"
