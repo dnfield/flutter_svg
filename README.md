@@ -131,7 +131,7 @@ of something that's broken.
 - Android Vector Drawable support beyond PoC - I'm willing to put more time into
   this if there's actually demand, but it doesn't come up often.
 
-## Probably out of scope/non-goals.
+## Probably out of scope/non-goals
 
 - SMIL animations. That just seems crazy. I think it'll be possible to animate
   the SVG but probably in a more Flutter driven way.
