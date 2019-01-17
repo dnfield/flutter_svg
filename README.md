@@ -30,16 +30,18 @@ Basic usage (to create an SVG rendering widget from an asset):
 final String assetName = 'assets/image.svg';
 final Widget svg = new SvgPicture.asset(
   assetName,
+  semanticsLabel: 'Acme Logo'
 );
 ```
 
 You can color/tint the image like so:
 
 ```dart
-final String assetName = 'assets/icon.svg';
+final String assetName = 'assets/up_arrow.svg';
 final Widget svgIcon = new SvgPicture.asset(
   assetName,
   color: Colors.red,
+  semanticsLabel: 'A red up arrow'
 );
 ```
 
@@ -61,6 +63,7 @@ final Widget svg = new SvgPicture.asset(
 
 final Widget networkSvg = new SvgPicture.network(
   'https://site-that-takes-a-while.com/image.svg',
+  semanticsLabel: 'A shark?!'
   placeholderBuilder: (BuildContext context) => new Container(
       padding: const EdgeInsets.all(30.0),
       child: const CircularProgressIndicator()),
