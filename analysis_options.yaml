@@ -141,7 +141,6 @@ linter:
     - sort_constructors_first
     - sort_pub_dependencies
     - sort_unnamed_constructors_first
-    - super_goes_last
     - public_member_api_docs
     - test_types_in_equals
     - throw_in_finally
