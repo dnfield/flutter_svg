@@ -110,7 +110,7 @@ linter:
     # - parameter_assignments # we do this commonly
     - prefer_adjacent_string_concatenation
     - prefer_asserts_in_initializer_lists
-    - prefer_collection_literals
+    # - prefer_collection_literals # it's triggering on Set literals which are not ready https://github.com/dart-lang/linter/issues/1411
     - prefer_conditional_assignment
     - prefer_const_constructors
     - prefer_const_constructors_in_immutables
@@ -141,7 +141,6 @@ linter:
     - sort_constructors_first
     - sort_pub_dependencies
     - sort_unnamed_constructors_first
-    - super_goes_last
     - public_member_api_docs
     - test_types_in_equals
     - throw_in_finally
