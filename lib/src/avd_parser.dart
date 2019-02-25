@@ -1,7 +1,7 @@
 // ignore_for_file: public_member_api_docs
 import 'dart:ui';
 
-import 'package:xml/xml.dart';
+import 'package:xml/xml_events.dart';
 import 'package:path_drawing/path_drawing.dart';
 import 'package:vector_math/vector_math_64.dart';
 

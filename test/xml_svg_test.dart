@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import 'package:test/test.dart';
-import 'package:xml/xml.dart';
+import 'package:xml/xml_events.dart';
 
 import 'package:flutter_svg/src/svg/xml_parsers.dart';
 import 'package:flutter_svg/src/utilities/xml.dart';
@@ -19,7 +19,7 @@ void main() {
   });
 
   test('Attribute and style tests', () {
-    final List<XmlAttribute> el =
+    final List<XmlElementAttribute> el =
         parse('<test stroke="#fff" fill="#eee" stroke-dashpattern="1 2" '
                 'style="stroke-opacity:1;fill-opacity:.23" />')
             .rootElement
@@ -58,17 +58,17 @@ void main() {
   test('viewBox tests', () {
     final Rect rect = Rect.fromLTWH(0.0, 0.0, 100.0, 100.0);
 
-    final List<XmlAttribute> svgWithViewBox =
+    final List<XmlElementAttribute> svgWithViewBox =
         parse('<svg viewBox="0 0 100 100" />').rootElement.attributes;
-    final List<XmlAttribute> svgWithViewBoxAndWidthHeight =
+    final List<XmlElementAttribute> svgWithViewBoxAndWidthHeight =
         parse('<svg width="50px" height="50px" viewBox="0 0 100 100" />')
             .rootElement
             .attributes;
-    final List<XmlAttribute> svgWithWidthHeight =
+    final List<XmlElementAttribute> svgWithWidthHeight =
         parse('<svg width="100" height="100" />').rootElement.attributes;
-    final List<XmlAttribute> svgWithViewBoxMinXMinY =
+    final List<XmlElementAttribute> svgWithViewBoxMinXMinY =
         parse('<svg viewBox="42 56 100 100" />').rootElement.attributes;
-    final List<XmlAttribute> svgWithNoSizeInfo =
+    final List<XmlElementAttribute> svgWithNoSizeInfo =
         parse('<svg />').rootElement.attributes;
 
     expect(parseViewBox(svgWithViewBoxAndWidthHeight).size, const Size(50, 50));

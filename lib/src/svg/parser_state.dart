@@ -5,8 +5,7 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:path_drawing/path_drawing.dart';
 import 'package:vector_math/vector_math_64.dart';
-import 'package:xml/xml.dart'
-    show XmlPushReader, XmlPushReaderNodeType, XmlAttribute;
+import 'package:xml/xml_events.dart' hide parseEvents;
 
 import '../utilities/errors.dart';
 import '../utilities/numbers.dart';
@@ -21,7 +20,7 @@ import 'xml_parsers.dart';
 final Set<String> _unhandledElements = Set<String>();
 
 typedef _ParseFunc = Future<void> Function(SvgParserState parserState);
-typedef _PathFunc = Path Function(List<XmlAttribute> attributes);
+typedef _PathFunc = Path Function(List<XmlElementAttribute> attributes);
 
 const Map<String, _ParseFunc> _svgElementParsers = <String, _ParseFunc>{
   'svg': _Elements.svg,
@@ -490,7 +489,7 @@ class _Elements {
 }
 
 class _Paths {
-  static Path circle(List<XmlAttribute> attributes) {
+  static Path circle(List<XmlElementAttribute> attributes) {
     final double cx = parseDouble(getAttribute(attributes, 'cx', def: '0'));
     final double cy = parseDouble(getAttribute(attributes, 'cy', def: '0'));
     final double r = parseDouble(getAttribute(attributes, 'r', def: '0'));
@@ -498,12 +497,12 @@ class _Paths {
     return Path()..addOval(oval);
   }
 
-  static Path path(List<XmlAttribute> attributes) {
+  static Path path(List<XmlElementAttribute> attributes) {
     final String d = getAttribute(attributes, 'd');
     return parseSvgPathData(d);
   }
 
-  static Path rect(List<XmlAttribute> attributes) {
+  static Path rect(List<XmlElementAttribute> attributes) {
     final double x = parseDouble(getAttribute(attributes, 'x', def: '0'));
     final double y = parseDouble(getAttribute(attributes, 'y', def: '0'));
     final double w = parseDouble(getAttribute(attributes, 'width', def: '0'));
@@ -524,15 +523,15 @@ class _Paths {
     return Path()..addRect(rect);
   }
 
-  static Path polygon(List<XmlAttribute> attributes) {
+  static Path polygon(List<XmlElementAttribute> attributes) {
     return parsePathFromPoints(attributes, true);
   }
 
-  static Path polyline(List<XmlAttribute> attributes) {
+  static Path polyline(List<XmlElementAttribute> attributes) {
     return parsePathFromPoints(attributes, false);
   }
 
-  static Path parsePathFromPoints(List<XmlAttribute> attributes, bool close) {
+  static Path parsePathFromPoints(List<XmlElementAttribute> attributes, bool close) {
     final String points = getAttribute(attributes, 'points');
     if (points == '') {
       return null;
@@ -542,7 +541,7 @@ class _Paths {
     return parseSvgPathData(path);
   }
 
-  static Path ellipse(List<XmlAttribute> attributes) {
+  static Path ellipse(List<XmlElementAttribute> attributes) {
     final double cx = parseDouble(getAttribute(attributes, 'cx', def: '0'));
     final double cy = parseDouble(getAttribute(attributes, 'cy', def: '0'));
     final double rx = parseDouble(getAttribute(attributes, 'rx', def: '0'));
@@ -552,7 +551,7 @@ class _Paths {
     return Path()..addOval(r);
   }
 
-  static Path line(List<XmlAttribute> attributes) {
+  static Path line(List<XmlElementAttribute> attributes) {
     final double x1 = parseDouble(getAttribute(attributes, 'x1', def: '0'));
     final double x2 = parseDouble(getAttribute(attributes, 'x2', def: '0'));
     final double y1 = parseDouble(getAttribute(attributes, 'y1', def: '0'));
@@ -578,22 +577,23 @@ class SvgParserState {
   /// Creates a new [SvgParserState].
   SvgParserState(this._reader, this._key) : assert(_reader != null);
 
-  final XmlPushReader _reader;
+  final Iterable<XmlEvent> _reader;
   final String _key;
   final DrawableDefinitionServer _definitions = DrawableDefinitionServer();
   final Queue<_SvgGroupTuple> _parentDrawables = ListQueue<_SvgGroupTuple>(10);
   DrawableRoot _root;
   bool _inDefs = false;
+  List<XmlElementAttribute> _currentAttributes;
 
   /// Drive the [XmlTextReader] to EOF and produce a [DrawableRoot].
   Future<DrawableRoot> parse() async {
-    while (_reader.read()) {
-      switch (_reader.nodeType) {
-        case XmlPushReaderNodeType.ELEMENT:
-          if (startElement()) {
+    for (XmlEvent node in _reader) {
+      if (node is XmlStartElementEvent) {
+          _currentAttributes = node.attributes;
+        if (startElement()) {
             continue;
           }
-          final _ParseFunc parseFunc = _svgElementParsers[_reader.name.local];
+          final _ParseFunc parseFunc = _svgElementParsers[node.name];
           await parseFunc?.call(this);
           assert(() {
             if (parseFunc == null) {
@@ -601,25 +601,16 @@ class SvgParserState {
             }
             return true;
           }());
-          break;
-        case XmlPushReaderNodeType.END_ELEMENT:
+      } else if (node is XmlEndElementEvent) {
           endElement();
-          break;
-        // comments, doctype, and process instructions are ignored.
-        case XmlPushReaderNodeType.COMMENT:
-        case XmlPushReaderNodeType.DOCUMENT_TYPE:
-        case XmlPushReaderNodeType.PROCESSING:
-        // CDATA and TEXT are handled by the `<text>` parser
-        case XmlPushReaderNodeType.TEXT:
-        case XmlPushReaderNodeType.CDATA:
-          break;
+          _currentAttributes = <XmlElementAttribute>[];
       }
     }
     return _root;
   }
 
   /// The XML Attributes of the current node in the tree.
-  List<XmlAttribute> get attributes => _reader.attributes;
+  List<XmlElementAttribute> get attributes => _currentAttributes;
 
   /// Gets the attribute for the current position of the parser.
   String attribute(String name, {String def, String namespace}) =>
