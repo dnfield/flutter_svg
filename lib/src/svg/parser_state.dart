@@ -5,8 +5,7 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:path_drawing/path_drawing.dart';
 import 'package:vector_math/vector_math_64.dart';
-import 'package:xml/xml.dart'
-    show XmlPushReader, XmlPushReaderNodeType, XmlAttribute;
+import 'package:xml/xml.dart';
 
 import '../utilities/errors.dart';
 import '../utilities/numbers.dart';
@@ -18,7 +17,7 @@ import 'xml_parsers.dart';
 
 final Set<String> _unhandledElements = Set<String>();
 
-typedef _ParseFunc = Future<void> Function(SvgParserState parserState);
+typedef _ParseFunc = Future<void> Function(SvgParserState parserState, XmlElement element);
 typedef _PathFunc = Path Function(List<XmlAttribute> attributes);
 
 const Map<String, _ParseFunc> _svgElementParsers = <String, _ParseFunc>{
@@ -44,18 +43,18 @@ const Map<String, _PathFunc> _svgPathFuncs = <String, _PathFunc>{
   'line': _Paths.line,
 };
 
-Offset _parseCurrentOffset(SvgParserState parserState, Offset lastOffset) {
-  final String x = parserState.attribute('x', def: null);
-  final String y = parserState.attribute('y', def: null);
+Offset _parseCurrentOffset(XmlElement element, Offset lastOffset) {
+  final String x = getAttribute(element.attributes, 'x', def: null);
+  final String y = getAttribute(element.attributes, 'y', def: null);
 
   return Offset(
     x != null
         ? parseDouble(x)
-        : parseDouble(parserState.attribute('dx', def: '0')) +
+        : parseDouble(getAttribute(element.attributes, 'dx', def: '0')) +
             (lastOffset?.dx ?? 0),
     y != null
         ? parseDouble(y)
-        : parseDouble(parserState.attribute('dy', def: '0')) +
+        : parseDouble(getAttribute(element.attributes, 'dy', def: '0')) +
             (lastOffset?.dy ?? 0),
   );
 }
@@ -73,26 +72,26 @@ class _TextInfo {
 }
 
 class _Elements {
-  static Future<void> svg(SvgParserState parserState) {
-    final DrawableViewport viewBox = parseViewBox(parserState.attributes);
+  static Future<void> svg(SvgParserState parserState, XmlElement element) {
+    final DrawableViewport viewBox = parseViewBox(element.attributes);
 
     parserState._root = DrawableRoot(
       viewBox,
       <Drawable>[],
       parserState._definitions,
-      parseStyle(parserState.attributes, parserState._definitions,
+      parseStyle(element.attributes, parserState._definitions,
           viewBox.viewBoxRect, null),
     );
-    parserState.addGroup(parserState._root);
+    parserState.addGroup(parserState._root, element);
     return null;
   }
 
-  static Future<void> g(SvgParserState parserState) {
+  static Future<void> g(SvgParserState parserState, XmlElement element) {
     final DrawableParent parent = parserState.currentGroup;
     final DrawableGroup group = DrawableGroup(
       <Drawable>[],
       parseStyle(
-        parserState.attributes,
+        element.attributes,
         parserState._definitions,
         parserState.rootBounds,
         parent.style,
@@ -102,38 +101,38 @@ class _Elements {
     if (!parserState._inDefs) {
       parent.children.add(group);
     }
-    parserState.addGroup(group);
+    parserState.addGroup(group, element);
     return null;
   }
 
-  static Future<void> symbol(SvgParserState parserState) {
+  static Future<void> symbol(SvgParserState parserState, XmlElement element) {
     final DrawableParent parent = parserState.currentGroup;
     final DrawableGroup group = DrawableGroup(
       <Drawable>[],
       parseStyle(
-        parserState.attributes,
+        element.attributes,
         parserState._definitions,
         null,
         parent.style,
         needsTransform: true,
       ),
     );
-    parserState.addGroup(group);
+    parserState.addGroup(group, element);
     return null;
   }
 
-  static Future<void> use(SvgParserState parserState) {
-    final String xlinkHref = getHrefAttribute(parserState.attributes);
+  static Future<void> use(SvgParserState parserState, XmlElement element) {
+    final String xlinkHref = getHrefAttribute(element.attributes);
     final DrawableStyle style = parseStyle(
-      parserState.attributes,
+      element.attributes,
       parserState._definitions,
       parserState.rootBounds,
       null,
     );
     final Matrix4 transform = Matrix4.identity()
       ..translate(
-        parseDouble(parserState.attribute('x', def: '0')),
-        parseDouble(parserState.attribute('y', def: '0')),
+        parseDouble(_attribute(element, 'x', def: '0')),
+        parseDouble(_attribute(element, 'y', def: '0')),
       );
     final DrawableStyleable ref =
         parserState._definitions.getDrawable('url($xlinkHref)');
@@ -147,10 +146,27 @@ class _Elements {
   }
 
   static Future<void> parseStops(
-      XmlPushReader reader, List<Color> colors, List<double> offsets) {
-    final int depth = reader.depth;
+     XmlElement element, List<Color> colors, List<double> offsets) {
+    for (XmlNode node in element.children) {
+      if (node is XmlElement) {
+        final String rawOpacity = getAttribute(
+          node.attributes,
+          'stop-opacity',
+          def: '1',
+        );
+        colors.add(parseColor(getAttribute(node.attributes, 'stop-color'))
+            .withOpacity(parseDouble(rawOpacity)));
 
-    while (reader.read() && depth <= reader.depth) {
+        final String rawOffset = getAttribute(
+          node.attributes,
+          'offset',
+          def: '0%',
+        );
+        offsets.add(parseDecimalOrPercentage(rawOffset));
+      }
+    }
+
+    /*while (reader.read() && depth <= reader.depth) {
       if (reader.nodeType == XmlPushReaderNodeType.END_ELEMENT) {
         continue;
       }
@@ -168,32 +184,32 @@ class _Elements {
         def: '0%',
       );
       offsets.add(parseDecimalOrPercentage(rawOffset));
-    }
+    }*/
     return null;
   }
 
-  static Future<void> radialGradient(SvgParserState parserState) {
+  static Future<void> radialGradient(SvgParserState parserState, XmlElement element) {
     final String gradientUnits = getAttribute(
-        parserState.attributes, 'gradientUnits',
+        element.attributes, 'gradientUnits',
         def: 'objectBoundingBox');
     final bool isObjectBoundingBox = gradientUnits == 'objectBoundingBox';
 
-    final String rawCx = parserState.attribute('cx', def: '50%');
-    final String rawCy = parserState.attribute('cy', def: '50%');
-    final String rawR = parserState.attribute('r', def: '50%');
-    final String rawFx = parserState.attribute('fx', def: rawCx);
-    final String rawFy = parserState.attribute('fy', def: rawCy);
-    final TileMode spreadMethod = parseTileMode(parserState.attributes);
-    final String id = buildUrlIri(parserState.attributes);
+    final String rawCx = _attribute(element, 'cx', def: '50%');
+    final String rawCy = _attribute(element, 'cy', def: '50%');
+    final String rawR = _attribute(element, 'r', def: '50%');
+    final String rawFx = _attribute(element, 'fx', def: rawCx);
+    final String rawFy = _attribute(element, 'fy', def: rawCy);
+    final TileMode spreadMethod = parseTileMode(element.attributes);
+    final String id = buildUrlIri(element.attributes);
     final Matrix4 originalTransform = parseTransform(
-      parserState.attribute('gradientTransform', def: null),
+      _attribute(element, 'gradientTransform', def: null),
     );
 
     final List<double> offsets = <double>[];
     final List<Color> colors = <Color>[];
 
-    if (parserState._reader.isEmptyElement) {
-      final String href = getHrefAttribute(parserState.attributes);
+    if (element.children.isEmpty) {
+      final String href = getHrefAttribute(element.attributes);
       final DrawableGradient ref =
           parserState._definitions.getGradient<DrawableGradient>('url($href)');
       if (ref == null) {
@@ -203,7 +219,7 @@ class _Elements {
         offsets.addAll(ref.offsets);
       }
     } else {
-      parseStops(parserState._reader, colors, offsets);
+      parseStops(element, colors, offsets);
     }
 
     double cx, cy, r, fx, fy;
@@ -256,26 +272,26 @@ class _Elements {
     return null;
   }
 
-  static Future<void> linearGradient(SvgParserState parserState) {
+  static Future<void> linearGradient(SvgParserState parserState, XmlElement element) {
     final String gradientUnits = getAttribute(
-        parserState.attributes, 'gradientUnits',
+        element.attributes, 'gradientUnits',
         def: 'objectBoundingBox');
     final bool isObjectBoundingBox = gradientUnits == 'objectBoundingBox';
 
-    final String x1 = parserState.attribute('x1', def: '0%');
-    final String x2 = parserState.attribute('x2', def: '100%');
-    final String y1 = parserState.attribute('y1', def: '0%');
-    final String y2 = parserState.attribute('y2', def: '0%');
-    final String id = buildUrlIri(parserState.attributes);
+    final String x1 = _attribute(element, 'x1', def: '0%');
+    final String x2 = _attribute(element, 'x2', def: '100%');
+    final String y1 = _attribute(element, 'y1', def: '0%');
+    final String y2 = _attribute(element, 'y2', def: '0%');
+    final String id = buildUrlIri(element.attributes);
     final Matrix4 originalTransform = parseTransform(
-      parserState.attribute('gradientTransform', def: null),
+      _attribute(element, 'gradientTransform', def: null),
     );
-    final TileMode spreadMethod = parseTileMode(parserState.attributes);
+    final TileMode spreadMethod = parseTileMode(element.attributes);
 
     final List<Color> colors = <Color>[];
     final List<double> offsets = <double>[];
-    if (parserState._reader.isEmptyElement) {
-      final String href = getHrefAttribute(parserState.attributes);
+    if (element.children.isEmpty) {
+      final String href = getHrefAttribute(element.attributes);
       final DrawableGradient ref =
           parserState._definitions.getGradient<DrawableGradient>('url($href)');
       if (ref == null) {
@@ -285,7 +301,7 @@ class _Elements {
         offsets.addAll(ref.offsets);
       }
     } else {
-      parseStops(parserState._reader, colors, offsets);
+      parseStops(element, colors, offsets);
     }
 
     Offset fromOffset, toOffset;
@@ -340,17 +356,71 @@ class _Elements {
     return null;
   }
 
-  static Future<void> clipPath(SvgParserState parserState) {
-    final String id = buildUrlIri(parserState.attributes);
+  static Future<void> clipPath(SvgParserState parserState, XmlElement element) {
+    final String id = buildUrlIri(element.attributes);
 
     final List<Path> paths = <Path>[];
     Path currentPath;
-    final int depth = parserState._reader.depth;
-    while (parserState._reader.read() && depth <= parserState._reader.depth) {
-      if (parserState._reader.nodeType == XmlPushReaderNodeType.END_ELEMENT) {
+    for (XmlNode node in element.children) {
+      if (node is XmlElement) {
+        final _PathFunc pathFn = _svgPathFuncs[node.name.local];
+        if (pathFn != null) {
+          final Path nextPath = applyTransformIfNeeded(
+            pathFn(node.attributes),
+            node.attributes,
+          );
+          nextPath.fillType =
+              parseFillRule(node.attributes, 'clip-rule');
+          if (currentPath != null &&
+              nextPath.fillType != currentPath.fillType) {
+            currentPath = nextPath;
+            paths.add(currentPath);
+          } else if (currentPath == null) {
+            currentPath = nextPath;
+            paths.add(currentPath);
+          } else {
+            currentPath.addPath(nextPath, Offset.zero);
+          }
+        } else if (element.name.local == 'use') {
+          final String xlinkHref = getHrefAttribute(node.attributes);
+          final DrawableStyleable definitionDrawable =
+          parserState._definitions.getDrawable('url($xlinkHref)');
+
+          void extractPathsFromDrawable(Drawable target) {
+            if (target is DrawableShape) {
+              paths.add(target.path);
+            } else if (target is DrawableGroup) {
+              target.children.forEach(extractPathsFromDrawable);
+            }
+          }
+
+          extractPathsFromDrawable(definitionDrawable);
+        } else {
+          FlutterError.reportError(FlutterErrorDetails(
+            exception: UnsupportedError(
+                'Unsupported clipPath child ${element.name.local}'),
+            informationCollector: (StringBuffer buff) {
+              buff.writeln(
+                  'The <clipPath> element contained an unsupported child ${element
+                      .name.local}');
+              if (parserState._key != null) {
+                buff.writeln();
+                buff.writeln('Picture key: ${parserState._key}');
+              }
+            },
+            library: 'SVG',
+            context: 'in _Element.clipPath',
+          ));
+        }
+      }
+    }
+    parserState._definitions.addClipPath(id, paths);
+
+    /*while (parserState._document.read() && depth <= parserState._document.depth) {
+      if (parserState._document.nodeType == XmlPushReaderNodeType.END_ELEMENT) {
         continue;
       }
-      final _PathFunc pathFn = _svgPathFuncs[parserState._reader.name.local];
+      final _PathFunc pathFn = _svgPathFuncs[element.name.local];
       if (pathFn != null) {
         final Path nextPath = applyTransformIfNeeded(
           pathFn(parserState.attributes),
@@ -366,7 +436,7 @@ class _Elements {
         } else {
           currentPath.addPath(nextPath, Offset.zero);
         }
-      } else if (parserState._reader.name.local == 'use') {
+      } else if (element.name.local == 'use') {
         final String xlinkHref = getHrefAttribute(parserState.attributes);
         final DrawableStyleable definitionDrawable =
             parserState._definitions.getDrawable('url($xlinkHref)');
@@ -383,10 +453,10 @@ class _Elements {
       } else {
         FlutterError.reportError(FlutterErrorDetails(
           exception: UnsupportedError(
-              'Unsupported clipPath child ${parserState._reader.name.local}'),
+              'Unsupported clipPath child ${element.name.local}'),
           informationCollector: (StringBuffer buff) {
             buff.writeln(
-                'The <clipPath> element contained an unsupported child ${parserState._reader.name.local}');
+                'The <clipPath> element contained an unsupported child ${element.name.local}');
             if (parserState._key != null) {
               buff.writeln();
               buff.writeln('Picture key: ${parserState._key}');
@@ -397,19 +467,19 @@ class _Elements {
         ));
       }
     }
-    parserState._definitions.addClipPath(id, paths);
+    parserState._definitions.addClipPath(id, paths);*/
     return null;
   }
 
-  static Future<void> image(SvgParserState parserState) async {
-    final String href = getHrefAttribute(parserState.attributes);
+  static Future<void> image(SvgParserState parserState, XmlElement element) async {
+    final String href = getHrefAttribute(element.attributes);
     final Offset offset = Offset(
-      parseDouble(parserState.attribute('x', def: '0')),
-      parseDouble(parserState.attribute('y', def: '0')),
+      parseDouble(_attribute(element, 'x', def: '0')),
+      parseDouble(_attribute(element, 'y', def: '0')),
     );
     final Size size = Size(
-      parseDouble(parserState.attribute('width', def: '0')),
-      parseDouble(parserState.attribute('height', def: '0')),
+      parseDouble(_attribute(element, 'width', def: '0')),
+      parseDouble(_attribute(element, 'height', def: '0')),
     );
     final Image image = await resolveImage(href);
     parserState.currentGroup.children.add(
@@ -417,7 +487,7 @@ class _Elements {
     );
   }
 
-  static Future<void> text(SvgParserState parserState) async {
+  static Future<void> text(SvgParserState parserState, XmlElement element) async {
     assert(parserState != null);
     assert(parserState.currentGroup != null);
     // <text>, <tspan> -> Collect styles
@@ -426,12 +496,61 @@ class _Elements {
     // Track the style(s) and offset(s) for <text> and <tspan> elements
     final Queue<_TextInfo> textInfos = ListQueue<_TextInfo>();
     double lastTextWidth = 0;
-    final int depth = parserState._reader.depth;
-    do {
-      switch (parserState._reader.nodeType) {
+    for (XmlNode node in element.children) {
+      if (node is XmlCDATA || node is XmlText) {
+        final String value = node.text.trim();
+        if (value.isEmpty) {
+          continue;
+        }
+        assert(textInfos.isNotEmpty);
+        final _TextInfo lastTextInfo = textInfos.last;
+        final Paragraph fill = createParagraph(
+          value,
+          lastTextInfo.style,
+          lastTextInfo.style.fill,
+        );
+        final Paragraph stroke = createParagraph(
+          value,
+          lastTextInfo.style,
+          DrawablePaint.isEmpty(lastTextInfo.style.stroke)
+              ? transparentStroke
+              : lastTextInfo.style.stroke,
+        );
+        parserState.currentGroup.children.add(DrawableText(
+          fill,
+          stroke,
+          lastTextInfo.offset,
+          lastTextInfo.style.textStyle.anchor ??
+              DrawableTextAnchorPosition.start,
+          transform: lastTextInfo.style.transform,
+        ));
+        lastTextWidth = fill.maxIntrinsicWidth;
+      } else if (node is XmlElement) {
+        _TextInfo lastTextInfo;
+        if (textInfos.isNotEmpty) {
+          lastTextInfo = textInfos.last;
+        }
+        final Offset currentOffset = _parseCurrentOffset(
+            element, lastTextInfo?.offset?.translate(lastTextWidth, 0));
+        textInfos.add(_TextInfo(
+          parseStyle(
+            element.attributes,
+            parserState._definitions,
+            parserState.rootBounds,
+            lastTextInfo?.style ?? parserState.currentGroup.style,
+            needsTransform: true,
+          ),
+          currentOffset,
+        ));
+      }
+    }
+
+
+    /*do {
+      switch (parserState._document.nodeType) {
         case XmlPushReaderNodeType.CDATA:
         case XmlPushReaderNodeType.TEXT:
-          final String value = parserState._reader.value.trim();
+          final String value = parserState._document.value.trim();
           if (value.isEmpty) {
             continue;
           }
@@ -458,7 +577,7 @@ class _Elements {
             transform: lastTextInfo.style.transform,
           ));
           lastTextWidth = fill.maxIntrinsicWidth;
-          break;
+          break;*//*
         case XmlPushReaderNodeType.ELEMENT:
           _TextInfo lastTextInfo;
           if (textInfos.isNotEmpty) {
@@ -483,7 +602,7 @@ class _Elements {
         default:
           break;
       }
-    } while (parserState._reader.read() && depth <= parserState._reader.depth);
+    } while (parserState._document.read() && depth <= parserState._document.depth);*/
   }
 }
 
@@ -569,14 +688,17 @@ class _SvgGroupTuple {
   final DrawableParent drawable;
 }
 
+String _attribute(XmlElement element, String name, {String def, String namespace}) =>
+    getAttribute(element.attributes, name, def: def, namespace: namespace);
+
 /// The implementation of [SvgParser].
 ///
 /// Maintains state while pushing an [XmlPushReader] through the SVG tree.
 class SvgParserState {
   /// Creates a new [SvgParserState].
-  SvgParserState(this._reader, this._key) : assert(_reader != null);
+  SvgParserState(this._document, this._key) : assert(_document != null);
 
-  final XmlPushReader _reader;
+  final XmlDocument _document;
   final String _key;
   final DrawableDefinitionServer _definitions = DrawableDefinitionServer();
   final Queue<_SvgGroupTuple> _parentDrawables = ListQueue<_SvgGroupTuple>(10);
@@ -585,13 +707,25 @@ class SvgParserState {
 
   /// Drive the [XmlTextReader] to EOF and produce a [DrawableRoot].
   Future<DrawableRoot> parse() async {
-    while (_reader.read()) {
-      switch (_reader.nodeType) {
+    final XmlElement rootElement = _document.rootElement;
+
+    final _ParseFunc parseFunc = _svgElementParsers[rootElement.name.local];
+    await parseFunc?.call(this, rootElement);
+    assert(() {
+      if (parseFunc == null) {
+        unhandledElement(rootElement);
+      }
+      return true;
+    }());
+    //return _root;
+
+    /*while (_document.read()) {
+      switch (_document.nodeType) {
         case XmlPushReaderNodeType.ELEMENT:
           if (startElement()) {
             continue;
           }
-          final _ParseFunc parseFunc = _svgElementParsers[_reader.name.local];
+          final _ParseFunc parseFunc = _svgElementParsers[_document.name.local];
           await parseFunc?.call(this);
           assert(() {
             if (parseFunc == null) {
@@ -612,16 +746,16 @@ class SvgParserState {
         case XmlPushReaderNodeType.CDATA:
           break;
       }
-    }
+    }*/
     return _root;
   }
 
   /// The XML Attributes of the current node in the tree.
-  List<XmlAttribute> get attributes => _reader.attributes;
+  //List<XmlAttribute> get attributes => _document.attributes;
 
   /// Gets the attribute for the current position of the parser.
-  String attribute(String name, {String def, String namespace}) =>
-      getAttribute(attributes, name, def: def, namespace: namespace);
+  //String attribute(String name, {String def, String namespace}) =>
+  //    getAttribute(attributes, name, def: def, namespace: namespace);
 
   /// The current group, if any, in the [Drawable] heirarchy.
   DrawableParent get currentGroup {
@@ -638,8 +772,8 @@ class SvgParserState {
   }
 
   /// Whether this [DrawableStyleable] belongs in the [DrawableDefinitions] or not.
-  bool checkForIri(DrawableStyleable drawable) {
-    final String iri = buildUrlIri(attributes);
+  bool checkForIri(DrawableStyleable drawable, XmlElement element) {
+    final String iri = buildUrlIri(element.attributes);
     if (iri != emptyUrlIri) {
       _definitions.addDrawable(iri, drawable);
       return true;
@@ -648,64 +782,64 @@ class SvgParserState {
   }
 
   /// Appends a group to the collection.
-  void addGroup(DrawableParent drawable) {
-    _parentDrawables.addLast(_SvgGroupTuple(_reader.name.local, drawable));
-    checkForIri(drawable);
+  void addGroup(DrawableParent drawable, XmlElement element) {
+    _parentDrawables.addLast(_SvgGroupTuple(element.name.local, drawable));
+    checkForIri(drawable, element);
   }
 
   /// Appends a [DrawableShape] to the [currentGroup].
-  bool addShape() {
-    final _PathFunc pathFunc = _svgPathFuncs[_reader.name.local];
+  bool addShape(XmlElement element) {
+    final _PathFunc pathFunc = _svgPathFuncs[element.name.local];
     if (pathFunc == null) {
       return false;
     }
 
     final DrawableParent parent = _parentDrawables.last.drawable;
     final DrawableStyle parentStyle = parent.style;
-    final Path path = pathFunc(attributes);
+    final Path path = pathFunc(element.attributes);
     final DrawableStyleable drawable = DrawableShape(
       path,
       parseStyle(
-        attributes,
+        element.attributes,
         _definitions,
         path.getBounds(),
         parentStyle,
       ),
-      transform: parseTransform(getAttribute(attributes, 'transform'))?.storage,
+      transform: parseTransform(getAttribute(element.attributes, 'transform'))?.storage,
     );
-    final bool isIri = checkForIri(drawable);
+    final bool isIri = checkForIri(drawable, element);
     if (!_inDefs || !isIri) {
       parent.children.add(drawable);
     }
     return true;
   }
-
+/*
   /// Potentially handles a starting element.
   bool startElement() {
-    if (_reader.name.local == 'defs') {
+    if (_document.name.local == 'defs') {
       // we won't get a call to `endElement()` if we're in a '<defs/>'
-      _inDefs = !_reader.isEmptyElement;
+      _inDefs = !_document.isEmptyElement;
       return true;
     }
     return addShape();
-  }
-
+  }*/
+/*
   /// Handles the end of an XML element.
   void endElement() {
-    if (_reader.name.local == _parentDrawables.last.name) {
+    if (_document.name.local == _parentDrawables.last.name) {
       _parentDrawables.removeLast();
     }
-    if (_reader.name.local == 'defs') {
+    if (_document.name.local == 'defs') {
       _inDefs = false;
     }
-  }
+  }*/
 
   /// Prints an error for unhandled elements.
   ///
   /// Will only print an error once for unhandled/unexpected elements, except for
   /// `<style/>` elements.
-  void unhandledElement() {
-    if (_reader.name.local == 'style') {
+  void unhandledElement(XmlElement element) {
+    if (element.name.local == 'style') {
       FlutterError.reportError(FlutterErrorDetails(
         exception: UnimplementedError(
             'The <style> element is not implemented in this library.'),
@@ -722,8 +856,8 @@ class SvgParserState {
         library: 'SVG',
         context: 'in parseSvgElement',
       ));
-    } else if (_unhandledElements.add(_reader.name.local)) {
-      print('unhandled element ${_reader.name.local}; Picture key: $_key');
+    } else if (_unhandledElements.add(element.name.local)) {
+      print('unhandled element ${element.name.local}; Picture key: $_key');
     }
   }
 }
