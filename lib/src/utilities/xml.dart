@@ -52,10 +52,17 @@ String getAttribute(
   return raw == '' || raw == null ? def : raw;
 }
 
-String _getAttribute(List<XmlElementAttribute> list, String localName,
-    {String def = '', String namespace}) {
+String _getAttribute(
+  List<XmlElementAttribute> list,
+  String localName, {
+  String def = '',
+  String namespace,
+}) {
   return list
-          .firstWhere((XmlElementAttribute attr) => attr.name == localName,
+          .firstWhere(
+              (XmlElementAttribute attr) =>
+                  attr.name.replaceFirst('${attr.namespacePrefix}:', '') ==
+                  localName,
               orElse: () => null)
           ?.value ??
       def;
