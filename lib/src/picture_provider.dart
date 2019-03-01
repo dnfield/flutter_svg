@@ -33,15 +33,24 @@ typedef PictureInfoDecoder<T> = FutureOr<PictureInfo> Function(
 /// See also:
 ///
 ///  * [PictureProvider], which has an example showing how this might be used.
-PictureConfiguration createLocalPictureConfiguration(BuildContext context,
-    {Rect viewBox, Color color, BlendMode colorBlendMode}) {
+PictureConfiguration createLocalPictureConfiguration(
+  BuildContext context, {
+  Rect viewBox,
+  ColorFilter colorFilterOverride,
+  Color color,
+  BlendMode colorBlendMode,
+}) {
   return PictureConfiguration(
     bundle: DefaultAssetBundle.of(context),
     locale: Localizations.localeOf(context, nullOk: true),
     textDirection: Directionality.of(context),
     viewBox: viewBox,
     platform: defaultTargetPlatform,
-    colorFilter: ColorFilter.mode(color, colorBlendMode ?? BlendMode.srcIn),
+    colorFilter: colorFilterOverride ??
+        ColorFilter.mode(
+          color,
+          colorBlendMode ?? BlendMode.srcIn,
+        ),
   );
 }
 

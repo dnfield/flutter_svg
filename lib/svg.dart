@@ -111,28 +111,6 @@ class Svg {
   }
 }
 
-/// Creates an [PictureConfiguration] based on the given [BuildContext], and
-/// optionally the `viewBox` and `colorFilter`.
-///
-/// If this is not called from a build method, then it should be reinvoked
-/// whenever the dependencies change, e.g. by calling it from
-/// [State.didChangeDependencies], so that any changes in the environment are
-/// picked up (e.g. if the device pixel ratio changes).
-PictureConfiguration createLocalPictureConfiguration(
-  BuildContext context, {
-  Rect viewBox,
-  ColorFilter colorFilter,
-}) {
-  return PictureConfiguration(
-    bundle: DefaultAssetBundle.of(context),
-    locale: Localizations.localeOf(context, nullOk: true),
-    textDirection: Directionality.of(context),
-    platform: defaultTargetPlatform,
-    colorFilter: colorFilter,
-    viewBox: viewBox,
-  );
-}
-
 /// Prefetches an SVG Picture into the picture cache.
 ///
 /// Returns a [Future] that will complete when the first image yielded by the
@@ -152,13 +130,17 @@ Future<void> precachePicture(
   PictureProvider provider,
   BuildContext context, {
   Rect viewBox,
-  ColorFilter colorFilter,
+  ColorFilter colorFilterOverride,
+  Color color,
+  BlendMode colorBlendMode,
   PictureErrorListener onError,
 }) {
   final PictureConfiguration config = createLocalPictureConfiguration(
     context,
     viewBox: viewBox,
-    colorFilter: colorFilter,
+    colorFilterOverride: colorFilterOverride,
+    color: color,
+    colorBlendMode: colorBlendMode,
   );
   final Completer<void> completer = Completer<void>();
   final PictureStream stream = provider.resolve(config);
