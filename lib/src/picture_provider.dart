@@ -299,7 +299,7 @@ abstract class PictureProvider<T> {
   /// Subclasses should implement [obtainKey] and [load], which are used by this
   /// method.
   PictureStream resolve(PictureConfiguration picture) {
-    // assert(picture != null);
+    assert(picture != null);
     final PictureStream stream = PictureStream();
     T obtainedKey;
     obtainKey(picture).then<void>((T key) {

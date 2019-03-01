@@ -11,6 +11,17 @@ import 'package:flutter/foundation.dart';
 /// [devicePixelRatio].
 typedef ViewportCalculator = Rect Function(double devicePixelRatio);
 
+/// The signature of a method that listens for errors on picture stream resolution.
+typedef PictureErrorListener = void Function(
+    dynamic exception, StackTrace stackTrace);
+
+@immutable
+class _PictureListenerPair {
+  const _PictureListenerPair(this.listener, this.errorListener);
+  final PictureListener listener;
+  final PictureErrorListener errorListener;
+}
+
 /// Represents information about a ui.Picture to be drawn on a canvas.
 @immutable
 class PictureInfo {
@@ -121,9 +132,9 @@ class PictureStream extends Diagnosticable {
   /// occurred. If the listener is added within a render object paint function,
   /// then use this flag to avoid calling [RenderObject.markNeedsPaint] during
   /// a paint.
-  void addListener(PictureListener listener) {
+  void addListener(PictureListener listener, {PictureErrorListener onError}) {
     if (_completer != null) {
-      return _completer.addListener(listener);
+      return _completer.addListener(listener, onError: onError);
     }
     _listeners ??= <PictureListener>[];
     _listeners.add(listener);
@@ -179,10 +190,10 @@ class PictureStream extends Diagnosticable {
 /// [PictureProvider] subclass will return an [PictureStream] and automatically
 /// configure it with the right [PictureStreamCompleter] when possible.
 abstract class PictureStreamCompleter extends Diagnosticable {
-  final List<PictureListener> _listeners = <PictureListener>[];
+  final List<_PictureListenerPair> _listeners = <_PictureListenerPair>[];
   PictureInfo _current;
 
-  /// Adds a listener callback that is called whenever a new concrete [ImageInfo]
+  /// Adds a listener callback that is called whenever a new concrete [PictureInfo]
   /// object is available. If a concrete image is already available, this object
   /// will call the listener synchronously.
   ///
@@ -193,47 +204,55 @@ abstract class PictureStreamCompleter extends Diagnosticable {
   /// occurred. If the listener is added within a render object paint function,
   /// then use this flag to avoid calling [RenderObject.markNeedsPaint] during
   /// a paint.
-  void addListener(PictureListener listener) {
-    _listeners.add(listener);
+  void addListener(PictureListener listener, {PictureErrorListener onError}) {
+    _listeners.add(_PictureListenerPair(listener, onError));
     if (_current != null) {
       try {
         listener(_current, true);
       } catch (exception, stack) {
         _handleImageError(
-            'by a synchronously-called image listener', exception, stack);
+          'by a synchronously-called image listener',
+          exception,
+          stack,
+        );
       }
     }
   }
 
-  /// Stop listening for new concrete [ImageInfo] objects.
+  /// Stop listening for new concrete [PictureInfo] objects.
   void removeListener(PictureListener listener) {
     _listeners.remove(listener);
   }
 
-  /// Calls all the registered listeners to notify them of a new image.
+  /// Calls all the registered listeners to notify them of a new picture.
   @protected
-  void setImage(PictureInfo image) {
-    _current = image;
+  void setPicture(PictureInfo picture) {
+    _current = picture;
     if (_listeners.isEmpty) {
       return;
     }
-    final List<PictureListener> localListeners =
-        List<PictureListener>.from(_listeners);
-    for (PictureListener listener in localListeners) {
+    final List<_PictureListenerPair> localListeners =
+        List<_PictureListenerPair>.from(_listeners);
+    for (_PictureListenerPair listenerPair in localListeners) {
       try {
-        listener(image, false);
+        listenerPair.listener(picture, false);
       } catch (exception, stack) {
-        _handleImageError('by an image listener', exception, stack);
+        if (listenerPair.errorListener != null) {
+          listenerPair.errorListener(exception, stack);
+        } else {
+          _handleImageError('by a picture listener', exception, stack);
+        }
       }
     }
   }
 
   void _handleImageError(String context, dynamic exception, dynamic stack) {
     FlutterError.reportError(FlutterErrorDetails(
-        exception: exception,
-        stack: stack,
-        library: 'image resource service',
-        context: context));
+      exception: exception,
+      stack: stack,
+      library: 'SVG',
+      context: context,
+    ));
   }
 
   /// Accumulates a list of strings describing the object's state. Subclasses
@@ -243,7 +262,7 @@ abstract class PictureStreamCompleter extends Diagnosticable {
     super.debugFillProperties(description);
     description.add(DiagnosticsProperty<PictureInfo>('current', _current,
         ifNull: 'unresolved', showName: false));
-    description.add(ObjectFlagProperty<List<PictureListener>>(
+    description.add(ObjectFlagProperty<List<_PictureListenerPair>>(
       'listeners',
       _listeners,
       ifPresent:
@@ -272,7 +291,7 @@ class OneFramePictureStreamCompleter extends PictureStreamCompleter {
   OneFramePictureStreamCompleter(Future<PictureInfo> picture,
       {InformationCollector informationCollector})
       : assert(picture != null) {
-    picture.then<void>(setImage, onError: (dynamic error, StackTrace stack) {
+    picture.then<void>(setPicture, onError: (dynamic error, StackTrace stack) {
       FlutterError.reportError(FlutterErrorDetails(
         exception: error,
         stack: stack,
