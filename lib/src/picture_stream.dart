@@ -101,7 +101,7 @@ class PictureStream extends Diagnosticable {
   PictureStreamCompleter get completer => _completer;
   PictureStreamCompleter _completer;
 
-  List<PictureListener> _listeners;
+  List<_PictureListenerPair> _listeners;
 
   /// Assigns a particular [PictureStreamCompleter] to this [PictureStream].
   ///
@@ -115,9 +115,11 @@ class PictureStream extends Diagnosticable {
     assert(_completer == null);
     _completer = value;
     if (_listeners != null) {
-      final List<PictureListener> initialListeners = _listeners;
+      final List<_PictureListenerPair> initialListeners = _listeners;
       _listeners = null;
-      initialListeners.forEach(_completer.addListener);
+      for (_PictureListenerPair pair in initialListeners) {
+        _completer.addListener(pair.listener, onError: pair.errorListener);
+      }
     }
   }
 
@@ -136,8 +138,8 @@ class PictureStream extends Diagnosticable {
     if (_completer != null) {
       return _completer.addListener(listener, onError: onError);
     }
-    _listeners ??= <PictureListener>[];
-    _listeners.add(listener);
+    _listeners ??= <_PictureListenerPair>[];
+    _listeners.add(_PictureListenerPair(listener, onError));
   }
 
   /// Stop listening for new concrete [ImageInfo] objects.
@@ -171,7 +173,7 @@ class PictureStream extends Diagnosticable {
       ifPresent: _completer?.toStringShort(),
       ifNull: 'unresolved',
     ));
-    properties.add(ObjectFlagProperty<List<PictureListener>>(
+    properties.add(ObjectFlagProperty<List<_PictureListenerPair>>(
       'listeners',
       _listeners,
       ifPresent:

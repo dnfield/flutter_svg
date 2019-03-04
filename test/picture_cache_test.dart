@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_svg/src/picture_cache.dart';
 import 'package:flutter_svg/src/picture_provider.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:xml/xml.dart';
 
 class MockPictureStreamCompleter extends PictureStreamCompleter {}
 
@@ -16,6 +17,9 @@ void main() {
   testWidgets('Precache test', (WidgetTester tester) async {
     const String svgString = '''<svg viewBox="0 0 10 10">
 <rect x="1" y="1" width="5" height="5" fill="black" />
+</svg>''';
+    const String svgString2 = '''<svg viewBox="0 0 10 10">
+<rect x="1" y="1" width="6" height="5" fill="black" />
 </svg>''';
     await tester.pumpWidget(
       const Directionality(
@@ -41,6 +45,41 @@ void main() {
       ),
     );
     expect(PictureProvider.cacheCount, 1);
+
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: SvgPicture.string(svgString2),
+      ),
+    );
+    expect(PictureProvider.cacheCount, 2);
+  });
+
+  testWidgets('Precache with error', (WidgetTester tester) async {
+    const String svgString = '<svg';
+    await tester.pumpWidget(
+      const Directionality(
+        textDirection: TextDirection.ltr,
+        child: Text('test_text'),
+      ),
+    );
+
+    bool gotError = false;
+    void errorListener(dynamic error, StackTrace stackTrace) {
+      gotError = true;
+      expect(error, isInstanceOf<XmlParserException>());
+    }
+
+    await precachePicture(
+      StringPicture(
+        SvgPicture.svgStringDecoder,
+        svgString,
+      ),
+      tester.element(find.text('test_text')),
+      onError: errorListener,
+    );
+    expect(tester.takeException(), isInstanceOf<XmlParserException>());
+    expect(gotError, isTrue);
   });
 
   test('Cache Tests', () {

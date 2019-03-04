@@ -143,15 +143,14 @@ Future<void> precachePicture(
     colorBlendMode: colorBlendMode,
   );
   final Completer<void> completer = Completer<void>();
-  final PictureStream stream = provider.resolve(config);
+  PictureStream stream;
+
   void listener(PictureInfo picture, bool synchronous) {
     completer.complete();
-    stream.removeListener(listener);
+    stream?.removeListener(listener);
   }
 
   void errorListener(dynamic exception, StackTrace stackTrace) {
-    completer.complete();
-    stream.removeListener(listener);
     if (onError != null) {
       onError(exception, stackTrace);
     } else {
@@ -163,9 +162,12 @@ Future<void> precachePicture(
         silent: true,
       ));
     }
+    completer.complete();
+    stream?.removeListener(listener);
   }
 
-  stream.addListener(listener, onError: errorListener);
+  stream = provider.resolve(config, onError: errorListener)
+    ..addListener(listener, onError: errorListener);
   return completer.future;
 }
 
