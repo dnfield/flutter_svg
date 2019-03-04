@@ -300,6 +300,9 @@ abstract class PictureProvider<T> {
   /// const constructors so that they can be used in const expressions.
   const PictureProvider();
 
+  /// The number of items in the [PictureCache].
+  static int get cacheCount => _cache.count;
+
   /// Resolves this Picture provider using the given `configuration`, returning
   /// an [PictureStream].
   ///
