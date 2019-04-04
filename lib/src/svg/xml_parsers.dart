@@ -346,16 +346,18 @@ DrawableStyle parseStyle(
     final Matrix4 transform = parseTransform(
       getAttribute(attributes, 'transform'),
     );
-    if (multiplyTransformByParent && parentStyle?.transform != null) {
-      if (transform == null) {
-        rawTransform = parentStyle.transform;
+    if (transform != null) {
+      if (multiplyTransformByParent && parentStyle?.transform != null) {
+        if (transform == null) {
+          rawTransform = parentStyle.transform;
+        } else {
+          rawTransform = Matrix4.fromFloat64List(parentStyle.transform)
+              .multiplied(transform)
+              .storage;
+        }
       } else {
-        rawTransform = Matrix4.fromFloat64List(parentStyle.transform)
-            .multiplied(transform)
-            .storage;
+        rawTransform = transform.storage;
       }
-    } else {
-      rawTransform = transform.storage;
     }
   }
   return DrawableStyle.mergeAndBlend(
