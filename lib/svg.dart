@@ -620,9 +620,11 @@ class _SvgPictureState extends State<SvgPicture> {
   }
 
   void _handleImageChanged(PictureInfo imageInfo, bool synchronousCall) {
-    setState(() {
-      _picture = imageInfo;
-    });
+    if (mounted) {
+      setState(() {
+        _picture = imageInfo;
+      });
+    }
   }
 
   // Update _pictureStream to newStream, and moves the stream listener
