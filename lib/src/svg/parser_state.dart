@@ -752,13 +752,13 @@ class SvgParserState {
     }
 
     final XmlStartElementEvent parentEl = _currentParentElement;
-    final List<XmlElementAttribute> attrs = [];
+    final List<XmlElementAttribute> attrs = <XmlElementAttribute>[];
 
     for (XmlElementAttribute el in _currentAttributes) {
       XmlElementAttribute tmpAttr;
       if (el.value.endsWith('%')) {
-        final pVal = int.parse(parentEl.attributes
-            .firstWhere((p) => p.name == el.name)
+        final int pVal = int.parse(parentEl.attributes
+            .firstWhere((XmlElementAttribute p) => p.name == el.name)
             .value);
 
         tmpAttr = XmlElementAttribute(
