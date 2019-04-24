@@ -751,29 +751,34 @@ class SvgParserState {
       return false;
     }
 
-    final XmlStartElementEvent parentEl = _currentParentElement;
-    final List<XmlElementAttribute> attrs = <XmlElementAttribute>[];
+    List<XmlElementAttribute> attrs = <XmlElementAttribute>[];
 
-    for (XmlElementAttribute el in _currentAttributes) {
-      XmlElementAttribute tmpAttr;
-      if (el.value.endsWith('%')) {
-        final int pVal = int.parse(parentEl.attributes
-            .firstWhere((XmlElementAttribute p) => p.name == el.name)
-            .value);
+    if (_currentParentElement is XmlStartElementEvent) {
+      final XmlStartElementEvent parentEl = _currentParentElement;
 
-        tmpAttr = XmlElementAttribute(
-          el.name,
-          (pVal * int.parse(el.value.substring(0, el.value.length - 1)) / 100)
-              .toString(),
-          el.attributeType,
-        );
+      for (XmlElementAttribute el in _currentAttributes) {
+        XmlElementAttribute tmpAttr;
+        if (el.value.endsWith('%')) {
+          final int pVal = int.parse(parentEl.attributes
+              .firstWhere((XmlElementAttribute p) => p.name == el.name)
+              .value);
+
+          tmpAttr = XmlElementAttribute(
+            el.name,
+            (pVal * int.parse(el.value.substring(0, el.value.length - 1)) / 100)
+                .toString(),
+            el.attributeType,
+          );
+        }
+
+        if (tmpAttr == null) {
+          attrs.add(el);
+        } else {
+          attrs.add(tmpAttr);
+        }
       }
-
-      if (tmpAttr == null) {
-        attrs.add(el);
-      } else {
-        attrs.add(tmpAttr);
-      }
+    } else {
+      attrs = attributes;
     }
 
     final DrawableParent parent = _parentDrawables.last.drawable;
