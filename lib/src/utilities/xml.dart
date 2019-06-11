@@ -49,7 +49,7 @@ String getAttribute(
     raw = _getAttribute(el, name, namespace: namespace)?.trim();
   }
 
-  return raw == '' || raw == null ? def : raw;
+  return raw == '' || raw == null || raw == 'null' ? def : raw;
 }
 
 String _getAttribute(
