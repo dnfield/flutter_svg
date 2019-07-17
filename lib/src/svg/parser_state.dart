@@ -678,6 +678,8 @@ class SvgParserState {
   /// Drive the [XmlTextReader] to EOF and produce a [DrawableRoot].
   Future<DrawableRoot> parse() async {
     for (XmlEvent event in _readSubtree()) {
+      // Make sure the main thread is not completely blocked
+      await Future<void>.delayed(Duration.zero);
       if (event is XmlStartElementEvent) {
         if (startElement(event)) {
           continue;
