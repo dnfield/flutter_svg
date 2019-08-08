@@ -144,6 +144,8 @@ of something that's broken.
 - Foreign elements
 - Rendering properties/hints
 
+## Adobe Illustrator SVG Configuration 
+![Export configuration](https://user-images.githubusercontent.com/2842459/62599914-91de9c00-b8fe-11e9-8fb7-4af57d5100f7.png)
 ## SVG sample attribution
 
 SVGs in `/assets/w3samples` pulled from [W3 sample files](https://dev.w3.org/SVG/tools/svgweb/samples/svg-files/)
