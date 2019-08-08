@@ -148,7 +148,6 @@ of something that's broken.
 - In Styling: choose Presentation Attributes instead of Inline CSS because CSS is not fully supported.
 - In Images: choose Embded not Linked to other file to get a single svg with no debendency to other files.
 - In Objects IDs: choose layer names to add every layer name to svg tags or you can use minimal,it is optional.
-presentation attributes
 ![Export configuration](https://user-images.githubusercontent.com/2842459/62599914-91de9c00-b8fe-11e9-8fb7-4af57d5100f7.png)
 ## SVG sample attribution
 
