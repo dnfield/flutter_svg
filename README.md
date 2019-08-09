@@ -144,6 +144,11 @@ of something that's broken.
 - Foreign elements
 - Rendering properties/hints
 
+## Recommended Adobe Illustrator SVG Configuration
+- In Styling: choose Presentation Attributes instead of Inline CSS because CSS is not fully supported.
+- In Images: choose Embded not Linked to other file to get a single svg with no debendency to other files.
+- In Objects IDs: choose layer names to add every layer name to svg tags or you can use minimal,it is optional.
+![Export configuration](https://user-images.githubusercontent.com/2842459/62599914-91de9c00-b8fe-11e9-8fb7-4af57d5100f7.png)
 ## SVG sample attribution
 
 SVGs in `/assets/w3samples` pulled from [W3 sample files](https://dev.w3.org/SVG/tools/svgweb/samples/svg-files/)
