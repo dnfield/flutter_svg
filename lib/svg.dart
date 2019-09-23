@@ -704,33 +704,16 @@ class _SvgPictureState extends State<SvgPicture> {
     }
 
     if (_picture != null) {
-      final Rect viewport = Offset.zero & _picture.viewport.size;
-
-      double width = widget.width;
-      double height = widget.height;
-      if (width == null && height == null) {
-        width = viewport.width > viewport.height ? viewport.width : null;
-        height = viewport.height > viewport.width ? viewport.height : null;
-      } else if (height != null) {
-        width = height / viewport.height * viewport.width;
-      } else if (width != null) {
-        height = width / viewport.width * viewport.height;
-      }
-
       return _maybeWrapWithSemantics(
-        SizedBox(
-          width: width,
-          height: height,
-          child: FittedBox(
-            fit: widget.fit,
-            alignment: widget.alignment,
-            child: SizedBox.fromSize(
-              size: viewport.size,
-              child: RawPicture(
-                _picture,
-                matchTextDirection: widget.matchTextDirection,
-                allowDrawingOutsideViewBox: widget.allowDrawingOutsideViewBox,
-              ),
+        FittedBox(
+          fit: widget.fit,
+          alignment: widget.alignment,
+          child: SizedBox.fromSize(
+            size: _picture.viewport.size,
+            child: RawPicture(
+              _picture,
+              matchTextDirection: widget.matchTextDirection,
+              allowDrawingOutsideViewBox: widget.allowDrawingOutsideViewBox,
             ),
           ),
         ),
