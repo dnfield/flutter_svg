@@ -4,6 +4,7 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui';
 
+import 'package:http/http.dart';
 import 'package:vector_math/vector_math_64.dart';
 
 import '../utilities/http.dart';
@@ -95,10 +96,8 @@ Matrix4 parseTransform(String transform) {
     return null;
   }
 
-  if (!_transformValidator.hasMatch(transform))
-    throw StateError('illegal or unsupported transform: $transform');
-  final Iterable<Match> matches =
-      _transformCommand.allMatches(transform).toList().reversed;
+  if (!_transformValidator.hasMatch(transform)) throw StateError('illegal or unsupported transform: $transform');
+  final Iterable<Match> matches = _transformCommand.allMatches(transform).toList().reversed;
   Matrix4 result = Matrix4.identity();
   for (Match m in matches) {
     final String command = m.group(1);
@@ -163,8 +162,7 @@ Matrix4 _parseSvgRotate(String paramsStr, Matrix4 current) {
   assert(params.length <= 3);
   final double a = radians(parseDouble(params[0]));
 
-  final Matrix4 rotate =
-      affineMatrix(cos(a), sin(a), -sin(a), cos(a), 0.0, 0.0);
+  final Matrix4 rotate = affineMatrix(cos(a), sin(a), -sin(a), cos(a), 0.0, 0.0);
 
   if (params.length > 1) {
     final double x = parseDouble(params[1]);
@@ -179,10 +177,8 @@ Matrix4 _parseSvgRotate(String paramsStr, Matrix4 current) {
 }
 
 /// Creates a [Matrix4] affine matrix.
-Matrix4 affineMatrix(
-    double a, double b, double c, double d, double e, double f) {
-  return Matrix4(
-      a, b, 0.0, 0.0, c, d, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, e, f, 0.0, 1.0);
+Matrix4 affineMatrix(double a, double b, double c, double d, double e, double f) {
+  return Matrix4(a, b, 0.0, 0.0, c, d, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, e, f, 0.0, 1.0);
 }
 
 /// Parses a `fill-rule` attribute.
@@ -207,7 +203,8 @@ Future<Image> resolveImage(String href) async {
   };
 
   if (href.startsWith('http')) {
-    final Uint8List bytes = await httpGet(href);
+    //TODO(jonasbark): TODO we should be able to use customized client
+    final Uint8List bytes = await httpGet(Client(), href);
     return decodeImage(bytes);
   }
 
@@ -225,8 +222,7 @@ const ParagraphConstraints _infiniteParagraphConstraints = ParagraphConstraints(
 );
 
 /// A [DrawablePaint] with a transparent stroke.
-const DrawablePaint transparentStroke =
-    DrawablePaint(PaintingStyle.stroke, color: Color(0x0));
+const DrawablePaint transparentStroke = DrawablePaint(PaintingStyle.stroke, color: Color(0x0));
 
 /// Creates a [Paragraph] object using the specified [text], [style], and
 /// [foregroundOverride].

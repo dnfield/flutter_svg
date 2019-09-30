@@ -6,6 +6,7 @@ import 'dart:ui' show Picture;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show AssetBundle;
 import 'package:flutter/widgets.dart';
+import 'package:http/http.dart';
 import 'package:universal_io/io.dart';
 
 import 'src/picture_provider.dart';
@@ -293,9 +294,13 @@ class SvgPicture extends StatefulWidget {
     BlendMode colorBlendMode = BlendMode.srcIn,
     this.semanticsLabel,
     this.excludeFromSemantics = false,
+    BaseClient httpClient,
   })  : pictureProvider = NetworkPicture(
-            allowDrawingOutsideViewBox == true ? svgByteDecoderOutsideViewBox : svgByteDecoder, url,
-            headers: headers, colorFilter: _getColorFilter(color, colorBlendMode)),
+            allowDrawingOutsideViewBox == true ? svgByteDecoderOutsideViewBox : svgByteDecoder,
+            httpClient ?? Client(),
+            url,
+            headers: headers,
+            colorFilter: _getColorFilter(color, colorBlendMode)),
         super(key: key);
 
   /// Creates a widget that displays a [PictureStream] obtained from a [File].
