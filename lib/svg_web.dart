@@ -8,13 +8,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show AssetBundle;
 import 'package:flutter/widgets.dart';
+import 'package:universal_io/io.dart';
 
-import 'parser.dart';
 import 'src/picture_provider.dart';
 import 'src/picture_stream.dart';
-import 'src/render_picture.dart';
 import 'src/vector_drawable.dart';
-import 'svg.dart';
 
 /// Instance for [Svg]'s utility methods, which can produce a [DrawableRoot]
 /// or [PictureInfo] from [String] or [Uint8List].
