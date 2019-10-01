@@ -312,8 +312,11 @@ class SvgPicture extends StatefulWidget {
     this.excludeFromSemantics = false,
     BaseClient httpClient,
   })  : pictureProvider = NetworkPicture(
-            allowDrawingOutsideViewBox == true ? svgByteDecoderOutsideViewBox : svgByteDecoder, httpClient ?? Client(), url,
-            headers: headers, colorFilter: _getColorFilter(color, colorBlendMode)),
+            allowDrawingOutsideViewBox == true ? svgByteDecoderOutsideViewBox : svgByteDecoder,
+            httpClient ?? Client(),
+            url,
+            headers: headers,
+            colorFilter: _getColorFilter(color, colorBlendMode)),
         super(key: key);
 
   /// Creates a widget that displays a [PictureStream] obtained from a [File].

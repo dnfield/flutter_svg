@@ -354,7 +354,7 @@ class SvgPicture extends StatefulWidget {
     this.excludeFromSemantics = false,
     BaseClient httpClient,
   })  : pictureProvider = NetworkPicture(
-            allowDrawingOutsideViewBox == true ? svgByteDecoderOutsideViewBox : svgByteDecoder, httpClient, url,
+            allowDrawingOutsideViewBox == true ? svgByteDecoderOutsideViewBox : svgByteDecoder, httpClient ?? Client(), url,
             headers: headers, colorFilter: _getColorFilter(color, colorBlendMode)),
         super(key: key);
 
