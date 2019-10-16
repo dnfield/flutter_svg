@@ -711,10 +711,10 @@ class _SvgPictureState extends State<SvgPicture> {
       if (width == null && height == null) {
         width = viewport.width;
         height = viewport.height;
-      } else if (height != null) {
-        width = height / viewport.height * viewport.width;
-      } else if (width != null) {
+      } else if (height == null) {
         height = width / viewport.width * viewport.height;
+      } else if (width == null) {
+        width = height / viewport.height * viewport.width;
       }
 
       return _maybeWrapWithSemantics(
