@@ -32,6 +32,7 @@ const Map<String, _ParseFunc> _svgElementParsers = <String, _ParseFunc>{
   'clipPath': _Elements.clipPath,
   'image': _Elements.image,
   'text': _Elements.text,
+  'filter': _Elements.filter,
 };
 
 const Map<String, _PathFunc> _svgPathFuncs = <String, _PathFunc>{
@@ -527,6 +528,81 @@ class _Elements {
         textInfos.removeLast();
       }
     }
+  }
+
+  static Future<DrawableFilter> parseEffects(
+    SvgParserState parserState,
+    Rect bounds,
+  ) async {
+    final List<CanvasOperation> ops = <CanvasOperation>[];
+    ops.add((Canvas canvas) => canvas.clipRect(bounds));
+    for (XmlEvent event in parserState._readSubtree()) {
+      if (event is XmlEndElementEvent) {
+        continue;
+      }
+      if (event is XmlStartElementEvent) {
+        switch (event.localName) {
+          case 'feFlood':
+            final Color color = const Color(0xFF000000);
+            ops.add((Canvas canvas) {
+              canvas.drawPaint(Paint()..color = color);
+            });
+            break;
+          case 'feColorMatrix':
+            final ColorFilter matrix =
+                parseColorFilterMatrix(parserState.attribute('values'));
+            ops.add((Canvas canvas) {
+              canvas.saveLayer(null, Paint()..colorFilter = matrix);
+            });
+            break;
+          case 'feOffset':
+            final double dx = //0;
+                parseDouble(parserState.attribute('dx', def: '0'));
+            final double dy = //0 ;
+                parseDouble(parserState.attribute('dy', def: '0'));
+                print('$dx x $dy');
+            ops.add((Canvas canvas) {
+              canvas.translate(dx * 10, dy * 10);
+            });
+            break;
+          case 'feGaussianBlur':
+            final double sigma =
+                parseDouble(parserState.attribute('stdDeviation', def: '4'));
+            ops.add((Canvas canvas) {
+              canvas.saveLayer(
+                null,
+                Paint()
+                  ..imageFilter = ImageFilter.blur(
+                    sigmaX: sigma,
+                    sigmaY: sigma,
+                  ),
+              );
+            });
+            break;
+          case 'feBlend':
+            print('Wat do');
+            break;
+          default:
+            print('Unsupported filter operation: ${event.localName}');
+        }
+      }
+    }
+    return DrawableFilter(bounds: bounds, operations: ops);
+  }
+
+  static Future<void> filter(SvgParserState parserState) async {
+    assert(parserState != null);
+    final String id = parserState.attribute('id');
+    assert(id != null && id.isNotEmpty);
+    final double width = parseDouble(parserState.attribute('width'));
+    final double height = parseDouble(parserState.attribute('height'));
+    final double x = parseDouble(parserState.attribute('x'));
+    final double y = parseDouble(parserState.attribute('y'));
+    final Rect filterBounds = Rect.fromLTWH(x, y, width, height);
+    parserState._definitions.addFilter(
+      'url(#$id)',
+      await parseEffects(parserState, filterBounds),
+    );
   }
 }
 

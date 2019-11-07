@@ -367,6 +367,18 @@ FontWeight parseFontWeight(String fontWeight) {
       ' is not supported');
 }
 
+/// Parses the `filter` attribute from an SVG element.
+DrawableFilter parseFilter(
+  List<XmlElementAttribute> attributes,
+  DrawableDefinitionServer definitions,
+) {
+  final String id = getAttribute(attributes, 'filter');
+  if (id != '') {
+    return definitions.getFilter(id);
+  }
+  return null;
+}
+
 /// Parses style attributes or @style attribute.
 ///
 /// Remember that @style attribute takes precedence.
@@ -424,5 +436,6 @@ DrawableStyle parseStyle(
       ),
     ),
     blendMode: _blendModes[getAttribute(attributes, 'mix-blend-mode')],
+    filter: parseFilter(attributes, definitions),
   );
 }

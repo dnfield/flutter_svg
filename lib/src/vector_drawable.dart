@@ -58,6 +58,7 @@ class DrawableStyle {
     this.clipPath,
     this.mask,
     this.blendMode,
+    this.filter,
   });
 
   /// Used where 'dasharray' is 'none'
@@ -105,6 +106,9 @@ class DrawableStyle {
   /// Setting this will result in at least one [Canvas.saveLayer] call.
   final BlendMode blendMode;
 
+  /// The [DrawableFilter] to apply, if any.
+  final DrawableFilter filter;
+
   /// Creates a new [DrawableStyle] if `parent` is not null, filling in any null
   /// properties on this with the properties from other (except [groupOpacity],
   /// is not inherited).
@@ -121,6 +125,7 @@ class DrawableStyle {
     List<Path> clipPath,
     DrawableStyleable mask,
     BlendMode blendMode,
+    DrawableFilter filter,
   }) {
     return DrawableStyle(
       fill: DrawablePaint.merge(fill, parent?.fill),
@@ -138,6 +143,7 @@ class DrawableStyle {
       clipPath: clipPath,
       mask: mask,
       blendMode: blendMode,
+      filter: filter,
     );
   }
 
@@ -562,6 +568,7 @@ class DrawableDefinitionServer {
   final Map<String, List<Path>> _clipPaths = <String, List<Path>>{};
   final Map<String, DrawableStyleable> _drawables =
       <String, DrawableStyleable>{};
+  final Map<String, DrawableFilter> _filters = <String, DrawableFilter>{};
 
   /// Attempt to lookup a [Drawable] by [id].
   DrawableStyleable getDrawable(String id, {bool nullOk = false}) {
@@ -615,6 +622,61 @@ class DrawableDefinitionServer {
     assert(id != null);
     assert(paths != null);
     _clipPaths[id] = paths;
+  }
+
+  /// Adds a [DrawableFilter] identified by [id].
+  void addFilter(String id, DrawableFilter filter) {
+    assert(id != null);
+    assert(filter != null);
+    _filters[id] = filter;
+  }
+
+  /// Get a [DrawableFilter] by [id].
+  DrawableFilter getFilter(String id) {
+    assert(id != null);
+    return _filters[id];
+  }
+}
+
+/// An operation performed on a [Canvas]. Used by [DrawableFilter].
+typedef CanvasOperation = void Function(Canvas canvas);
+
+/// Applies a filter effect to a drawable.
+@immutable
+class DrawableFilter {
+  /// Creates a new [DrawableFilter].
+  ///
+  /// All parameters are required and must not be null.
+  const DrawableFilter({
+    @required this.bounds,
+    @required this.operations,
+  })  : assert(bounds != null),
+        assert(operations != null);
+
+  /// The bounds for this filter.
+  final Rect bounds;
+
+  /// The operations to apply to this canvas.
+  final List<CanvasOperation> operations;
+
+  /// Applies the operations in this filter to the given [Canvas].
+  ///
+  /// This method will call [Canvas.save] at least once, and ensure that any
+  /// additional calls to [Canvas.save] or [Canvas.saveLayer] by additional
+  /// [operations] are balanced with a call to [Canvas.restore].
+  void apply(Canvas canvas) {
+    final int count = canvas.getSaveCount();
+    print(count);
+    canvas.save();
+    canvas.clipRect(bounds);
+    for (CanvasOperation operation in operations) {
+      operation(canvas);
+    }
+    final int newCount = canvas.getSaveCount();
+    print(newCount);
+    for (int i = count; i < newCount; i++) {
+      canvas.restore();
+    }
   }
 }
 
@@ -994,9 +1056,12 @@ class DrawableGroup implements DrawableStyleable, DrawableParent {
         canvas.saveLayer(null, blendingPaint);
       }
 
+      style.filter?.apply(canvas);
+
       for (Drawable child in children) {
         child.draw(canvas, colorFilter, bounds);
       }
+
       if (needsSaveLayer) {
         canvas.restore();
       }
@@ -1142,6 +1207,9 @@ class DrawableShape implements DrawableStyleable {
       if (style.blendMode != null) {
         canvas.saveLayer(null, Paint()..blendMode = style.blendMode);
       }
+
+      style.filter?.apply(canvas);
+
       if (style.fill?.style != null) {
         assert(style.fill.style == PaintingStyle.fill);
         canvas.drawPath(path, style.fill.toFlutterPaint(colorFilter));

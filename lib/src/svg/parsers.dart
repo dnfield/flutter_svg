@@ -116,6 +116,16 @@ Matrix4 parseTransform(String transform) {
 
 final RegExp _valueSeparator = RegExp('( *, *| +)');
 
+/// Parses an `feColorMatrix@values` attribute into a [ColorMatrix].
+ColorFilter parseColorFilterMatrix(String paramsStr) {
+  final List<String> params = paramsStr.trim().split(_valueSeparator);
+  assert(params.isNotEmpty);
+  assert(params.length == 20);
+  return ColorFilter.matrix(params
+      .map<double>((String part) => parseDouble(part))
+      .toList(growable: false));
+}
+
 Matrix4 _parseSvgMatrix(String paramsStr, Matrix4 current) {
   final List<String> params = paramsStr.trim().split(_valueSeparator);
   assert(params.isNotEmpty);
