@@ -20,6 +20,7 @@
 
 analyzer:
   strong-mode:
+    implicit-casts: false
     implicit-dynamic: false
   errors:
     # treat missing required parameters as a warning (not a hint)
@@ -43,7 +44,7 @@ linter:
     - always_specify_types
     - annotate_overrides
     # - avoid_annotating_with_dynamic # conflicts with always_specify_types
-    - avoid_as
+    # - avoid_as # conflicts with implicit-casts: false
     # - avoid_bool_literals_in_conditional_expressions # not yet tested
     # - avoid_catches_without_on_clauses # we do this commonly
     # - avoid_catching_errors # we do this commonly
