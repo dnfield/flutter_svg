@@ -296,6 +296,7 @@ class OneFramePictureStreamCompleter extends PictureStreamCompleter {
       {InformationCollector informationCollector})
       : assert(picture != null) {
     picture.then<void>(setPicture, onError: (dynamic error, StackTrace stack) {
+	  setPicture(null);
       FlutterError.reportError(FlutterErrorDetails(
         exception: error,
         stack: stack,
