@@ -67,7 +67,7 @@ class PictureInfo {
 /// frame is requested if the call was asynchronous (after the current frame)
 /// and no rendering frame is requested if the call was synchronous (within the
 /// same stack frame as the call to [PictureStream.addListener]).
-typedef PictureListener = Function(PictureInfo image, bool synchronousCall);
+typedef PictureListener = Function(PictureInfo image, bool synchronousCall, bool error);
 
 /// A handle to an image resource.
 ///
@@ -192,6 +192,7 @@ class PictureStream extends Diagnosticable {
 abstract class PictureStreamCompleter extends Diagnosticable {
   final List<_PictureListenerPair> _listeners = <_PictureListenerPair>[];
   PictureInfo _current;
+  bool _error = false;
 
   /// Adds a listener callback that is called whenever a new concrete [PictureInfo]
   /// object is available. If a concrete image is already available, this object
@@ -208,7 +209,7 @@ abstract class PictureStreamCompleter extends Diagnosticable {
     _listeners.add(_PictureListenerPair(listener, onError));
     if (_current != null) {
       try {
-        listener(_current, true);
+        listener(_current, true, _error);
       } catch (exception, stack) {
         _handleImageError(
           ErrorDescription('by a synchronously-called image listener'),
@@ -237,7 +238,7 @@ abstract class PictureStreamCompleter extends Diagnosticable {
         List<_PictureListenerPair>.from(_listeners);
     for (_PictureListenerPair listenerPair in localListeners) {
       try {
-        listenerPair.listener(picture, false);
+        listenerPair.listener(picture, false, _error);
       } catch (exception, stack) {
         if (listenerPair.errorListener != null) {
           listenerPair.errorListener(exception, stack);
@@ -296,7 +297,7 @@ class OneFramePictureStreamCompleter extends PictureStreamCompleter {
       {InformationCollector informationCollector})
       : assert(picture != null) {
     picture.then<void>(setPicture, onError: (dynamic error, StackTrace stack) {
-	  setPicture(null);
+	  _error = true;
       FlutterError.reportError(FlutterErrorDetails(
         exception: error,
         stack: stack,
