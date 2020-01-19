@@ -145,7 +145,7 @@ Future<void> precachePicture(
   final Completer<void> completer = Completer<void>();
   PictureStream stream;
 
-  void listener(PictureInfo picture, bool synchronous) {
+  void listener(PictureInfo picture, bool synchronous, bool error) {
     completer.complete();
     stream?.removeListener(listener);
   }
@@ -209,7 +209,7 @@ class SvgPicture extends StatefulWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
-    this.errorBuilder,
+    this.errorWidget,
     this.semanticsLabel,
     this.excludeFromSemantics = false,
   }) : super(key: key);
@@ -303,7 +303,7 @@ class SvgPicture extends StatefulWidget {
     this.alignment = Alignment.center,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
-    this.errorBuilder,
+    this.errorWidget,
     Color color,
     BlendMode colorBlendMode = BlendMode.srcIn,
     this.semanticsLabel,
@@ -358,7 +358,7 @@ class SvgPicture extends StatefulWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
-    this.errorBuilder,
+    this.errorWidget,
     Color color,
     BlendMode colorBlendMode = BlendMode.srcIn,
     this.semanticsLabel,
@@ -409,7 +409,7 @@ class SvgPicture extends StatefulWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
-    this.errorBuilder,
+    this.errorWidget,
     Color color,
     BlendMode colorBlendMode = BlendMode.srcIn,
     this.semanticsLabel,
@@ -456,7 +456,7 @@ class SvgPicture extends StatefulWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
-    this.errorBuilder,
+    this.errorWidget,
     Color color,
     BlendMode colorBlendMode = BlendMode.srcIn,
     this.semanticsLabel,
@@ -503,7 +503,7 @@ class SvgPicture extends StatefulWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
-    this.errorBuilder,
+    this.errorWidget,
     Color color,
     BlendMode colorBlendMode = BlendMode.srcIn,
     this.semanticsLabel,
@@ -588,8 +588,8 @@ class SvgPicture extends StatefulWidget {
   /// The placeholder to use while fetching, decoding, and parsing the SVG data.
   final WidgetBuilder placeholderBuilder;
 
-  /// The errorBuilder to use when there is an error.
-  final WidgetBuilder errorBuilder;
+  /// The widget to display if there is an error.
+  final Widget errorWidget;
 
   /// If true, will horizontally flip the picture in [TextDirection.rtl] contexts.
   final bool matchTextDirection;
@@ -618,6 +618,7 @@ class _SvgPictureState extends State<SvgPicture> {
   PictureInfo _picture;
   PictureStream _pictureStream;
   bool _isListeningToStream = false;
+  bool _error = false;
 
   @override
   void didChangeDependencies() {
@@ -652,9 +653,10 @@ class _SvgPictureState extends State<SvgPicture> {
     _updateSourceStream(newStream);
   }
 
-  void _handleImageChanged(PictureInfo imageInfo, bool synchronousCall) {
+  void _handleImageChanged(PictureInfo imageInfo, bool synchronousCall, bool error) {
     setState(() {
       _picture = imageInfo;
+	  _error = error;
     });
   }
 
@@ -701,8 +703,8 @@ class _SvgPictureState extends State<SvgPicture> {
   @override
   Widget build(BuildContext context) {
     Widget _maybeWrapWithSemantics(Widget child) {
-      if(_picture == null && widget.errorBuilder != null){
-        return widget.errorBuilder(context);
+      if(_error && widget.errorWidget != null){
+        return widget.errorWidget;
       }
       if (widget.excludeFromSemantics) {
         return child;
