@@ -403,7 +403,7 @@ void main() {
         child: RepaintBoundary(
           child: SvgPicture.string(
             svgWithAnError,
-            errorWidget: Container(
+            errorBuilder: (BuildContext context) => Container(
               key: _key,
             ),
             width: 100.0,
@@ -425,8 +425,8 @@ void main() {
         textDirection: TextDirection.ltr,
         child: RepaintBoundary(
           child: SvgPicture.network(
-            "http://localhost/thereisnothing.svg",
-            errorWidget: Container(
+            'http://localhost/thereisnothing.svg',
+            errorBuilder: (BuildContext context) => Container(
               key: _key,
             ),
             width: 100.0,

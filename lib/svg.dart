@@ -209,7 +209,7 @@ class SvgPicture extends StatefulWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
-    this.errorWidget,
+    this.errorBuilder,
     this.semanticsLabel,
     this.excludeFromSemantics = false,
   }) : super(key: key);
@@ -303,7 +303,7 @@ class SvgPicture extends StatefulWidget {
     this.alignment = Alignment.center,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
-    this.errorWidget,
+    this.errorBuilder,
     Color color,
     BlendMode colorBlendMode = BlendMode.srcIn,
     this.semanticsLabel,
@@ -358,7 +358,7 @@ class SvgPicture extends StatefulWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
-    this.errorWidget,
+    this.errorBuilder,
     Color color,
     BlendMode colorBlendMode = BlendMode.srcIn,
     this.semanticsLabel,
@@ -409,7 +409,7 @@ class SvgPicture extends StatefulWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
-    this.errorWidget,
+    this.errorBuilder,
     Color color,
     BlendMode colorBlendMode = BlendMode.srcIn,
     this.semanticsLabel,
@@ -456,7 +456,7 @@ class SvgPicture extends StatefulWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
-    this.errorWidget,
+    this.errorBuilder,
     Color color,
     BlendMode colorBlendMode = BlendMode.srcIn,
     this.semanticsLabel,
@@ -503,7 +503,7 @@ class SvgPicture extends StatefulWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
-    this.errorWidget,
+    this.errorBuilder,
     Color color,
     BlendMode colorBlendMode = BlendMode.srcIn,
     this.semanticsLabel,
@@ -589,7 +589,7 @@ class SvgPicture extends StatefulWidget {
   final WidgetBuilder placeholderBuilder;
 
   /// The widget to display if there is an error.
-  final Widget errorWidget;
+  final WidgetBuilder errorBuilder;
 
   /// If true, will horizontally flip the picture in [TextDirection.rtl] contexts.
   final bool matchTextDirection;
@@ -703,8 +703,8 @@ class _SvgPictureState extends State<SvgPicture> {
   @override
   Widget build(BuildContext context) {
     Widget _maybeWrapWithSemantics(Widget child) {
-      if(_error && widget.errorWidget != null){
-        return widget.errorWidget;
+      if(_error && widget.errorBuilder != null){
+        return widget.errorBuilder(context);
       }
       if (widget.excludeFromSemantics) {
         return child;
