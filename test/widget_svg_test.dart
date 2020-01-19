@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' show window;
 
+import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -59,6 +60,10 @@ void main() {
             </g>
         </g>
     </g>
+</svg>''';
+
+  const String svgWithAnError = '''<?xml version="1.0" encoding="UTF-8"?>
+<svg width=ThisIsInvalid height="90px" viewBox="5 10 18 70" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 </svg>''';
 
   final Uint8List svg = utf8.encode(svgStr) as Uint8List;
@@ -388,6 +393,52 @@ void main() {
 
     expect(find.byType(Semantics), findsNothing);
   }, semanticsEnabled: true);
+
+  testWidgets('SvgPicture.string with parsing error', (WidgetTester tester) async{
+    GlobalKey _key = GlobalKey();
+
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: RepaintBoundary(
+          child: SvgPicture.string(
+            svgWithAnError,
+            errorWidget: Container(
+              key: _key,
+            ),
+            width: 100.0,
+            height: 100.0,
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    expect(find.byKey(_key), findsNothing);
+  });
+
+  testWidgets('SvgPicture.network with parsing error', (WidgetTester tester) async{
+    GlobalKey _key = GlobalKey();
+
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: RepaintBoundary(
+          child: SvgPicture.network(
+            "http://localhost/thereisnothing.svg",
+            errorWidget: Container(
+              key: _key,
+            ),
+            width: 100.0,
+            height: 100.0,
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    expect(find.byKey(_key), findsNothing);
+  });
 }
 
 class MockAssetBundle extends Mock implements AssetBundle {}
