@@ -656,7 +656,13 @@ class _SvgPictureState extends State<SvgPicture> {
   void _handleImageChanged(PictureInfo imageInfo, bool synchronousCall, bool error) {
     setState(() {
       _picture = imageInfo;
-	  _error = error;
+	    _error = error;
+    });
+  }
+
+  void _handleImageError(dynamic exception, StackTrace stack){
+    setState(() {
+      _error = true;
     });
   }
 
@@ -673,7 +679,7 @@ class _SvgPictureState extends State<SvgPicture> {
 
     _pictureStream = newStream;
     if (_isListeningToStream) {
-      _pictureStream.addListener(_handleImageChanged);
+      _pictureStream.addListener(_handleImageChanged, onError: _handleImageError);
     }
   }
 
@@ -681,7 +687,7 @@ class _SvgPictureState extends State<SvgPicture> {
     if (_isListeningToStream) {
       return;
     }
-    _pictureStream.addListener(_handleImageChanged);
+    _pictureStream.addListener(_handleImageChanged, onError: _handleImageError);
     _isListeningToStream = true;
   }
 
