@@ -14,5 +14,7 @@ doc/api/
 coverage/
 .project
 
+# golden failure diffs
+test/failures
 # Flutter crash logs
 /flutter_*.log
