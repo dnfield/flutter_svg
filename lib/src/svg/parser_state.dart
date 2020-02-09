@@ -64,14 +64,12 @@ class _TextInfo {
   const _TextInfo(
     this.style,
     this.offset,
-    this.transform,
   );
   final DrawableStyle style;
   final Offset offset;
-  final Matrix4 transform;
 
   @override
-  String toString() => '$runtimeType{$offset, $style, $transform}';
+  String toString() => '$runtimeType{$offset, $style}';
 }
 
 class _Elements {
@@ -102,8 +100,8 @@ class _Elements {
         parserState._definitions,
         parserState.rootBounds,
         parent.style,
+        needsTransform: true,
       ),
-      transform: parseTransform(parserState.attribute('transform'))?.storage,
     );
     if (!parserState._inDefs) {
       parent.children.add(group);
@@ -121,8 +119,8 @@ class _Elements {
         parserState._definitions,
         null,
         parent.style,
+        needsTransform: true,
       ),
-      transform: parseTransform(parserState.attribute('transform'))?.storage,
     );
     parserState.addGroup(parserState._currentStartElement, group);
     return null;
@@ -141,27 +139,18 @@ class _Elements {
       parserState.rootBounds,
       parent.style,
     );
-
-    final Matrix4 transform =
-        parseTransform(parserState.attribute('transform')) ??
-            Matrix4.identity();
-    transform.translate(
-      parseDouble(parserState.attribute('x', def: '0')),
-      parseDouble(parserState.attribute('y', def: '0')),
-    );
-
+    final Matrix4 transform = Matrix4.identity()
+      ..translate(
+        parseDouble(parserState.attribute('x', def: '0')),
+        parseDouble(parserState.attribute('y', def: '0')),
+      );
     final DrawableStyleable ref =
         parserState._definitions.getDrawable('url($xlinkHref)');
     final DrawableGroup group = DrawableGroup(
       <Drawable>[ref.mergeStyle(style)],
-      style,
-      transform: transform.storage,
+      DrawableStyle(transform: transform.storage),
     );
-
-    final bool isIri = parserState.checkForIri(group);
-    if (!parserState._inDefs || !isIri) {
-      parent.children.add(group);
-    }
+    parent.children.add(group);
     return null;
   }
 
@@ -197,11 +186,9 @@ class _Elements {
 
   static Future<void> radialGradient(SvgParserState parserState) {
     final String gradientUnits = getAttribute(
-      parserState.attributes,
-      'gradientUnits',
-      def: null,
-    );
-    bool isObjectBoundingBox = gradientUnits != 'userSpaceOnUse';
+        parserState.attributes, 'gradientUnits',
+        def: 'objectBoundingBox');
+    final bool isObjectBoundingBox = gradientUnits == 'objectBoundingBox';
 
     final String rawCx = parserState.attribute('cx', def: '50%');
     final String rawCy = parserState.attribute('cy', def: '50%');
@@ -224,10 +211,6 @@ class _Elements {
       if (ref == null) {
         reportMissingDef(href, 'radialGradient');
       } else {
-        if (gradientUnits == null) {
-          isObjectBoundingBox =
-              ref.unitMode == GradientUnitMode.objectBoundingBox;
-        }
         colors.addAll(ref.colors);
         offsets.addAll(ref.offsets);
       }
@@ -287,11 +270,9 @@ class _Elements {
 
   static Future<void> linearGradient(SvgParserState parserState) {
     final String gradientUnits = getAttribute(
-      parserState.attributes,
-      'gradientUnits',
-      def: null,
-    );
-    bool isObjectBoundingBox = gradientUnits != 'userSpaceOnUse';
+        parserState.attributes, 'gradientUnits',
+        def: 'objectBoundingBox');
+    final bool isObjectBoundingBox = gradientUnits == 'objectBoundingBox';
 
     final String x1 = parserState.attribute('x1', def: '0%');
     final String x2 = parserState.attribute('x2', def: '100%');
@@ -312,10 +293,6 @@ class _Elements {
       if (ref == null) {
         reportMissingDef(href, 'linearGradient');
       } else {
-        if (gradientUnits == null) {
-          isObjectBoundingBox =
-              ref.unitMode == GradientUnitMode.objectBoundingBox;
-        }
         colors.addAll(ref.colors);
         offsets.addAll(ref.offsets);
       }
@@ -452,33 +429,14 @@ class _Elements {
       parseDouble(parserState.attribute('height', def: '0')),
     );
     final Image image = await resolveImage(href);
-    final DrawableParent parent = parserState._parentDrawables.last.drawable;
-    final DrawableStyle parentStyle = parent.style;
-    final DrawableRasterImage drawable = DrawableRasterImage(
-      image,
-      offset,
-      parseStyle(
-        parserState.attributes,
-        parserState._definitions,
-        parserState.rootBounds,
-        parentStyle,
-      ),
-      size: size,
-      transform: parseTransform(parserState.attribute('transform'))?.storage,
+    parserState.currentGroup.children.add(
+      DrawableRasterImage(image, offset, size: size),
     );
-    final bool isIri = parserState.checkForIri(drawable);
-    if (!parserState._inDefs || !isIri) {
-      parserState.currentGroup.children.add(drawable);
-    }
   }
 
   static Future<void> text(SvgParserState parserState) async {
     assert(parserState != null);
     assert(parserState.currentGroup != null);
-    if (parserState._currentStartElement.isSelfClosing) {
-      return;
-    }
-
     // <text>, <tspan> -> Collect styles
     // <tref> TBD - looks like Inkscape supports it, but no browser does.
     // XmlNodeType.TEXT/CDATA -> DrawableText
@@ -504,16 +462,13 @@ class _Elements {
             ? transparentStroke
             : lastTextInfo.style.stroke,
       );
-      parserState.currentGroup.children.add(
-        DrawableText(
-          fill,
-          stroke,
-          lastTextInfo.offset,
-          lastTextInfo.style.textStyle.anchor ??
-              DrawableTextAnchorPosition.start,
-          transform: lastTextInfo.transform?.storage,
-        ),
-      );
+      parserState.currentGroup.children.add(DrawableText(
+        fill,
+        stroke,
+        lastTextInfo.offset,
+        lastTextInfo.style.textStyle.anchor ?? DrawableTextAnchorPosition.start,
+        transform: lastTextInfo.style.transform,
+      ));
       lastTextWidth = fill.maxIntrinsicWidth;
     }
 
@@ -526,24 +481,16 @@ class _Elements {
         parserState,
         lastTextInfo?.offset?.translate(lastTextWidth, 0),
       );
-      Matrix4 transform = parseTransform(parserState.attribute('transform'));
-      if (lastTextInfo?.transform != null) {
-        if (transform == null) {
-          transform = lastTextInfo.transform;
-        } else {
-          transform = lastTextInfo.transform.multiplied(transform);
-        }
-      }
-
       textInfos.add(_TextInfo(
         parseStyle(
           parserState.attributes,
           parserState._definitions,
           parserState.rootBounds,
           lastTextInfo?.style ?? parserState.currentGroup.style,
+          needsTransform: true,
+          multiplyTransformByParent: lastTextInfo != null,
         ),
         currentOffset,
-        transform,
       ));
       if (event.isSelfClosing) {
         textInfos.removeLast();

@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
-import 'dart:ui' show Picture;
+import 'dart:ui';
+import 'dart:html' as html;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show AssetBundle;
 import 'package:flutter/widgets.dart';
 import 'package:http/http.dart';
@@ -40,8 +42,12 @@ class Svg {
     bool allowDrawingOutsideOfViewBox,
     ColorFilter colorFilter,
     String key,
-  ) async =>
-      throw UnimplementedError();
+  ) async {
+    final String rawString = utf8.decode(raw);
+    return PictureInfo(
+      string: rawString,
+    );
+  }
 
   /// Produces a [PictureInfo] from a [String] of SVG data.
   ///
@@ -54,34 +60,11 @@ class Svg {
   ///
   /// The [key] will be used for debugging purposes.
   FutureOr<PictureInfo> svgPictureStringDecoder(
-          String raw, bool allowDrawingOutsideOfViewBox, ColorFilter colorFilter, String key) async =>
-      throw UnimplementedError();
-
-  /// Produces a [Drawableroot] from a [Uint8List] of SVG byte data (assumes UTF8 encoding).
-  ///
-  /// The [key] will be used for debugging purposes.
-  FutureOr<DrawableRoot> fromSvgBytes(Uint8List raw, String key) async {
-    // TODO(dnfield): do utf decoding in another thread?
-    // Might just have to live with potentially slow(ish) decoding, this is causing errors.
-    // See: https://github.com/dart-lang/sdk/issues/31954
-    // See: https://github.com/flutter/flutter/blob/bf3bd7667f07709d0b817ebfcb6972782cfef637/packages/flutter/lib/src/services/asset_bundle.dart#L66
-    // if (raw.lengthInBytes < 20 * 1024) {
-    return fromSvgString(utf8.decode(raw), key);
-    // } else {
-    //   final String str =
-    //       await compute(_utf8Decode, raw, debugLabel: 'UTF8 decode for SVG');
-    //   return fromSvgString(str);
-    // }
+      String raw, bool allowDrawingOutsideOfViewBox, ColorFilter colorFilter, String key) async {
+    return PictureInfo(
+      string: raw,
+    );
   }
-
-  // String _utf8Decode(Uint8List data) {
-  //   return utf8.decode(data);
-  // }
-
-  /// Creates a [DrawableRoot] from a string of SVG data.
-  ///
-  /// The `key` is used for debugging purposes.
-  Future<DrawableRoot> fromSvgString(String rawSvg, String key) async => throw UnimplementedError();
 }
 
 /// Prefetches an SVG Picture into the picture cache.
@@ -107,8 +90,41 @@ Future<void> precachePicture(
   Color color,
   BlendMode colorBlendMode,
   PictureErrorListener onError,
-}) =>
-    throw UnimplementedError();
+}) {
+  final PictureConfiguration config = createLocalPictureConfiguration(
+    context,
+    viewBox: viewBox,
+    colorFilterOverride: colorFilterOverride,
+    color: color,
+    colorBlendMode: colorBlendMode,
+  );
+  final Completer<void> completer = Completer<void>();
+  PictureStream stream;
+
+  void listener(PictureInfo picture, bool synchronous) {
+    completer.complete();
+    stream?.removeListener(listener);
+  }
+
+  void errorListener(dynamic exception, StackTrace stackTrace) {
+    if (onError != null) {
+      onError(exception, stackTrace);
+    } else {
+      FlutterError.reportError(FlutterErrorDetails(
+        context: ErrorDescription('picture failed to precache'),
+        library: 'SVG',
+        exception: exception,
+        stack: stackTrace,
+        silent: true,
+      ));
+    }
+    completer.complete();
+    stream?.removeListener(listener);
+  }
+
+  stream = provider.resolve(config, onError: errorListener)..addListener(listener, onError: errorListener);
+  return completer.future;
+}
 
 /// A widget that will parse SVG data into a [Picture] using a [PictureProvider].
 ///
@@ -522,6 +538,145 @@ class SvgPicture extends StatefulWidget {
 }
 
 class _SvgPictureState extends State<SvgPicture> {
+  PictureInfo _picture;
+  PictureStream _pictureStream;
+  bool _isListeningToStream = false;
+
   @override
-  Widget build(BuildContext context) => Container();
+  void didChangeDependencies() {
+    _resolveImage();
+
+    if (TickerMode.of(context)) {
+      _listenToStream();
+    } else {
+      _stopListeningToStream();
+    }
+    super.didChangeDependencies();
+  }
+
+  @override
+  void didUpdateWidget(SvgPicture oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.pictureProvider != oldWidget.pictureProvider) {
+      _resolveImage();
+    }
+  }
+
+  @override
+  void reassemble() {
+    _resolveImage(); // in case the image cache was flushed
+    super.reassemble();
+  }
+
+  void _resolveImage() {
+    final PictureStream newStream = widget.pictureProvider.resolve(createLocalPictureConfiguration(context));
+    assert(newStream != null);
+    _updateSourceStream(newStream);
+  }
+
+  void _handleImageChanged(PictureInfo imageInfo, bool synchronousCall) {
+    platformViewRegistry.registerViewFactory('img-svg-${imageInfo.hashCode}', (int viewId) {
+      final String base64 = base64Encode(utf8.encode(imageInfo.string));
+      final String base64String = 'data:image/svg+xml;base64,$base64';
+      final html.ImageElement element =
+          html.ImageElement(src: base64String, height: widget.height?.toInt(), width: widget.width?.toInt());
+      return element;
+    });
+
+    setState(() {
+      _picture = imageInfo;
+    });
+  }
+
+  // Update _pictureStream to newStream, and moves the stream listener
+  // registration from the old stream to the new stream (if a listener was
+  // registered).
+  void _updateSourceStream(PictureStream newStream) {
+    if (_pictureStream?.key == newStream?.key) {
+      return;
+    }
+
+    if (_isListeningToStream) _pictureStream.removeListener(_handleImageChanged);
+
+    _pictureStream = newStream;
+    if (_isListeningToStream) {
+      _pictureStream.addListener(_handleImageChanged);
+    }
+  }
+
+  void _listenToStream() {
+    if (_isListeningToStream) {
+      return;
+    }
+    _pictureStream.addListener(_handleImageChanged);
+    _isListeningToStream = true;
+  }
+
+  void _stopListeningToStream() {
+    if (!_isListeningToStream) {
+      return;
+    }
+    _pictureStream.removeListener(_handleImageChanged);
+    _isListeningToStream = false;
+  }
+
+  @override
+  void dispose() {
+    assert(_pictureStream != null);
+    _stopListeningToStream();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Widget _maybeWrapWithSemantics(Widget child) {
+      if (widget.excludeFromSemantics) {
+        return child;
+      }
+      return Semantics(
+        container: widget.semanticsLabel != null,
+        image: true,
+        label: widget.semanticsLabel == null ? '' : widget.semanticsLabel,
+        child: child,
+      );
+    }
+
+    if (_picture != null) {
+      final double width = widget.width;
+      final double height = widget.height;
+
+      return _maybeWrapWithSemantics(
+        Container(
+          width: width,
+          height: height,
+          alignment: widget.alignment,
+          child: HtmlElementView(
+            viewType: 'img-svg-${_picture.hashCode}',
+          ),
+        ),
+      );
+    }
+
+    return _maybeWrapWithSemantics(
+      widget.placeholderBuilder == null
+          ? _getDefaultPlaceholder(context, widget.width, widget.height)
+          : widget.placeholderBuilder(context),
+    );
+  }
+
+  Widget _getDefaultPlaceholder(BuildContext context, double width, double height) {
+    if (width != null || height != null) {
+      return SizedBox(width: width, height: height);
+    }
+
+    return SvgPicture.defaultPlaceholderBuilder(context);
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder description) {
+    super.debugFillProperties(description);
+    description.add(
+      DiagnosticsProperty<PictureStream>('stream', _pictureStream),
+    );
+  }
 }

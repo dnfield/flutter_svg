@@ -1,49 +1,5 @@
 # CHANGES
 
-## 0.17.1
-
-- Fix for issue with `use` elements refering to groups or other `use` elements
-  not correctly applying styles.
-
-## 0.17.0
-
-- Make ColorFiltering apply to whole layer instead of per paint operation.
-- **BREAKING** Remove `colorFilter` parameter from `VectorDrawable.draw`.
-- Fix color filtering for text.
-
-## 0.16.1
-
-- Support `image` tags in `defs`.
-- Make `DrawableRasterImage` implement `DrawableStyleable`.
-
-## 0.16.0
-
-- Move `transform` out of `DrawableStyle` and onto `DrawableStyleable`. Shapes
-  already worked this way, and the transform logic was handled in a confusingly
-  different way than all the other style attributes.
-- Support `<use/>` elements having `id`s.
-- Properly apply transforms to referenced use eleemnts.
-
-## 0.15.0
-
-- Respect transformations on `<image/>` tags.
-- Be more tolerant of malformed base64 data, similar to browsers (specifically,
-  having spaces present in the data). ## 0.14.4
-- Apply masks in the correct order when blend modes are involved in shapes.
-
-## 0.14.4
-
-- Support for masks on groups.
-- Update example project to Android X.
-
-## 0.14.3
-
-- Support for the `mix-blend-mode` attribute.
-
-## 0.14.2
-
-- Format, open up obtainKey for testing.
-
 ## 0.14.1
 
 - Support for HSL colors (thanks to [@christianalfoni](https://github.com/christianalfoni))

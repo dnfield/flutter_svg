@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' show Picture;
 
@@ -7,10 +8,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show AssetBundle;
 import 'package:flutter/widgets.dart';
 import 'package:http/http.dart';
-import 'package:universal_io/io.dart';
 
+import 'parser.dart';
 import 'src/picture_provider.dart';
 import 'src/picture_stream.dart';
+import 'src/render_picture.dart';
 import 'src/vector_drawable.dart';
 
 /// Instance for [Svg]'s utility methods, which can produce a [DrawableRoot]
@@ -40,8 +42,18 @@ class Svg {
     bool allowDrawingOutsideOfViewBox,
     ColorFilter colorFilter,
     String key,
-  ) async =>
-      throw UnimplementedError();
+  ) async {
+    final DrawableRoot svgRoot = await fromSvgBytes(raw, key);
+    final Picture pic = svgRoot.toPicture(
+      clipToViewBox: allowDrawingOutsideOfViewBox == true ? false : true,
+      colorFilter: colorFilter,
+    );
+    return PictureInfo(
+      picture: pic,
+      viewport: svgRoot.viewport.viewBoxRect,
+      size: svgRoot.viewport.size,
+    );
+  }
 
   /// Produces a [PictureInfo] from a [String] of SVG data.
   ///
@@ -54,8 +66,18 @@ class Svg {
   ///
   /// The [key] will be used for debugging purposes.
   FutureOr<PictureInfo> svgPictureStringDecoder(
-          String raw, bool allowDrawingOutsideOfViewBox, ColorFilter colorFilter, String key) async =>
-      throw UnimplementedError();
+      String raw, bool allowDrawingOutsideOfViewBox, ColorFilter colorFilter, String key) async {
+    final DrawableRoot svg = await fromSvgString(raw, key);
+    return PictureInfo(
+      picture: svg.toPicture(
+        clipToViewBox: allowDrawingOutsideOfViewBox == true ? false : true,
+        colorFilter: colorFilter,
+        size: svg.viewport.viewBox,
+      ),
+      viewport: svg.viewport.viewBoxRect,
+      size: svg.viewport.size,
+    );
+  }
 
   /// Produces a [Drawableroot] from a [Uint8List] of SVG byte data (assumes UTF8 encoding).
   ///
@@ -81,7 +103,10 @@ class Svg {
   /// Creates a [DrawableRoot] from a string of SVG data.
   ///
   /// The `key` is used for debugging purposes.
-  Future<DrawableRoot> fromSvgString(String rawSvg, String key) async => throw UnimplementedError();
+  Future<DrawableRoot> fromSvgString(String rawSvg, String key) async {
+    final SvgParser parser = SvgParser();
+    return await parser.parse(rawSvg, key: key);
+  }
 }
 
 /// Prefetches an SVG Picture into the picture cache.
@@ -107,8 +132,41 @@ Future<void> precachePicture(
   Color color,
   BlendMode colorBlendMode,
   PictureErrorListener onError,
-}) =>
-    throw UnimplementedError();
+}) {
+  final PictureConfiguration config = createLocalPictureConfiguration(
+    context,
+    viewBox: viewBox,
+    colorFilterOverride: colorFilterOverride,
+    color: color,
+    colorBlendMode: colorBlendMode,
+  );
+  final Completer<void> completer = Completer<void>();
+  PictureStream stream;
+
+  void listener(PictureInfo picture, bool synchronous) {
+    completer.complete();
+    stream?.removeListener(listener);
+  }
+
+  void errorListener(dynamic exception, StackTrace stackTrace) {
+    if (onError != null) {
+      onError(exception, stackTrace);
+    } else {
+      FlutterError.reportError(FlutterErrorDetails(
+        context: ErrorDescription('picture failed to precache'),
+        library: 'SVG',
+        exception: exception,
+        stack: stackTrace,
+        silent: true,
+      ));
+    }
+    completer.complete();
+    stream?.removeListener(listener);
+  }
+
+  stream = provider.resolve(config, onError: errorListener)..addListener(listener, onError: errorListener);
+  return completer.future;
+}
 
 /// A widget that will parse SVG data into a [Picture] using a [PictureProvider].
 ///
@@ -296,11 +354,8 @@ class SvgPicture extends StatefulWidget {
     this.excludeFromSemantics = false,
     BaseClient httpClient,
   })  : pictureProvider = NetworkPicture(
-            allowDrawingOutsideViewBox == true ? svgByteDecoderOutsideViewBox : svgByteDecoder,
-            httpClient ?? Client(),
-            url,
-            headers: headers,
-            colorFilter: _getColorFilter(color, colorBlendMode)),
+            allowDrawingOutsideViewBox == true ? svgByteDecoderOutsideViewBox : svgByteDecoder, httpClient ?? Client(), url,
+            headers: headers, colorFilter: _getColorFilter(color, colorBlendMode)),
         super(key: key);
 
   /// Creates a widget that displays a [PictureStream] obtained from a [File].
@@ -344,7 +399,9 @@ class SvgPicture extends StatefulWidget {
     BlendMode colorBlendMode = BlendMode.srcIn,
     this.semanticsLabel,
     this.excludeFromSemantics = false,
-  })  : pictureProvider = null,
+  })  : pictureProvider = FilePicture(
+            allowDrawingOutsideViewBox == true ? svgByteDecoderOutsideViewBox : svgByteDecoder, file,
+            colorFilter: _getColorFilter(color, colorBlendMode)),
         super(key: key);
 
   /// Creates a widget that displays a [PictureStream] obtained from a [Uint8List].
@@ -522,6 +579,219 @@ class SvgPicture extends StatefulWidget {
 }
 
 class _SvgPictureState extends State<SvgPicture> {
+  PictureInfo _picture;
+  PictureStream _pictureStream;
+  bool _isListeningToStream = false;
+
   @override
-  Widget build(BuildContext context) => Container();
+  void didChangeDependencies() {
+    _resolveImage();
+
+    if (TickerMode.of(context)) {
+      _listenToStream();
+    } else {
+      _stopListeningToStream();
+    }
+    super.didChangeDependencies();
+  }
+
+  @override
+  void didUpdateWidget(SvgPicture oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.pictureProvider != oldWidget.pictureProvider) {
+      _resolveImage();
+    }
+  }
+
+  @override
+  void reassemble() {
+    _resolveImage(); // in case the image cache was flushed
+    super.reassemble();
+  }
+
+  void _resolveImage() {
+    final PictureStream newStream = widget.pictureProvider.resolve(createLocalPictureConfiguration(context));
+    assert(newStream != null);
+    _updateSourceStream(newStream);
+  }
+
+  void _handleImageChanged(PictureInfo imageInfo, bool synchronousCall) {
+    setState(() {
+      _picture = imageInfo;
+    });
+  }
+
+  // Update _pictureStream to newStream, and moves the stream listener
+  // registration from the old stream to the new stream (if a listener was
+  // registered).
+  void _updateSourceStream(PictureStream newStream) {
+    if (_pictureStream?.key == newStream?.key) {
+      return;
+    }
+
+    if (_isListeningToStream) _pictureStream.removeListener(_handleImageChanged);
+
+    _pictureStream = newStream;
+    if (_isListeningToStream) {
+      _pictureStream.addListener(_handleImageChanged);
+    }
+  }
+
+  void _listenToStream() {
+    if (_isListeningToStream) {
+      return;
+    }
+    _pictureStream.addListener(_handleImageChanged);
+    _isListeningToStream = true;
+  }
+
+  void _stopListeningToStream() {
+    if (!_isListeningToStream) {
+      return;
+    }
+    _pictureStream.removeListener(_handleImageChanged);
+    _isListeningToStream = false;
+  }
+
+  @override
+  void dispose() {
+    assert(_pictureStream != null);
+    _stopListeningToStream();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Widget _maybeWrapWithSemantics(Widget child) {
+      if (widget.excludeFromSemantics) {
+        return child;
+      }
+      return Semantics(
+        container: widget.semanticsLabel != null,
+        image: true,
+        label: widget.semanticsLabel == null ? '' : widget.semanticsLabel,
+        child: child,
+      );
+    }
+
+    if (_picture != null) {
+      final Rect viewport = Offset.zero & _picture.viewport.size;
+
+      double width = widget.width;
+      double height = widget.height;
+      if (width == null && height == null) {
+        width = viewport.width;
+        height = viewport.height;
+      } else if (height != null) {
+        width = height / viewport.height * viewport.width;
+      } else if (width != null) {
+        height = width / viewport.width * viewport.height;
+      }
+
+      return _maybeWrapWithSemantics(
+        SizedBox(
+          width: width,
+          height: height,
+          child: FittedBox(
+            fit: widget.fit,
+            alignment: widget.alignment,
+            child: SizedBox.fromSize(
+              size: viewport.size,
+              child: RawPicture(
+                _picture,
+                matchTextDirection: widget.matchTextDirection,
+                allowDrawingOutsideViewBox: widget.allowDrawingOutsideViewBox,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return _maybeWrapWithSemantics(
+      widget.placeholderBuilder == null
+          ? _getDefaultPlaceholder(context, widget.width, widget.height)
+          : widget.placeholderBuilder(context),
+    );
+  }
+
+  Widget _getDefaultPlaceholder(BuildContext context, double width, double height) {
+    if (width != null || height != null) {
+      return SizedBox(width: width, height: height);
+    }
+
+    return SvgPicture.defaultPlaceholderBuilder(context);
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder description) {
+    super.debugFillProperties(description);
+    description.add(
+      DiagnosticsProperty<PictureStream>('stream', _pictureStream),
+    );
+  }
+}
+
+/// Decodes the given [File] object as a picture, associating it with the given
+/// scale.
+///
+/// See also:
+///
+///  * [SvgPicture.file] for a shorthand of an [SvgPicture] widget backed by [FilePicture].
+class FilePicture extends PictureProvider<FilePicture> {
+  /// Creates an object that decodes a [File] as a picture.
+  ///
+  /// The arguments must not be null.
+  const FilePicture(this.decoder, this.file, {this.colorFilter})
+      : assert(decoder != null),
+        assert(file != null);
+
+  /// The file to decode into a picture.
+  final File file;
+
+  /// The [PictureInfoDecoder] to use for loading this picture.
+  final PictureInfoDecoder<Uint8List> decoder;
+
+  /// The [ColorFilter], if any, to use when drawing this picture.
+  final ColorFilter colorFilter;
+
+  @override
+  Future<FilePicture> obtainKey(PictureConfiguration picture) {
+    return SynchronousFuture<FilePicture>(this);
+  }
+
+  @override
+  PictureStreamCompleter load(FilePicture key, {PictureErrorListener onError}) {
+    return OneFramePictureStreamCompleter(_loadAsync(key, onError: onError), informationCollector: () sync* {
+      yield DiagnosticsProperty<String>('Path', file?.path);
+    });
+  }
+
+  Future<PictureInfo> _loadAsync(FilePicture key, {PictureErrorListener onError}) async {
+    assert(key == this);
+
+    final Uint8List data = await file.readAsBytes();
+    if (data == null || data.isEmpty) {
+      return null;
+    }
+    if (onError != null) {
+      return decoder(data, colorFilter, key.toString())..catchError(onError);
+    }
+    return decoder(data, colorFilter, key.toString());
+  }
+
+  @override
+  bool operator ==(dynamic other) {
+    if (other.runtimeType != runtimeType) {
+      return false;
+    }
+    final FilePicture typedOther = other;
+    return file?.path == typedOther.file?.path && typedOther.colorFilter == colorFilter;
+  }
+
+  @override
+  int get hashCode => hashValues(file?.path?.hashCode, colorFilter);
+
+  @override
+  String toString() => '$runtimeType("${file?.path}", colorFilter: $colorFilter)';
 }

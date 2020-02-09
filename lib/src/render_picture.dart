@@ -208,12 +208,7 @@ void scaleCanvasToViewBox(
       desiredSize.width / viewBox.width,
       desiredSize.height / viewBox.height,
     );
-    final Size scaledHalfViewBoxSize = viewBox.size * scale / 2.0;
-    final Size halfDesiredSize = desiredSize / 2.0;
-    final Offset shift = Offset(
-      halfDesiredSize.width - scaledHalfViewBoxSize.width,
-      halfDesiredSize.height - scaledHalfViewBoxSize.height,
-    );
+    final Offset shift = desiredSize / 2.0 - viewBox.size * scale / 2.0;
     canvas.translate(shift.dx, shift.dy);
     canvas.scale(scale, scale);
   }

@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:path_drawing/path_drawing.dart';
@@ -146,7 +147,7 @@ DashOffset parseDashOffset(List<XmlElementAttribute> attributes) {
 double parseOpacity(List<XmlElementAttribute> attributes) {
   final String rawOpacity = getAttribute(attributes, 'opacity', def: null);
   if (rawOpacity != null) {
-    return parseDouble(rawOpacity).clamp(0.0, 1.0).toDouble();
+    return parseDouble(rawOpacity).clamp(0.0, 1.0);
   }
   return null;
 }
@@ -180,7 +181,7 @@ DrawablePaint parseStroke(
     def: '1.0',
   );
   final String rawOpacity = getAttribute(attributes, 'opacity');
-  double opacity = parseDouble(rawStrokeOpacity).clamp(0.0, 1.0).toDouble();
+  double opacity = parseDouble(rawStrokeOpacity).clamp(0.0, 1.0);
   if (rawOpacity != '') {
     opacity *= parseDouble(rawOpacity).clamp(0.0, 1.0);
   }
@@ -243,7 +244,7 @@ DrawablePaint parseFill(
   final String rawFill = getAttribute(el, 'fill');
   final String rawFillOpacity = getAttribute(el, 'fill-opacity', def: '1.0');
   final String rawOpacity = getAttribute(el, 'opacity');
-  double opacity = parseDouble(rawFillOpacity).clamp(0.0, 1.0).toDouble();
+  double opacity = parseDouble(rawFillOpacity).clamp(0.0, 1.0);
   if (rawOpacity != '') {
     opacity *= parseDouble(rawOpacity).clamp(0.0, 1.0);
   }
@@ -304,24 +305,6 @@ List<Path> parseClipPath(
   return null;
 }
 
-const Map<String, BlendMode> _blendModes = <String, BlendMode>{
-  'multiply': BlendMode.multiply,
-  'screen': BlendMode.screen,
-  'overlay': BlendMode.overlay,
-  'darken': BlendMode.darken,
-  'lighten': BlendMode.lighten,
-  'color-dodge': BlendMode.colorDodge,
-  'color-burn': BlendMode.colorBurn,
-  'hard-light': BlendMode.hardLight,
-  'soft-light': BlendMode.softLight,
-  'difference': BlendMode.difference,
-  'exclusion': BlendMode.exclusion,
-  'hue': BlendMode.hue,
-  'saturation': BlendMode.saturation,
-  'color': BlendMode.color,
-  'luminosity': BlendMode.luminosity,
-};
-
 /// Lookup the mask if the attribute is present
 DrawableStyleable parseMask(
   List<XmlElementAttribute> attributes,
@@ -373,10 +356,30 @@ DrawableStyle parseStyle(
   List<XmlElementAttribute> attributes,
   DrawableDefinitionServer definitions,
   Rect bounds,
-  DrawableStyle parentStyle,
-) {
+  DrawableStyle parentStyle, {
+  bool needsTransform = false,
+  bool multiplyTransformByParent = false,
+}) {
+  Float64List rawTransform;
+  if (needsTransform) {
+    final Matrix4 transform = parseTransform(
+      getAttribute(attributes, 'transform'),
+    );
+    if (multiplyTransformByParent && parentStyle?.transform != null) {
+      if (transform == null) {
+        rawTransform = parentStyle.transform;
+      } else {
+        rawTransform = Matrix4.fromFloat64List(parentStyle.transform)
+            .multiplied(transform)
+            .storage;
+      }
+    } else {
+      rawTransform = transform?.storage;
+    }
+  }
   return DrawableStyle.mergeAndBlend(
     parentStyle,
+    transform: rawTransform,
     stroke: parseStroke(attributes, bounds, definitions, parentStyle?.stroke),
     dashArray: parseDashArray(attributes),
     dashOffset: parseDashOffset(attributes),
@@ -402,6 +405,5 @@ DrawableStyle parseStyle(
         getAttribute(attributes, 'text-anchor', def: 'inherit'),
       ),
     ),
-    blendMode: _blendModes[getAttribute(attributes, 'mix-blend-mode')],
   );
 }

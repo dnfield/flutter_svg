@@ -21,7 +21,7 @@ final Avd avd = Avd._();
 class Avd {
   Avd._();
 
-  Future<PictureInfo> avdPictureDecoder(
+  FutureOr<PictureInfo> avdPictureDecoder(
       Uint8List raw,
       bool allowDrawingOutsideOfViewBox,
       ColorFilter colorFilter,
@@ -33,7 +33,7 @@ class Avd {
     return PictureInfo(picture: pic, viewport: avdRoot.viewport.viewBoxRect);
   }
 
-  Future<PictureInfo> avdPictureStringDecoder(
+  FutureOr<PictureInfo> avdPictureStringDecoder(
     String raw,
     bool allowDrawingOutsideOfViewBox,
     ColorFilter colorFilter,
@@ -49,7 +49,7 @@ class Avd {
     );
   }
 
-  Future<DrawableRoot> fromAvdBytes(Uint8List raw, String key) async {
+  FutureOr<DrawableRoot> fromAvdBytes(Uint8List raw, String key) async {
     // TODO(dnfield): do utf decoding in another thread?
     // Might just have to live with potentially slow(ish) decoding, this is causing errors.
     // See: https://github.com/dart-lang/sdk/issues/31954

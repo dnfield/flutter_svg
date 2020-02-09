@@ -28,7 +28,7 @@ Basic usage (to create an SVG rendering widget from an asset):
 
 ```dart
 final String assetName = 'assets/image.svg';
-final Widget svg = SvgPicture.asset(
+final Widget svg = new SvgPicture.asset(
   assetName,
   semanticsLabel: 'Acme Logo'
 );
@@ -38,7 +38,7 @@ You can color/tint the image like so:
 
 ```dart
 final String assetName = 'assets/up_arrow.svg';
-final Widget svgIcon = SvgPicture.asset(
+final Widget svgIcon = new SvgPicture.asset(
   assetName,
   color: Colors.red,
   semanticsLabel: 'A red up arrow'
@@ -57,14 +57,14 @@ parsing/loading (normally only relevant for network access).
 ```dart
 // Will print error messages to the console.
 final String assetName = 'assets/image_that_does_not_exist.svg';
-final Widget svg = SvgPicture.asset(
+final Widget svg = new SvgPicture.asset(
   assetName,
 );
 
-final Widget networkSvg = SvgPicture.network(
+final Widget networkSvg = new SvgPicture.network(
   'https://site-that-takes-a-while.com/image.svg',
   semanticsLabel: 'A shark?!',
-  placeholderBuilder: (BuildContext context) => Container(
+  placeholderBuilder: (BuildContext context) => new Container(
       padding: const EdgeInsets.all(30.0),
       child: const CircularProgressIndicator()),
 );

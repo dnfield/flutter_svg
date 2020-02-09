@@ -9,13 +9,12 @@ import 'package:flutter_svg/src/utilities/xml.dart';
 void main() {
   test('Xlink href tests', () {
     final XmlStartElementEvent el =
-        parseEvents('<test href="http://localhost" />').first
-            as XmlStartElementEvent;
+        parseEvents('<test href="http://localhost" />').first;
 
     final XmlStartElementEvent elXlink =
         parseEvents('<test xmlns:xlink="$kXlinkNamespace" '
                 'xlink:href="http://localhost" />')
-            .first as XmlStartElementEvent;
+            .first;
 
     expect(getHrefAttribute(el.attributes), 'http://localhost');
     expect(getHrefAttribute(elXlink.attributes), 'http://localhost');
@@ -25,7 +24,7 @@ void main() {
     final XmlStartElementEvent el =
         parseEvents('<test stroke="#fff" fill="#eee" stroke-dashpattern="1 2" '
                 'style="stroke-opacity:1;fill-opacity:.23" />')
-            .first as XmlStartElementEvent;
+            .first;
 
     expect(getAttribute(el.attributes, 'stroke'), '#fff');
     expect(getAttribute(el.attributes, 'fill'), '#eee');
@@ -41,8 +40,7 @@ void main() {
   // if the parsing logic changes, we can simplify some methods.  for now assert that whitespace in attributes is preserved
   test('Attribute WhiteSpace test', () {
     final XmlStartElementEvent xd =
-        parseEvents('<test attr="  asdf" attr2="asdf  " attr3="asdf" />').first
-            as XmlStartElementEvent;
+        parseEvents('<test attr="  asdf" attr2="asdf  " attr3="asdf" />').first;
 
     expect(
       xd.attributes[0].value,
@@ -62,19 +60,15 @@ void main() {
     const Rect rect = Rect.fromLTWH(0.0, 0.0, 100.0, 100.0);
 
     final XmlStartElementEvent svgWithViewBox =
-        parseEvents('<svg viewBox="0 0 100 100" />').first
-            as XmlStartElementEvent;
+        parseEvents('<svg viewBox="0 0 100 100" />').first;
     final XmlStartElementEvent svgWithViewBoxAndWidthHeight =
         parseEvents('<svg width="50px" height="50px" viewBox="0 0 100 100" />')
-            .first as XmlStartElementEvent;
+            .first;
     final XmlStartElementEvent svgWithWidthHeight =
-        parseEvents('<svg width="100" height="100" />').first
-            as XmlStartElementEvent;
+        parseEvents('<svg width="100" height="100" />').first;
     final XmlStartElementEvent svgWithViewBoxMinXMinY =
-        parseEvents('<svg viewBox="42 56 100 100" />').first
-            as XmlStartElementEvent;
-    final XmlStartElementEvent svgWithNoSizeInfo =
-        parseEvents('<svg />').first as XmlStartElementEvent;
+        parseEvents('<svg viewBox="42 56 100 100" />').first;
+    final XmlStartElementEvent svgWithNoSizeInfo = parseEvents('<svg />').first;
 
     expect(parseViewBox(svgWithViewBoxAndWidthHeight.attributes).size,
         const Size(50, 50));
@@ -92,20 +86,15 @@ void main() {
 
   test('TileMode tests', () {
     final XmlStartElementEvent pad =
-        parseEvents('<linearGradient spreadMethod="pad" />').first
-            as XmlStartElementEvent;
+        parseEvents('<linearGradient spreadMethod="pad" />').first;
     final XmlStartElementEvent reflect =
-        parseEvents('<linearGradient spreadMethod="reflect" />').first
-            as XmlStartElementEvent;
+        parseEvents('<linearGradient spreadMethod="reflect" />').first;
     final XmlStartElementEvent repeat =
-        parseEvents('<linearGradient spreadMethod="repeat" />').first
-            as XmlStartElementEvent;
+        parseEvents('<linearGradient spreadMethod="repeat" />').first;
     final XmlStartElementEvent invalid =
-        parseEvents('<linearGradient spreadMethod="invalid" />').first
-            as XmlStartElementEvent;
+        parseEvents('<linearGradient spreadMethod="invalid" />').first;
 
-    final XmlStartElementEvent none =
-        parseEvents('<linearGradient />').first as XmlStartElementEvent;
+    final XmlStartElementEvent none = parseEvents('<linearGradient />').first;
 
     expect(parseTileMode(pad.attributes), TileMode.clamp);
     expect(parseTileMode(invalid.attributes), TileMode.clamp);
@@ -117,11 +106,9 @@ void main() {
 
   test('@stroke-dashoffset tests', () {
     final XmlStartElementEvent abs =
-        parseEvents('<stroke stroke-dashoffset="20" />').first
-            as XmlStartElementEvent;
+        parseEvents('<stroke stroke-dashoffset="20" />').first;
     final XmlStartElementEvent pct =
-        parseEvents('<stroke stroke-dashoffset="20%" />').first
-            as XmlStartElementEvent;
+        parseEvents('<stroke stroke-dashoffset="20%" />').first;
 
     // TODO(dnfield): DashOffset is completely opaque right now, maybe expose the raw value?
     expect(parseDashOffset(abs.attributes), isNotNull);
