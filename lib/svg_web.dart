@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show AssetBundle;
 import 'package:flutter/widgets.dart';
+import 'package:flutter_svg/parser.dart';
 import 'package:http/http.dart';
 import 'package:universal_io/io.dart';
 
@@ -67,6 +68,11 @@ class Svg {
     return PictureInfo(
       string: raw,
     );
+  }
+
+  Future<DrawableRoot> fromSvgString(String rawSvg, String key) async {
+    final SvgParser parser = SvgParser();
+    return await parser.parse(rawSvg, key: key);
   }
 }
 
