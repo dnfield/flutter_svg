@@ -19,7 +19,7 @@ abstract class Drawable {
   /// the `parentPaint` to optionally override the child's paint.
   ///
   /// The `bounds` specify the area to draw in.
-  void draw(Canvas canvas, ColorFilter colorFilter, Rect bounds);
+  void draw(Canvas canvas, Rect bounds);
 }
 
 /// A [Drawable] that can have a [DrawableStyle] applied to it.
@@ -493,7 +493,7 @@ class DrawableText implements Drawable {
       (fill?.width ?? 0.0) + (stroke?.width ?? 0.0) > 0.0;
 
   @override
-  void draw(Canvas canvas, ColorFilter colorFilter, Rect bounds) {
+  void draw(Canvas canvas, Rect bounds) {
     if (!hasDrawableContent) {
       return;
     }
@@ -874,7 +874,7 @@ class DrawableRoot implements DrawableParent {
       !viewport.viewBox.isEmpty;
 
   @override
-  void draw(Canvas canvas, ColorFilter colorFilter, Rect bounds) {
+  void draw(Canvas canvas, Rect bounds) {
     if (!hasDrawableContent) {
       return;
     }
@@ -882,7 +882,7 @@ class DrawableRoot implements DrawableParent {
       canvas.translate(viewport.viewBoxOffset.dx, viewport.viewBoxOffset.dy);
     }
     for (Drawable child in children) {
-      child.draw(canvas, colorFilter, viewport.viewBoxRect);
+      child.draw(canvas, viewport.viewBoxRect);
     }
   }
 
@@ -910,7 +910,7 @@ class DrawableRoot implements DrawableParent {
       clipCanvasToViewBox(canvas);
     }
 
-    draw(canvas, colorFilter, viewport.viewBoxRect);
+    draw(canvas, viewport.viewBoxRect);
     canvas.restore();
     return recorder.endRecording();
   }
@@ -959,7 +959,7 @@ class DrawableGroup implements DrawableStyleable, DrawableParent {
   bool get hasDrawableContent => children != null && children.isNotEmpty;
 
   @override
-  void draw(Canvas canvas, ColorFilter colorFilter, Rect bounds) {
+  void draw(Canvas canvas, Rect bounds) {
     if (!hasDrawableContent) {
       return;
     }
@@ -979,7 +979,7 @@ class DrawableGroup implements DrawableStyleable, DrawableParent {
         );
       }
       for (Drawable child in children) {
-        child.draw(canvas, colorFilter, bounds);
+        child.draw(canvas, bounds);
       }
       if (style.groupOpacity != null && style.groupOpacity != 1.0) {
         canvas.restore();
@@ -1052,7 +1052,7 @@ class DrawableRasterImage implements Drawable {
   final Size size;
 
   @override
-  void draw(Canvas canvas, ColorFilter colorFilter, Rect bounds) {
+  void draw(Canvas canvas, Rect bounds) {
     final Size imageSize = Size(
       image.width.toDouble(),
       image.height.toDouble(),
@@ -1110,7 +1110,7 @@ class DrawableShape implements DrawableStyleable {
   bool get hasDrawableContent => bounds.width + bounds.height > 0;
 
   @override
-  void draw(Canvas canvas, ColorFilter colorFilter, Rect bounds) {
+  void draw(Canvas canvas, Rect bounds) {
     if (!hasDrawableContent || style == null) {
       return;
     }
@@ -1126,7 +1126,7 @@ class DrawableShape implements DrawableStyleable {
 
       if (style.fill?.style != null) {
         assert(style.fill.style == PaintingStyle.fill);
-        canvas.drawPath(path, style.fill.toFlutterPaint(colorFilter));
+        canvas.drawPath(path, style.fill.toFlutterPaint());
       }
 
       if (style.stroke?.style != null) {
@@ -1139,9 +1139,9 @@ class DrawableShape implements DrawableStyleable {
                 dashArray: style.dashArray,
                 dashOffset: style.dashOffset,
               ),
-              style.stroke.toFlutterPaint(colorFilter));
+              style.stroke.toFlutterPaint());
         } else {
-          canvas.drawPath(path, style.stroke.toFlutterPaint(colorFilter));
+          canvas.drawPath(path, style.stroke.toFlutterPaint());
         }
       }
 
@@ -1173,7 +1173,7 @@ class DrawableShape implements DrawableStyleable {
         0.2126, 0.7152, 0.0722, 0, 0,
       ]); //convert to grayscale (https://www.w3.org/Graphics/Color/sRGB) and use them as transparency
       canvas.saveLayer(null, p);
-      style.mask.draw(canvas, colorFilter, bounds);
+      style.mask.draw(canvas, bounds);
       canvas.restore();
       canvas.restore();
     }
