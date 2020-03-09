@@ -74,8 +74,9 @@ DrawablePaint parseStroke(List<XmlAttribute> el, Rect bounds) {
   }
   return DrawablePaint(
     PaintingStyle.stroke,
-    color: parseColor(rawStroke).withOpacity(parseDouble(
-        getAttribute(el, 'strokeAlpha', def: '1', namespace: androidNS))),
+    color: parseColor(rawStroke),
+    opacity: parseDouble(
+        getAttribute(el, 'strokeAlpha', def: '1', namespace: androidNS)),
     strokeWidth: parseDouble(
         getAttribute(el, 'strokeWidth', def: '0', namespace: androidNS)),
     strokeCap: parseStrokeCap(el),
@@ -127,8 +128,8 @@ DrawablePaint parseFill(List<XmlAttribute> el, Rect bounds) {
   }
   return DrawablePaint(
     PaintingStyle.fill,
-    color: parseColor(rawFill)
-        .withOpacity(parseDouble(getAttribute(el, 'fillAlpha', def: '1'))),
+    color: parseColor(rawFill),
+    opacity: parseDouble(getAttribute(el, 'fillAlpha', def: '1')),
   );
 }
 

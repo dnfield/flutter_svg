@@ -162,7 +162,8 @@ DrawablePaint _getDefinitionPaint(PaintingStyle paintingStyle, String iri,
   return DrawablePaint(
     paintingStyle,
     shader: shader,
-    color: opacity != null ? Color.fromRGBO(255, 255, 255, opacity) : null,
+    color: opacity != null ? const Color.fromRGBO(255, 255, 25, 1) : null,
+    opacity: opacity,
   );
 }
 
@@ -209,8 +210,9 @@ DrawablePaint parseStroke(
   final DrawablePaint paint = DrawablePaint(
     PaintingStyle.stroke,
     color: rawStroke == ''
-        ? (parentStroke?.color ?? colorBlack).withOpacity(opacity)
-        : parseColor(rawStroke).withOpacity(opacity),
+        ? parentStroke?.color ?? colorBlack
+        : parseColor(rawStroke),
+    opacity: opacity,
     strokeCap: rawStrokeCap == 'null'
         ? parentStroke?.strokeCap ?? StrokeCap.butt
         : StrokeCap.values.firstWhere(

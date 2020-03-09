@@ -7,6 +7,7 @@ import 'package:path_drawing/path_drawing.dart';
 import 'package:vector_math/vector_math_64.dart';
 
 import 'render_picture.dart' as render_picture;
+import 'svg/colors.dart';
 import 'svg/parsers.dart' show affineMatrix;
 import 'svg/xml_parsers.dart';
 
@@ -174,6 +175,7 @@ class DrawablePaint {
   const DrawablePaint(
     this.style, {
     this.color,
+    this.opacity,
     this.shader,
     this.blendMode,
     this.colorFilter,
@@ -214,6 +216,7 @@ class DrawablePaint {
     return DrawablePaint(
       a.style ?? b.style,
       color: a.color ?? b.color,
+      opacity: a.opacity ?? b.opacity,
       shader: a.shader ?? b.shader,
       blendMode: a.blendMode ?? b.blendMode,
       colorFilter: a.colorFilter ?? b.colorFilter,
@@ -239,6 +242,9 @@ class DrawablePaint {
 
   /// The color to use for this paint when stroking or filling a shape.
   final Color color;
+
+  /// The opacity value to apply to the color.
+  final double opacity;
 
   /// The [Shader] to use  when stroking or filling a shape.
   final Shader shader;
@@ -290,9 +296,7 @@ class DrawablePaint {
     if (blendMode != null) {
       paint.blendMode = blendMode;
     }
-    if (color != null) {
-      paint.color = color;
-    }
+    paint.color = (color ?? colorBlack).withOpacity(opacity ?? 1);
     if (colorFilter != null) {
       paint.colorFilter = colorFilter;
     }
@@ -329,7 +333,7 @@ class DrawablePaint {
 
   @override
   String toString() {
-    return 'DrawablePaint{$style, color: $color, shader: $shader, blendMode: $blendMode, '
+    return 'DrawablePaint{$style, color: $color, opacity: $opacity, shader: $shader, blendMode: $blendMode, '
         'colorFilter: $colorFilter, isAntiAlias: $isAntiAlias, filterQuality: $filterQuality, '
         'maskFilter: $maskFilter, strokeCap: $strokeCap, strokeJoin: $strokeJoin, '
         'strokeMiterLimit: $strokeMiterLimit, strokeWidth: $strokeWidth}';
