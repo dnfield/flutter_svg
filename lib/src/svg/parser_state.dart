@@ -169,9 +169,10 @@ class _Elements {
           'stop-opacity',
           def: '1',
         );
-        colors.add(
-            parseColor(getAttribute(parserState.attributes, 'stop-color'))
-                .withOpacity(parseDouble(rawOpacity)));
+        final Color stopColor =
+            parseColor(getAttribute(parserState.attributes, 'stop-color')) ??
+                colorBlack;
+        colors.add(stopColor.withOpacity(parseDouble(rawOpacity)));
 
         final String rawOffset = getAttribute(
           parserState.attributes,
@@ -760,6 +761,7 @@ class SvgParserState {
         _definitions,
         path.getBounds(),
         parentStyle,
+        defaultFillColor: colorBlack,
       ),
       transform: parseTransform(getAttribute(attributes, 'transform'))?.storage,
     );

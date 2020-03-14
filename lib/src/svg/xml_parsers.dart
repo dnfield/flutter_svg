@@ -236,11 +236,11 @@ DrawablePaint parseStroke(
 
 /// Parses a `fill` attribute.
 DrawablePaint parseFill(
-  List<XmlElementAttribute> el,
-  Rect bounds,
-  DrawableDefinitionServer definitions,
-  DrawablePaint parentFill,
-) {
+    List<XmlElementAttribute> el,
+    Rect bounds,
+    DrawableDefinitionServer definitions,
+    DrawablePaint parentFill,
+    Color defaultFillColor) {
   final String rawFill = getAttribute(el, 'fill');
   final String rawFillOpacity = getAttribute(el, 'fill-opacity', def: '1.0');
   final String rawOpacity = getAttribute(el, 'opacity');
@@ -267,10 +267,30 @@ DrawablePaint parseFill(
 
   return DrawablePaint(
     PaintingStyle.fill,
-    color: rawFill == ''
-        ? (parentFill?.color ?? colorBlack).withOpacity(opacity)
-        : parseColor(rawFill).withOpacity(opacity),
+    color: _determineFillColor(
+      parentFill?.color,
+      rawFill,
+      opacity,
+      rawOpacity != '' || rawFillOpacity != '',
+      defaultFillColor,
+    ),
   );
+}
+
+Color _determineFillColor(
+  Color parentFillColor,
+  String rawFill,
+  double opacity,
+  bool explicitOpacity,
+  Color defaultFillColor,
+) {
+  final Color color =
+      parseColor(rawFill) ?? parentFillColor ?? defaultFillColor;
+  if (explicitOpacity && color != null) {
+    return color.withOpacity(opacity);
+  }
+
+  return color;
 }
 
 /// Parses a `fill-rule` attribute into a [PathFillType].
@@ -357,33 +377,21 @@ DrawableStyle parseStyle(
   DrawableDefinitionServer definitions,
   Rect bounds,
   DrawableStyle parentStyle, {
-  bool needsTransform = false,
-  bool multiplyTransformByParent = false,
+  Color defaultFillColor,
 }) {
-  Float64List rawTransform;
-  if (needsTransform) {
-    final Matrix4 transform = parseTransform(
-      getAttribute(attributes, 'transform'),
-    );
-    if (multiplyTransformByParent && parentStyle?.transform != null) {
-      if (transform == null) {
-        rawTransform = parentStyle.transform;
-      } else {
-        rawTransform = Matrix4.fromFloat64List(parentStyle.transform)
-            .multiplied(transform)
-            .storage;
-      }
-    } else {
-      rawTransform = transform?.storage;
-    }
-  }
   return DrawableStyle.mergeAndBlend(
     parentStyle,
     transform: rawTransform,
     stroke: parseStroke(attributes, bounds, definitions, parentStyle?.stroke),
     dashArray: parseDashArray(attributes),
     dashOffset: parseDashOffset(attributes),
-    fill: parseFill(attributes, bounds, definitions, parentStyle?.fill),
+    fill: parseFill(
+      attributes,
+      bounds,
+      definitions,
+      parentStyle?.fill,
+      defaultFillColor,
+    ),
     pathFillType: parseFillRule(
       attributes,
       'fill-rule',

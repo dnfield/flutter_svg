@@ -100,7 +100,7 @@ Matrix4 parseTransform(String transform) {
   final Iterable<Match> matches = _transformCommand.allMatches(transform).toList().reversed;
   Matrix4 result = Matrix4.identity();
   for (Match m in matches) {
-    final String command = m.group(1);
+    final String command = m.group(1).trim();
     final String params = m.group(2);
 
     final MatrixParser transformer = _matrixParsers[command];
@@ -190,6 +190,8 @@ PathFillType parseRawFillRule(String rawFillRule) {
   return rawFillRule != 'evenodd' ? PathFillType.nonZero : PathFillType.evenOdd;
 }
 
+final RegExp _whitespacePattern = RegExp(r'\s');
+
 /// Resolves an image reference, potentially downloading it via HTTP.
 Future<Image> resolveImage(String href) async {
   if (href == null || href == '') {
@@ -210,7 +212,10 @@ Future<Image> resolveImage(String href) async {
 
   if (href.startsWith('data:')) {
     final int commaLocation = href.indexOf(',') + 1;
-    final Uint8List bytes = base64.decode(href.substring(commaLocation));
+
+    final Uint8List bytes = base64.decode(
+        href.substring(commaLocation).replaceAll(_whitespacePattern, ''));
+
     return decodeImage(bytes);
   }
 
