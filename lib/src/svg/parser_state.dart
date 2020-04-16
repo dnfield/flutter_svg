@@ -64,18 +64,50 @@ class _TextInfo {
   const _TextInfo(
     this.style,
     this.offset,
+    this.transform,
   );
   final DrawableStyle style;
   final Offset offset;
+  final Matrix4 transform;
 
   @override
-  String toString() => '$runtimeType{$offset, $style}';
+  String toString() => '$runtimeType{$offset, $style, $transform}';
 }
 
 class _Elements {
   static Future<void> svg(SvgParserState parserState) {
     final DrawableViewport viewBox = parseViewBox(parserState.attributes);
-
+    // TODO(dnfield): Support nested SVG elements. https://github.com/dnfield/flutter_svg/issues/132
+    if (parserState._root != null) {
+      FlutterError.reportError(FlutterErrorDetails(
+        exception: UnsupportedError('Unsupported nested <svg> element.'),
+        informationCollector: () sync* {
+          yield ErrorDescription(
+              'The root <svg> element contained an unsupported nested SVG element.');
+          if (parserState._key != null) {
+            yield ErrorDescription('');
+            yield DiagnosticsProperty<String>('Picture key', parserState._key);
+          }
+        },
+        library: 'SVG',
+        context: ErrorDescription('in _Element.svg'),
+      ));
+      parserState._parentDrawables.addLast(
+        _SvgGroupTuple(
+          'svg',
+          DrawableGroup(
+            <Drawable>[],
+            parseStyle(
+              parserState.attributes,
+              parserState._definitions,
+              viewBox.viewBoxRect,
+              null,
+            ),
+          ),
+        ),
+      );
+      return null;
+    }
     parserState._root = DrawableRoot(
       viewBox,
       <Drawable>[],
@@ -100,8 +132,8 @@ class _Elements {
         parserState._definitions,
         parserState.rootBounds,
         parent.style,
-        needsTransform: true,
       ),
+      transform: parseTransform(parserState.attribute('transform'))?.storage,
     );
     if (!parserState._inDefs) {
       parent.children.add(group);
@@ -119,8 +151,8 @@ class _Elements {
         parserState._definitions,
         null,
         parent.style,
-        needsTransform: true,
       ),
+      transform: parseTransform(parserState.attribute('transform'))?.storage,
     );
     parserState.addGroup(parserState._currentStartElement, group);
     return null;
@@ -139,18 +171,27 @@ class _Elements {
       parserState.rootBounds,
       parent.style,
     );
-    final Matrix4 transform = Matrix4.identity()
-      ..translate(
-        parseDouble(parserState.attribute('x', def: '0')),
-        parseDouble(parserState.attribute('y', def: '0')),
-      );
+
+    final Matrix4 transform =
+        parseTransform(parserState.attribute('transform')) ??
+            Matrix4.identity();
+    transform.translate(
+      parseDouble(parserState.attribute('x', def: '0')),
+      parseDouble(parserState.attribute('y', def: '0')),
+    );
+
     final DrawableStyleable ref =
         parserState._definitions.getDrawable('url($xlinkHref)');
     final DrawableGroup group = DrawableGroup(
       <Drawable>[ref.mergeStyle(style)],
-      DrawableStyle(transform: transform.storage),
+      style,
+      transform: transform.storage,
     );
-    parent.children.add(group);
+
+    final bool isIri = parserState.checkForIri(group);
+    if (!parserState._inDefs || !isIri) {
+      parent.children.add(group);
+    }
     return null;
   }
 
@@ -169,9 +210,10 @@ class _Elements {
           'stop-opacity',
           def: '1',
         );
-        colors.add(
-            parseColor(getAttribute(parserState.attributes, 'stop-color'))
-                .withOpacity(parseDouble(rawOpacity)));
+        final Color stopColor =
+            parseColor(getAttribute(parserState.attributes, 'stop-color')) ??
+                colorBlack;
+        colors.add(stopColor.withOpacity(parseDouble(rawOpacity)));
 
         final String rawOffset = getAttribute(
           parserState.attributes,
@@ -186,9 +228,11 @@ class _Elements {
 
   static Future<void> radialGradient(SvgParserState parserState) {
     final String gradientUnits = getAttribute(
-        parserState.attributes, 'gradientUnits',
-        def: 'objectBoundingBox');
-    final bool isObjectBoundingBox = gradientUnits == 'objectBoundingBox';
+      parserState.attributes,
+      'gradientUnits',
+      def: null,
+    );
+    bool isObjectBoundingBox = gradientUnits != 'userSpaceOnUse';
 
     final String rawCx = parserState.attribute('cx', def: '50%');
     final String rawCy = parserState.attribute('cy', def: '50%');
@@ -211,6 +255,10 @@ class _Elements {
       if (ref == null) {
         reportMissingDef(href, 'radialGradient');
       } else {
+        if (gradientUnits == null) {
+          isObjectBoundingBox =
+              ref.unitMode == GradientUnitMode.objectBoundingBox;
+        }
         colors.addAll(ref.colors);
         offsets.addAll(ref.offsets);
       }
@@ -270,9 +318,11 @@ class _Elements {
 
   static Future<void> linearGradient(SvgParserState parserState) {
     final String gradientUnits = getAttribute(
-        parserState.attributes, 'gradientUnits',
-        def: 'objectBoundingBox');
-    final bool isObjectBoundingBox = gradientUnits == 'objectBoundingBox';
+      parserState.attributes,
+      'gradientUnits',
+      def: null,
+    );
+    bool isObjectBoundingBox = gradientUnits != 'userSpaceOnUse';
 
     final String x1 = parserState.attribute('x1', def: '0%');
     final String x2 = parserState.attribute('x2', def: '100%');
@@ -293,6 +343,10 @@ class _Elements {
       if (ref == null) {
         reportMissingDef(href, 'linearGradient');
       } else {
+        if (gradientUnits == null) {
+          isObjectBoundingBox =
+              ref.unitMode == GradientUnitMode.objectBoundingBox;
+        }
         colors.addAll(ref.colors);
         offsets.addAll(ref.offsets);
       }
@@ -429,14 +483,33 @@ class _Elements {
       parseDouble(parserState.attribute('height', def: '0')),
     );
     final Image image = await resolveImage(href);
-    parserState.currentGroup.children.add(
-      DrawableRasterImage(image, offset, size: size),
+    final DrawableParent parent = parserState._parentDrawables.last.drawable;
+    final DrawableStyle parentStyle = parent.style;
+    final DrawableRasterImage drawable = DrawableRasterImage(
+      image,
+      offset,
+      parseStyle(
+        parserState.attributes,
+        parserState._definitions,
+        parserState.rootBounds,
+        parentStyle,
+      ),
+      size: size,
+      transform: parseTransform(parserState.attribute('transform'))?.storage,
     );
+    final bool isIri = parserState.checkForIri(drawable);
+    if (!parserState._inDefs || !isIri) {
+      parserState.currentGroup.children.add(drawable);
+    }
   }
 
   static Future<void> text(SvgParserState parserState) async {
     assert(parserState != null);
     assert(parserState.currentGroup != null);
+    if (parserState._currentStartElement.isSelfClosing) {
+      return;
+    }
+
     // <text>, <tspan> -> Collect styles
     // <tref> TBD - looks like Inkscape supports it, but no browser does.
     // XmlNodeType.TEXT/CDATA -> DrawableText
@@ -462,13 +535,16 @@ class _Elements {
             ? transparentStroke
             : lastTextInfo.style.stroke,
       );
-      parserState.currentGroup.children.add(DrawableText(
-        fill,
-        stroke,
-        lastTextInfo.offset,
-        lastTextInfo.style.textStyle.anchor ?? DrawableTextAnchorPosition.start,
-        transform: lastTextInfo.style.transform,
-      ));
+      parserState.currentGroup.children.add(
+        DrawableText(
+          fill,
+          stroke,
+          lastTextInfo.offset,
+          lastTextInfo.style.textStyle.anchor ??
+              DrawableTextAnchorPosition.start,
+          transform: lastTextInfo.transform?.storage,
+        ),
+      );
       lastTextWidth = fill.maxIntrinsicWidth;
     }
 
@@ -481,16 +557,24 @@ class _Elements {
         parserState,
         lastTextInfo?.offset?.translate(lastTextWidth, 0),
       );
+      Matrix4 transform = parseTransform(parserState.attribute('transform'));
+      if (lastTextInfo?.transform != null) {
+        if (transform == null) {
+          transform = lastTextInfo.transform;
+        } else {
+          transform = lastTextInfo.transform.multiplied(transform);
+        }
+      }
+
       textInfos.add(_TextInfo(
         parseStyle(
           parserState.attributes,
           parserState._definitions,
           parserState.rootBounds,
           lastTextInfo?.style ?? parserState.currentGroup.style,
-          needsTransform: true,
-          multiplyTransformByParent: lastTextInfo != null,
         ),
         currentOffset,
+        transform,
       ));
       if (event.isSelfClosing) {
         textInfos.removeLast();
@@ -760,6 +844,7 @@ class SvgParserState {
         _definitions,
         path.getBounds(),
         parentStyle,
+        defaultFillColor: colorBlack,
       ),
       transform: parseTransform(getAttribute(attributes, 'transform'))?.storage,
     );

@@ -8,7 +8,8 @@ import 'dart:ui' show Picture, Rect, hashValues, Size;
 import 'package:flutter/foundation.dart';
 
 /// The signature of a method that listens for errors on picture stream resolution.
-typedef PictureErrorListener = void Function(dynamic exception, StackTrace stackTrace);
+typedef PictureErrorListener = void Function(
+    dynamic exception, StackTrace stackTrace);
 
 @immutable
 class _PictureListenerPair {
@@ -51,7 +52,7 @@ class PictureInfo {
     if (other.runtimeType != runtimeType) {
       return false;
     }
-    final PictureInfo typedOther = other;
+    final PictureInfo typedOther = other as PictureInfo;
     return typedOther.string == string &&
         typedOther.picture == picture &&
         typedOther.viewport == viewport &&
@@ -87,7 +88,7 @@ typedef PictureListener = Function(PictureInfo image, bool synchronousCall);
 ///
 ///  * [PictureProvider], which has an example that includes the use of an
 ///    [PictureStream] in a [Widget].
-class PictureStream extends Diagnosticable {
+class PictureStream with Diagnosticable {
   /// Create an initially unbound image stream.
   ///
   /// Once an [PictureStreamCompleter] is available, call [setCompleter].
@@ -176,7 +177,8 @@ class PictureStream extends Diagnosticable {
     properties.add(ObjectFlagProperty<List<_PictureListenerPair>>(
       'listeners',
       _listeners,
-      ifPresent: '${_listeners?.length} listener${_listeners?.length == 1 ? "" : "s"}',
+      ifPresent:
+          '${_listeners?.length} listener${_listeners?.length == 1 ? "" : "s"}',
       ifNull: 'no listeners',
       level: _completer != null ? DiagnosticLevel.hidden : DiagnosticLevel.info,
     ));
@@ -190,7 +192,7 @@ class PictureStream extends Diagnosticable {
 /// [PictureStreamListener] objects are rarely constructed directly. Generally, an
 /// [PictureProvider] subclass will return an [PictureStream] and automatically
 /// configure it with the right [PictureStreamCompleter] when possible.
-abstract class PictureStreamCompleter extends Diagnosticable {
+abstract class PictureStreamCompleter with Diagnosticable {
   final List<_PictureListenerPair> _listeners = <_PictureListenerPair>[];
   PictureInfo _current;
 
@@ -234,7 +236,8 @@ abstract class PictureStreamCompleter extends Diagnosticable {
     if (_listeners.isEmpty) {
       return;
     }
-    final List<_PictureListenerPair> localListeners = List<_PictureListenerPair>.from(_listeners);
+    final List<_PictureListenerPair> localListeners =
+        List<_PictureListenerPair>.from(_listeners);
     for (_PictureListenerPair listenerPair in localListeners) {
       try {
         listenerPair.listener(picture, false);
@@ -242,13 +245,15 @@ abstract class PictureStreamCompleter extends Diagnosticable {
         if (listenerPair.errorListener != null) {
           listenerPair.errorListener(exception, stack);
         } else {
-          _handleImageError(ErrorDescription('by a picture listener'), exception, stack);
+          _handleImageError(
+              ErrorDescription('by a picture listener'), exception, stack);
         }
       }
     }
   }
 
-  void _handleImageError(DiagnosticsNode context, dynamic exception, dynamic stack) {
+  void _handleImageError(
+      DiagnosticsNode context, dynamic exception, StackTrace stack) {
     FlutterError.reportError(FlutterErrorDetails(
       exception: exception,
       stack: stack,
@@ -262,11 +267,13 @@ abstract class PictureStreamCompleter extends Diagnosticable {
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder description) {
     super.debugFillProperties(description);
-    description.add(DiagnosticsProperty<PictureInfo>('current', _current, ifNull: 'unresolved', showName: false));
+    description.add(DiagnosticsProperty<PictureInfo>('current', _current,
+        ifNull: 'unresolved', showName: false));
     description.add(ObjectFlagProperty<List<_PictureListenerPair>>(
       'listeners',
       _listeners,
-      ifPresent: '${_listeners?.length} listener${_listeners?.length == 1 ? "" : "s"}',
+      ifPresent:
+          '${_listeners?.length} listener${_listeners?.length == 1 ? "" : "s"}',
     ));
   }
 }
@@ -288,7 +295,8 @@ class OneFramePictureStreamCompleter extends PictureStreamCompleter {
   /// argument on [FlutterErrorDetails] set to true, meaning that by default the
   /// message is only dumped to the console in debug mode (see [new
   /// FlutterErrorDetails]).
-  OneFramePictureStreamCompleter(Future<PictureInfo> picture, {InformationCollector informationCollector})
+  OneFramePictureStreamCompleter(Future<PictureInfo> picture,
+      {InformationCollector informationCollector})
       : assert(picture != null) {
     picture.then<void>(setPicture, onError: (dynamic error, StackTrace stack) {
       FlutterError.reportError(FlutterErrorDetails(

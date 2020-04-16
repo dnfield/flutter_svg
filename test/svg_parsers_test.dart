@@ -1,5 +1,6 @@
 import 'dart:ui' show PathFillType;
 
+import 'package:flutter_svg/parser.dart';
 import 'package:flutter_svg/src/svg/parsers.dart';
 import 'package:flutter_svg/src/vector_drawable.dart';
 import 'package:test/test.dart';
@@ -39,23 +40,23 @@ void main() {
     expect(
         parseTransform('matrix(1.5, 2.0, 3.0, 4.0, 5.0, 6.0)'),
         Matrix4.fromList(<double>[
-          1.5,
-          2.0,
-          0.0,
-          0.0,
-          3.0,
-          4.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          5.0,
-          6.0,
-          0.0,
-          1.0
+          1.5, 2.0, 0.0, 0.0, //
+          3.0, 4.0, 0.0, 0.0,
+          0.0, 0.0, 1.0, 0.0,
+          5.0, 6.0, 0.0, 1.0
         ]));
+
+    expect(
+        parseTransform('matrix(1.5, 2.0, 3.0, 4.0, 5.0, 6.0 )'),
+        Matrix4.fromList(<double>[
+          1.5, 2.0, 0.0, 0.0, //
+          3.0, 4.0, 0.0, 0.0,
+          0.0, 0.0, 1.0, 0.0,
+          5.0, 6.0, 0.0, 1.0
+        ]));
+
+    expect(parseTransform('rotate(20)\n\tscale(10)'),
+        Matrix4.rotationZ(radians(20.0))..scale(10.0, 10.0, 1.0));
   });
 
   test('FillRule tests', () {
@@ -98,5 +99,12 @@ void main() {
 
     expect(() => parseFontSize('invalid'),
         throwsA(const TypeMatcher<StateError>()));
+  });
+
+  test('Empty text', () async {
+    final SvgParser parser = SvgParser();
+    final DrawableRoot root =
+        await parser.parse('<svg viewBox="0 0 10 10"><text /></svg>');
+    expect(root.children.isEmpty, true);
   });
 }

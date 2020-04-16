@@ -8,6 +8,17 @@ import 'package:vector_math/vector_math_64.dart';
 
 import 'render_picture.dart' as render_picture;
 import 'svg/parsers.dart' show affineMatrix;
+import 'svg/xml_parsers.dart';
+
+/// Paint used in masks.
+final Paint _grayscaleDstInPaint = Paint()
+  ..blendMode = BlendMode.dstIn
+  ..colorFilter = const ColorFilter.matrix(<double>[
+    0, 0, 0, 0, 0, //
+    0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0,
+    0.2126, 0.7152, 0.0722, 0, 0,
+  ]); //convert to grayscale (https://www.w3.org/Graphics/Color/sRGB) and use them as transparency
 
 /// Base interface for vector drawing.
 @immutable
@@ -19,7 +30,7 @@ abstract class Drawable {
   /// the `parentPaint` to optionally override the child's paint.
   ///
   /// The `bounds` specify the area to draw in.
-  void draw(Canvas canvas, ColorFilter colorFilter, Rect bounds);
+  void draw(Canvas canvas, Rect bounds);
 }
 
 /// A [Drawable] that can have a [DrawableStyle] applied to it.
@@ -27,6 +38,9 @@ abstract class Drawable {
 abstract class DrawableStyleable extends Drawable {
   /// The [DrawableStyle] for this object.
   DrawableStyle get style;
+
+  /// The 4x4 transform to apply to this [Drawable], if any.
+  Float64List get transform;
 
   /// Creates an instance with merged style information.
   DrawableStyleable mergeStyle(DrawableStyle newStyle);
@@ -51,12 +65,12 @@ class DrawableStyle {
     this.dashArray,
     this.dashOffset,
     this.fill,
-    this.transform,
     this.textStyle,
     this.pathFillType,
     this.groupOpacity,
     this.clipPath,
     this.mask,
+    this.blendMode,
   });
 
   /// Used where 'dasharray' is 'none'
@@ -80,9 +94,6 @@ class DrawableStyle {
   /// for the rendered [DrawableShape].  Drawn __before__ the [stroke].
   final DrawablePaint fill;
 
-  /// The 4x4 matrix ([Matrix4]) for a transform, if any.
-  final Float64List transform;
-
   /// The style to apply to text elements of this drawable or its chidlren.
   final DrawableTextStyle textStyle;
 
@@ -99,6 +110,11 @@ class DrawableStyle {
   /// children.
   final double groupOpacity;
 
+  /// The blend mode to apply, if any.
+  ///
+  /// Setting this will result in at least one [Canvas.saveLayer] call.
+  final BlendMode blendMode;
+
   /// Creates a new [DrawableStyle] if `parent` is not null, filling in any null
   /// properties on this with the properties from other (except [groupOpacity],
   /// is not inherited).
@@ -108,21 +124,18 @@ class DrawableStyle {
     DrawablePaint stroke,
     CircularIntervalList<double> dashArray,
     DashOffset dashOffset,
-    Float64List transform,
     DrawableTextStyle textStyle,
     PathFillType pathFillType,
     double groupOpacity,
     List<Path> clipPath,
     DrawableStyleable mask,
+    BlendMode blendMode,
   }) {
     return DrawableStyle(
       fill: DrawablePaint.merge(fill, parent?.fill),
       stroke: DrawablePaint.merge(stroke, parent?.stroke),
       dashArray: dashArray ?? parent?.dashArray,
       dashOffset: dashOffset ?? parent?.dashOffset,
-      // transforms aren't inherited because they're applied to canvas with save/restore
-      // that wraps any potential children
-      transform: transform,
       textStyle: DrawableTextStyle.merge(textStyle, parent?.textStyle),
       pathFillType: pathFillType ?? parent?.pathFillType,
       groupOpacity: groupOpacity,
@@ -130,6 +143,7 @@ class DrawableStyle {
       // that wraps any potential children
       clipPath: clipPath,
       mask: mask,
+      blendMode: blendMode,
     );
   }
 
@@ -147,7 +161,7 @@ class DrawableStyle {
 
   @override
   String toString() {
-    return 'DrawableStyle{$stroke,$dashArray,$dashOffset,$fill,$transform,$textStyle,$pathFillType,$groupOpacity,$clipPath,$mask}';
+    return 'DrawableStyle{$stroke,$dashArray,$dashOffset,$fill,$textStyle,$pathFillType,$groupOpacity,$clipPath,$mask}';
   }
 }
 
@@ -174,7 +188,7 @@ class DrawablePaint {
 
   /// Will merge two DrawablePaints, preferring properties defined in `a` if they're not null.
   ///
-  /// If `a` is `identical` wiht [DrawablePaint.empty], `b` will be ignored.
+  /// If `a` is `identical` with [DrawablePaint.empty], `b` will be ignored.
   factory DrawablePaint.merge(DrawablePaint a, DrawablePaint b) {
     if (a == null && b == null) {
       return null;
@@ -269,18 +283,18 @@ class DrawablePaint {
   final double strokeWidth;
 
   /// Creates a [Paint] object from this [DrawablePaint].
-  Paint toFlutterPaint([ColorFilter colorFilterOverride]) {
+  Paint toFlutterPaint() {
     final Paint paint = Paint();
 
-    // unfortunately,  need to nullcheck all of these
+    // Null chekcs are needed here because the setters assert.
     if (blendMode != null) {
       paint.blendMode = blendMode;
     }
     if (color != null) {
       paint.color = color;
     }
-    if (colorFilterOverride != null || colorFilter != null) {
-      paint.colorFilter = colorFilterOverride ?? colorFilter;
+    if (colorFilter != null) {
+      paint.colorFilter = colorFilter;
     }
     if (filterQuality != null) {
       paint.filterQuality = filterQuality;
@@ -493,7 +507,7 @@ class DrawableText implements Drawable {
       (fill?.width ?? 0.0) + (stroke?.width ?? 0.0) > 0.0;
 
   @override
-  void draw(Canvas canvas, ColorFilter colorFilter, Rect bounds) {
+  void draw(Canvas canvas, Rect bounds) {
     if (!hasDrawableContent) {
       return;
     }
@@ -570,6 +584,7 @@ class DrawableDefinitionServer {
   void addDrawable(String id, DrawableStyleable drawable) {
     assert(id != null);
     assert(drawable != null);
+    assert(id != emptyUrlIri);
     _drawables[id] = drawable;
   }
 
@@ -586,7 +601,7 @@ class DrawableDefinitionServer {
   /// Retreive a gradient from the pre-defined [DrawableGradient] collection.
   T getGradient<T extends DrawableGradient>(String id) {
     assert(id != null);
-    return _gradients[id];
+    return _gradients[id] as T;
   }
 
   /// Add a [DrawableGradient] to the pre-defined collection by [id].
@@ -831,11 +846,15 @@ class DrawableRoot implements DrawableParent {
     this.viewport,
     this.children,
     this.definitions,
-    this.style,
-  );
+    this.style, {
+    this.transform,
+  });
 
   /// The expected coordinates used by child paths for drawing.
   final DrawableViewport viewport;
+
+  @override
+  final Float64List transform;
 
   @override
   final List<Drawable> children;
@@ -874,15 +893,28 @@ class DrawableRoot implements DrawableParent {
       !viewport.viewBox.isEmpty;
 
   @override
-  void draw(Canvas canvas, ColorFilter colorFilter, Rect bounds) {
+  void draw(Canvas canvas, Rect bounds) {
     if (!hasDrawableContent) {
       return;
     }
+
+    if (transform != null) {
+      canvas.save();
+      canvas.transform(transform);
+    }
+
     if (viewport.viewBoxOffset != Offset.zero) {
       canvas.translate(viewport.viewBoxOffset.dx, viewport.viewBoxOffset.dy);
     }
     for (Drawable child in children) {
-      child.draw(canvas, colorFilter, viewport.viewBoxRect);
+      child.draw(canvas, viewport.viewBoxRect);
+    }
+
+    if (transform != null) {
+      canvas.restore();
+    }
+    if (viewport.viewBoxOffset != Offset.zero) {
+      canvas.restore();
     }
   }
 
@@ -902,7 +934,11 @@ class DrawableRoot implements DrawableParent {
 
     final PictureRecorder recorder = PictureRecorder();
     final Canvas canvas = Canvas(recorder, viewport.viewBoxRect);
-    canvas.save();
+    if (colorFilter != null) {
+      canvas.saveLayer(null, Paint()..colorFilter = colorFilter);
+    } else {
+      canvas.save();
+    }
     if (size != null) {
       scaleCanvasToViewBox(canvas, size);
     }
@@ -910,7 +946,7 @@ class DrawableRoot implements DrawableParent {
       clipCanvasToViewBox(canvas);
     }
 
-    draw(canvas, colorFilter, viewport.viewBoxRect);
+    draw(canvas, viewport.viewBoxRect);
     canvas.restore();
     return recorder.endRecording();
   }
@@ -928,18 +964,22 @@ class DrawableRoot implements DrawableParent {
       dashOffset: newStyle.dashOffset,
       pathFillType: newStyle.pathFillType,
       textStyle: newStyle.textStyle,
-      transform: newStyle.transform,
     );
+
+    final List<Drawable> mergedChildren =
+        children.map<Drawable>((Drawable child) {
+      if (child is DrawableStyleable) {
+        return child.mergeStyle(mergedStyle);
+      }
+      return child;
+    }).toList();
+
     return DrawableRoot(
       viewport,
-      children.map((Drawable child) {
-        if (child is DrawableStyleable) {
-          return child.mergeStyle(mergedStyle);
-        }
-        return child;
-      }).toList(),
+      mergedChildren,
       definitions,
       mergedStyle,
+      transform: transform,
     );
   }
 }
@@ -948,18 +988,20 @@ class DrawableRoot implements DrawableParent {
 /// `stroke`, or `fill`.
 class DrawableGroup implements DrawableStyleable, DrawableParent {
   /// Creates a new DrawableGroup.
-  const DrawableGroup(this.children, this.style);
+  const DrawableGroup(this.children, this.style, {this.transform});
 
   @override
   final List<Drawable> children;
   @override
   final DrawableStyle style;
+  @override
+  final Float64List transform;
 
   @override
   bool get hasDrawableContent => children != null && children.isNotEmpty;
 
   @override
-  void draw(Canvas canvas, ColorFilter colorFilter, Rect bounds) {
+  void draw(Canvas canvas, Rect bounds) {
     if (!hasDrawableContent) {
       return;
     }
@@ -968,23 +1010,39 @@ class DrawableGroup implements DrawableStyleable, DrawableParent {
       if (style.groupOpacity == 0) {
         return;
       }
-      if (style?.transform != null) {
+      if (transform != null) {
         canvas.save();
-        canvas.transform(style?.transform);
+        canvas.transform(transform);
       }
+
+      bool needsSaveLayer = style.mask != null;
+
+      final Paint blendingPaint = Paint();
       if (style.groupOpacity != null && style.groupOpacity != 1.0) {
-        canvas.saveLayer(
-          null,
-          Paint()..color = Color.fromRGBO(0, 0, 0, style.groupOpacity),
-        );
+        blendingPaint.color = Color.fromRGBO(0, 0, 0, style.groupOpacity);
+        needsSaveLayer = true;
       }
+      if (style.blendMode != null) {
+        blendingPaint.blendMode = style.blendMode;
+        needsSaveLayer = true;
+      }
+      if (needsSaveLayer) {
+        canvas.saveLayer(null, blendingPaint);
+      }
+
       for (Drawable child in children) {
-        child.draw(canvas, colorFilter, bounds);
+        child.draw(canvas, bounds);
       }
-      if (style.groupOpacity != null && style.groupOpacity != 1.0) {
+
+      if (style.mask != null) {
+        canvas.saveLayer(null, _grayscaleDstInPaint);
+        style.mask.draw(canvas, bounds);
         canvas.restore();
       }
-      if (style?.transform != null) {
+      if (needsSaveLayer) {
+        canvas.restore();
+      }
+      if (transform != null) {
         canvas.restore();
       }
     };
@@ -1021,25 +1079,34 @@ class DrawableGroup implements DrawableStyleable, DrawableParent {
       dashOffset: newStyle.dashOffset,
       pathFillType: newStyle.pathFillType,
       textStyle: newStyle.textStyle,
-      transform: newStyle.transform,
     );
+
+    final List<Drawable> mergedChildren =
+        children.map<Drawable>((Drawable child) {
+      if (child is DrawableStyleable) {
+        return child.mergeStyle(mergedStyle);
+      }
+      return child;
+    }).toList();
+
     return DrawableGroup(
-      children.map((Drawable child) {
-        if (child is DrawableStyleable) {
-          return child.mergeStyle(mergedStyle);
-        }
-        return child;
-      }).toList(),
+      mergedChildren,
       mergedStyle,
+      transform: transform,
     );
   }
 }
 
 /// A raster image (e.g. PNG, JPEG, or GIF) embedded in the drawable.
-class DrawableRasterImage implements Drawable {
+class DrawableRasterImage implements DrawableStyleable {
   /// Creates a new [DrawableRasterImage].
-  const DrawableRasterImage(this.image, this.offset, {this.size})
-      : assert(image != null),
+  const DrawableRasterImage(
+    this.image,
+    this.offset,
+    this.style, {
+    this.size,
+    this.transform,
+  })  : assert(image != null),
         assert(offset != null);
 
   /// The [Image] to draw.
@@ -1052,7 +1119,13 @@ class DrawableRasterImage implements Drawable {
   final Size size;
 
   @override
-  void draw(Canvas canvas, ColorFilter colorFilter, Rect bounds) {
+  final Float64List transform;
+
+  @override
+  final DrawableStyle style;
+
+  @override
+  void draw(Canvas canvas, Rect bounds) {
     final Size imageSize = Size(
       image.width.toDouble(),
       image.height.toDouble(),
@@ -1066,21 +1139,50 @@ class DrawableRasterImage implements Drawable {
         size.height / image.height,
       );
     }
-    if (scale != 1.0 || offset != Offset.zero) {
-      final Offset shift = desiredSize / 2.0 - imageSize * scale / 2.0;
+    if (scale != 1.0 || offset != Offset.zero || transform != null) {
+      final Size halfDesiredSize = desiredSize / 2.0;
+      final Size scaledHalfImageSize = imageSize * scale / 2.0;
+      final Offset shift = Offset(
+        halfDesiredSize.width - scaledHalfImageSize.width,
+        halfDesiredSize.height - scaledHalfImageSize.height,
+      );
       canvas.save();
       canvas.translate(offset.dx + shift.dx, offset.dy + shift.dy);
       canvas.scale(scale, scale);
+      if (transform != null) {
+        canvas.transform(transform);
+      }
     }
-
     canvas.drawImage(image, Offset.zero, Paint());
-    if (scale != 1.0 || offset != Offset.zero) {
+    if (scale != 1.0 || offset != Offset.zero || transform != null) {
       canvas.restore();
     }
   }
 
   @override
   bool get hasDrawableContent => image.height > 0 && image.width > 0;
+
+  @override
+  DrawableRasterImage mergeStyle(DrawableStyle newStyle) {
+    assert(newStyle != null);
+    return DrawableRasterImage(
+      image,
+      offset,
+      DrawableStyle.mergeAndBlend(
+        style,
+        fill: newStyle.fill,
+        stroke: newStyle.stroke,
+        clipPath: newStyle.clipPath,
+        mask: newStyle.mask,
+        dashArray: newStyle.dashArray,
+        dashOffset: newStyle.dashOffset,
+        pathFillType: newStyle.pathFillType,
+        textStyle: newStyle.textStyle,
+      ),
+      size: size,
+      transform: transform,
+    );
+  }
 }
 
 /// Represents a drawing element that will be rendered to the canvas.
@@ -1090,7 +1192,7 @@ class DrawableShape implements DrawableStyleable {
       : assert(path != null),
         assert(style != null);
 
-  /// The transform to be applied to the canvas for this shape, if any.
+  @override
   final Float64List transform;
 
   @override
@@ -1110,23 +1212,27 @@ class DrawableShape implements DrawableStyleable {
   bool get hasDrawableContent => bounds.width + bounds.height > 0;
 
   @override
-  void draw(Canvas canvas, ColorFilter colorFilter, Rect bounds) {
+  void draw(Canvas canvas, Rect bounds) {
     if (!hasDrawableContent || style == null) {
       return;
     }
 
     path.fillType = style.pathFillType ?? PathFillType.nonZero;
-
     // if we have multiple clips to apply, need to wrap this in a loop.
     final Function innerDraw = () {
       if (transform != null) {
         canvas.save();
         canvas.transform(transform);
       }
-
+      if (style.blendMode != null) {
+        canvas.saveLayer(null, Paint()..blendMode = style.blendMode);
+      }
+      if (style.mask != null) {
+        canvas.saveLayer(null, Paint());
+      }
       if (style.fill?.style != null) {
         assert(style.fill.style == PaintingStyle.fill);
-        canvas.drawPath(path, style.fill.toFlutterPaint(colorFilter));
+        canvas.drawPath(path, style.fill.toFlutterPaint());
       }
 
       if (style.stroke?.style != null) {
@@ -1139,20 +1245,27 @@ class DrawableShape implements DrawableStyleable {
                 dashArray: style.dashArray,
                 dashOffset: style.dashOffset,
               ),
-              style.stroke.toFlutterPaint(colorFilter));
+              style.stroke.toFlutterPaint());
         } else {
-          canvas.drawPath(path, style.stroke.toFlutterPaint(colorFilter));
+          canvas.drawPath(path, style.stroke.toFlutterPaint());
         }
       }
 
+      if (style.mask != null) {
+        canvas.saveLayer(null, _grayscaleDstInPaint);
+        style.mask.draw(canvas, bounds);
+        canvas.restore();
+        canvas.restore();
+      }
+
+      if (style.blendMode != null) {
+        canvas.restore();
+      }
       if (transform != null) {
         canvas.restore();
       }
     };
 
-    if (style.mask != null) {
-      canvas.saveLayer(null, Paint());
-    }
     if (style.clipPath?.isNotEmpty == true) {
       for (Path clip in style.clipPath) {
         canvas.save();
@@ -1162,20 +1275,6 @@ class DrawableShape implements DrawableStyleable {
       }
     } else {
       innerDraw();
-    }
-    if (style.mask != null) {
-      final Paint p = Paint();
-      p.blendMode = BlendMode.dstIn;
-      p.colorFilter = const ColorFilter.matrix(<double>[
-        0, 0, 0, 0, 0, //
-        0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0,
-        0.2126, 0.7152, 0.0722, 0, 0,
-      ]); //convert to grayscale (https://www.w3.org/Graphics/Color/sRGB) and use them as transparency
-      canvas.saveLayer(null, p);
-      style.mask.draw(canvas, colorFilter, bounds);
-      canvas.restore();
-      canvas.restore();
     }
   }
 
@@ -1194,8 +1293,8 @@ class DrawableShape implements DrawableStyleable {
         dashOffset: newStyle.dashOffset,
         pathFillType: newStyle.pathFillType,
         textStyle: newStyle.textStyle,
-        transform: newStyle.transform,
       ),
+      transform: transform,
     );
   }
 }
