@@ -60,7 +60,10 @@ class Svg {
   ///
   /// The [key] will be used for debugging purposes.
   FutureOr<PictureInfo> svgPictureStringDecoder(
-      String raw, bool allowDrawingOutsideOfViewBox, ColorFilter colorFilter, String key) async {
+      String raw,
+      bool allowDrawingOutsideOfViewBox,
+      ColorFilter colorFilter,
+      String key) async {
     return PictureInfo(
       string: raw,
     );
@@ -122,7 +125,8 @@ Future<void> precachePicture(
     stream?.removeListener(listener);
   }
 
-  stream = provider.resolve(config, onError: errorListener)..addListener(listener, onError: errorListener);
+  stream = provider.resolve(config, onError: errorListener)
+    ..addListener(listener, onError: errorListener);
   return completer.future;
 }
 
@@ -262,8 +266,13 @@ class SvgPicture extends StatefulWidget {
     this.semanticsLabel,
     this.excludeFromSemantics = false,
   })  : pictureProvider = ExactAssetPicture(
-            allowDrawingOutsideViewBox == true ? svgStringDecoderOutsideViewBox : svgStringDecoder, assetName,
-            bundle: bundle, package: package, colorFilter: _getColorFilter(color, colorBlendMode)),
+            allowDrawingOutsideViewBox == true
+                ? svgStringDecoderOutsideViewBox
+                : svgStringDecoder,
+            assetName,
+            bundle: bundle,
+            package: package,
+            colorFilter: _getColorFilter(color, colorBlendMode)),
         super(key: key);
 
   /// Creates a widget that displays a [PictureStream] obtained from the network.
@@ -312,7 +321,9 @@ class SvgPicture extends StatefulWidget {
     this.excludeFromSemantics = false,
     BaseClient httpClient,
   })  : pictureProvider = NetworkPicture(
-            allowDrawingOutsideViewBox == true ? svgByteDecoderOutsideViewBox : svgByteDecoder,
+            allowDrawingOutsideViewBox == true
+                ? svgByteDecoderOutsideViewBox
+                : svgByteDecoder,
             httpClient ?? Client(),
             url,
             headers: headers,
@@ -402,7 +413,10 @@ class SvgPicture extends StatefulWidget {
     this.semanticsLabel,
     this.excludeFromSemantics = false,
   })  : pictureProvider = MemoryPicture(
-            allowDrawingOutsideViewBox == true ? svgByteDecoderOutsideViewBox : svgByteDecoder, bytes,
+            allowDrawingOutsideViewBox == true
+                ? svgByteDecoderOutsideViewBox
+                : svgByteDecoder,
+            bytes,
             colorFilter: _getColorFilter(color, colorBlendMode)),
         super(key: key);
 
@@ -445,32 +459,42 @@ class SvgPicture extends StatefulWidget {
     this.semanticsLabel,
     this.excludeFromSemantics = false,
   })  : pictureProvider = StringPicture(
-            allowDrawingOutsideViewBox == true ? svgStringDecoderOutsideViewBox : svgStringDecoder, bytes,
+            allowDrawingOutsideViewBox == true
+                ? svgStringDecoderOutsideViewBox
+                : svgStringDecoder,
+            bytes,
             colorFilter: _getColorFilter(color, colorBlendMode)),
         super(key: key);
 
   /// The default placeholder for a SVG that may take time to parse or
   /// retrieve, e.g. from a network location.
-  static WidgetBuilder defaultPlaceholderBuilder = (BuildContext ctx) => const LimitedBox();
+  static WidgetBuilder defaultPlaceholderBuilder =
+      (BuildContext ctx) => const LimitedBox();
 
   static ColorFilter _getColorFilter(Color color, BlendMode colorBlendMode) =>
-      color == null ? null : ColorFilter.mode(color, colorBlendMode ?? BlendMode.srcIn);
+      color == null
+          ? null
+          : ColorFilter.mode(color, colorBlendMode ?? BlendMode.srcIn);
 
   /// A [PictureInfoDecoder] for [Uint8List]s that will clip to the viewBox.
   static final PictureInfoDecoder<Uint8List> svgByteDecoder =
-      (Uint8List bytes, ColorFilter colorFilter, String key) => svg.svgPictureDecoder(bytes, false, colorFilter, key);
+      (Uint8List bytes, ColorFilter colorFilter, String key) =>
+          svg.svgPictureDecoder(bytes, false, colorFilter, key);
 
   /// A [PictureInfoDecoder] for strings that will clip to the viewBox.
   static final PictureInfoDecoder<String> svgStringDecoder =
-      (String data, ColorFilter colorFilter, String key) => svg.svgPictureStringDecoder(data, false, colorFilter, key);
+      (String data, ColorFilter colorFilter, String key) =>
+          svg.svgPictureStringDecoder(data, false, colorFilter, key);
 
   /// A [PictureInfoDecoder] for [Uint8List]s that will not clip to the viewBox.
   static final PictureInfoDecoder<Uint8List> svgByteDecoderOutsideViewBox =
-      (Uint8List bytes, ColorFilter colorFilter, String key) => svg.svgPictureDecoder(bytes, true, colorFilter, key);
+      (Uint8List bytes, ColorFilter colorFilter, String key) =>
+          svg.svgPictureDecoder(bytes, true, colorFilter, key);
 
   /// A [PictureInfoDecoder] for [String]s that will not clip to the viewBox.
   static final PictureInfoDecoder<String> svgStringDecoderOutsideViewBox =
-      (String data, ColorFilter colorFilter, String key) => svg.svgPictureStringDecoder(data, true, colorFilter, key);
+      (String data, ColorFilter colorFilter, String key) =>
+          svg.svgPictureStringDecoder(data, true, colorFilter, key);
 
   /// If specified, the width to use for the SVG.  If unspecified, the SVG
   /// will take the width of its parent.
@@ -569,17 +593,21 @@ class _SvgPictureState extends State<SvgPicture> {
   }
 
   void _resolveImage() {
-    final PictureStream newStream = widget.pictureProvider.resolve(createLocalPictureConfiguration(context));
+    final PictureStream newStream = widget.pictureProvider
+        .resolve(createLocalPictureConfiguration(context));
     assert(newStream != null);
     _updateSourceStream(newStream);
   }
 
   void _handleImageChanged(PictureInfo imageInfo, bool synchronousCall) {
-    platformViewRegistry.registerViewFactory('img-svg-${imageInfo.hashCode}', (int viewId) {
+    platformViewRegistry.registerViewFactory('img-svg-${imageInfo.hashCode}',
+        (int viewId) {
       final String base64 = base64Encode(utf8.encode(imageInfo.string));
       final String base64String = 'data:image/svg+xml;base64,$base64';
-      final html.ImageElement element =
-          html.ImageElement(src: base64String, height: widget.height?.toInt(), width: widget.width?.toInt());
+      final html.ImageElement element = html.ImageElement(
+          src: base64String,
+          height: widget.height?.toInt() ?? 100,
+          width: widget.width?.toInt() ?? 100);
       return element;
     });
 
@@ -596,7 +624,8 @@ class _SvgPictureState extends State<SvgPicture> {
       return;
     }
 
-    if (_isListeningToStream) _pictureStream.removeListener(_handleImageChanged);
+    if (_isListeningToStream)
+      _pictureStream.removeListener(_handleImageChanged);
 
     _pictureStream = newStream;
     if (_isListeningToStream) {
@@ -664,7 +693,8 @@ class _SvgPictureState extends State<SvgPicture> {
     );
   }
 
-  Widget _getDefaultPlaceholder(BuildContext context, double width, double height) {
+  Widget _getDefaultPlaceholder(
+      BuildContext context, double width, double height) {
     if (width != null || height != null) {
       return SizedBox(width: width, height: height);
     }
