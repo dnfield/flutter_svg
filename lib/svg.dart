@@ -703,37 +703,45 @@ class _SvgPictureState extends State<SvgPicture> {
       );
     }
 
+    Widget _buildPictureBox(Rect viewport) {
+      return FittedBox(
+        fit: widget.fit,
+        alignment: widget.alignment,
+        child: SizedBox.fromSize(
+          size: viewport.size,
+          child: RawPicture(
+            _picture,
+            matchTextDirection: widget.matchTextDirection,
+            allowDrawingOutsideViewBox: widget.allowDrawingOutsideViewBox,
+          ),
+        ),
+      );
+    }
+
     if (_picture != null) {
       final Rect viewport = Offset.zero & _picture.viewport.size;
 
       double width = widget.width;
       double height = widget.height;
+      bool hasFixedDim = true;
       if (width == null && height == null) {
-        width = viewport.width;
-        height = viewport.height;
-      } else if (height != null) {
+        hasFixedDim = false;
+      } 
+      else if (width == null ) {
         width = height / viewport.height * viewport.width;
-      } else if (width != null) {
+      } 
+      else if (height == null) {
         height = width / viewport.width * viewport.height;
       }
 
       return _maybeWrapWithSemantics(
+        hasFixedDim ? 
         SizedBox(
           width: width,
           height: height,
-          child: FittedBox(
-            fit: widget.fit,
-            alignment: widget.alignment,
-            child: SizedBox.fromSize(
-              size: viewport.size,
-              child: RawPicture(
-                _picture,
-                matchTextDirection: widget.matchTextDirection,
-                allowDrawingOutsideViewBox: widget.allowDrawingOutsideViewBox,
-              ),
-            ),
-          ),
-        ),
+          child: _buildPictureBox(viewport)
+        )
+        : _buildPictureBox(viewport),
       );
     }
 
