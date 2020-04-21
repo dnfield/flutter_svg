@@ -671,8 +671,8 @@ class _SvgPictureState extends State<SvgPicture> {
     }
 
     if (_picture != null) {
-      final double width = widget.width;
-      final double height = widget.height;
+      final double width = widget.width ?? 100;
+      final double height = widget.height ?? 100;
 
       return _maybeWrapWithSemantics(
         Container(
