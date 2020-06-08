@@ -1,5 +1,9 @@
 # CHANGES
 
+- Drop DiagnosticbleMixin usage.
+- Bump XML dependency to ^4.1.0 and resolve deprecated API usages.
+- Await futures in tests.
+
 ## 0.17.4
 
 - Allow `precachePicture` to take `null` for a `BuildContext`.
