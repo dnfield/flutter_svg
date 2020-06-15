@@ -9,7 +9,9 @@ import 'package:flutter/foundation.dart';
 
 /// The signature of a method that listens for errors on picture stream resolution.
 typedef PictureErrorListener = void Function(
-    dynamic exception, StackTrace stackTrace);
+  dynamic exception,
+  StackTrace stackTrace,
+);
 
 @immutable
 class _PictureListenerPair {
@@ -165,20 +167,25 @@ class PictureStream with Diagnosticable {
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(properties);
-    properties.add(ObjectFlagProperty<PictureStreamCompleter>(
-      'completer',
-      _completer,
-      ifPresent: _completer?.toStringShort(),
-      ifNull: 'unresolved',
-    ));
-    properties.add(ObjectFlagProperty<List<_PictureListenerPair>>(
-      'listeners',
-      _listeners,
-      ifPresent:
-          '${_listeners?.length} listener${_listeners?.length == 1 ? "" : "s"}',
-      ifNull: 'no listeners',
-      level: _completer != null ? DiagnosticLevel.hidden : DiagnosticLevel.info,
-    ));
+    properties.add(
+      ObjectFlagProperty<PictureStreamCompleter>(
+        'completer',
+        _completer,
+        ifPresent: _completer?.toStringShort(),
+        ifNull: 'unresolved',
+      ),
+    );
+    properties.add(
+      ObjectFlagProperty<List<_PictureListenerPair>>(
+        'listeners',
+        _listeners,
+        ifPresent:
+            '${_listeners?.length} listener${_listeners?.length == 1 ? "" : "s"}',
+        ifNull: 'no listeners',
+        level:
+            _completer != null ? DiagnosticLevel.hidden : DiagnosticLevel.info,
+      ),
+    );
     _completer?.debugFillProperties(properties);
   }
 }
@@ -209,11 +216,11 @@ abstract class PictureStreamCompleter with Diagnosticable {
     if (_current != null) {
       try {
         listener(_current, true);
-      } catch (exception, stack) {
+      } on Exception catch (exception, stackTrace) {
         _handleImageError(
           ErrorDescription('by a synchronously-called image listener'),
           exception,
-          stack,
+          stackTrace,
         );
       }
     }
@@ -238,25 +245,33 @@ abstract class PictureStreamCompleter with Diagnosticable {
     for (_PictureListenerPair listenerPair in localListeners) {
       try {
         listenerPair.listener(picture, false);
-      } catch (exception, stack) {
+      } on Exception catch (exception, stackTrace) {
         if (listenerPair.errorListener != null) {
-          listenerPair.errorListener(exception, stack);
+          listenerPair.errorListener(exception, stackTrace);
         } else {
           _handleImageError(
-              ErrorDescription('by a picture listener'), exception, stack);
+            ErrorDescription('by a picture listener'),
+            exception,
+            stackTrace,
+          );
         }
       }
     }
   }
 
   void _handleImageError(
-      DiagnosticsNode context, dynamic exception, dynamic stack) {
-    FlutterError.reportError(FlutterErrorDetails(
-      exception: exception,
-      stack: stack as StackTrace,
-      library: 'SVG',
-      context: context,
-    ));
+    DiagnosticsNode context,
+    dynamic exception,
+    StackTrace stackTrace,
+  ) {
+    FlutterError.reportError(
+      FlutterErrorDetails(
+        exception: exception,
+        stack: stackTrace,
+        library: 'SVG',
+        context: context,
+      ),
+    );
   }
 
   /// Accumulates a list of strings describing the object's state. Subclasses
@@ -264,14 +279,22 @@ abstract class PictureStreamCompleter with Diagnosticable {
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder description) {
     super.debugFillProperties(description);
-    description.add(DiagnosticsProperty<PictureInfo>('current', _current,
-        ifNull: 'unresolved', showName: false));
-    description.add(ObjectFlagProperty<List<_PictureListenerPair>>(
-      'listeners',
-      _listeners,
-      ifPresent:
-          '${_listeners?.length} listener${_listeners?.length == 1 ? "" : "s"}',
-    ));
+    description.add(
+      DiagnosticsProperty<PictureInfo>(
+        'current',
+        _current,
+        ifNull: 'unresolved',
+        showName: false,
+      ),
+    );
+    description.add(
+      ObjectFlagProperty<List<_PictureListenerPair>>(
+        'listeners',
+        _listeners,
+        ifPresent:
+            '${_listeners?.length} listener${_listeners?.length == 1 ? "" : "s"}',
+      ),
+    );
   }
 }
 
@@ -292,18 +315,26 @@ class OneFramePictureStreamCompleter extends PictureStreamCompleter {
   /// argument on [FlutterErrorDetails] set to true, meaning that by default the
   /// message is only dumped to the console in debug mode (see [new
   /// FlutterErrorDetails]).
-  OneFramePictureStreamCompleter(Future<PictureInfo> picture,
-      {InformationCollector informationCollector})
-      : assert(picture != null) {
-    picture.then<void>(setPicture, onError: (dynamic error, StackTrace stack) {
-      FlutterError.reportError(FlutterErrorDetails(
-        exception: error,
-        stack: stack,
-        library: 'SVG',
-        context: ErrorDescription('resolving a single-frame picture stream'),
-        informationCollector: informationCollector,
-        silent: true,
-      ));
-    });
+  OneFramePictureStreamCompleter(
+    Future<PictureInfo> pictureInfoFuture, {
+    InformationCollector informationCollector,
+  }) : assert(pictureInfoFuture != null) {
+    () async {
+      try {
+        setPicture(await pictureInfoFuture);
+      } on Exception catch (exception, stackTrace) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: exception,
+            stack: stackTrace,
+            library: 'SVG',
+            context:
+                ErrorDescription('resolving a single-frame picture stream'),
+            informationCollector: informationCollector,
+            silent: true,
+          ),
+        );
+      }
+    }();
   }
 }

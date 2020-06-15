@@ -18,7 +18,10 @@ import 'picture_stream.dart';
 import 'utilities/http.dart';
 
 typedef PictureInfoDecoder<T> = Future<PictureInfo> Function(
-    T data, ColorFilter colorFilter, String key);
+  T data,
+  ColorFilter colorFilter,
+  String key,
+);
 
 /// Creates an [PictureConfiguration] based on the given [BuildContext] (and
 /// optionally size).
@@ -314,38 +317,47 @@ abstract class PictureProvider<T> {
   ///
   /// Subclasses should implement [obtainKey] and [load], which are used by this
   /// method.
-  PictureStream resolve(PictureConfiguration picture,
-      {PictureErrorListener onError}) {
+  PictureStream resolve(
+    PictureConfiguration picture, {
+    PictureErrorListener onError,
+  }) {
     assert(picture != null);
     final PictureStream stream = PictureStream();
-    T obtainedKey;
-    obtainKey(picture).then<void>((T key) {
-      obtainedKey = key;
-      stream.setCompleter(
-        _cache.putIfAbsent(
-          key,
-          () => load(key, onError: onError),
-        ),
-      );
-    }).catchError((dynamic exception, StackTrace stack) async {
-      if (onError != null) {
-        onError(exception, stack);
-        return null;
+    () async {
+      T obtainedKey;
+      try {
+        final key = await obtainKey(picture);
+        obtainedKey = key;
+        stream.setCompleter(
+          _cache.putIfAbsent(key, () => load(key, onError: onError)),
+        );
+      } on Exception catch (exception, stackTrace) {
+        if (onError != null) {
+          onError(exception, stackTrace);
+          return;
+        }
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: exception,
+            stack: stackTrace,
+            library: 'SVG',
+            context: ErrorDescription('while resolving a picture'),
+            silent: true, // could be a network error or whatnot
+            informationCollector: () sync* {
+              yield DiagnosticsProperty<PictureProvider>(
+                'Picture provider',
+                this,
+              );
+              yield DiagnosticsProperty<T>(
+                'Picture key',
+                obtainedKey,
+                defaultValue: null,
+              );
+            },
+          ),
+        );
       }
-      FlutterError.reportError(FlutterErrorDetails(
-          exception: exception,
-          stack: stack,
-          library: 'SVG',
-          context: ErrorDescription('while resolving a picture'),
-          silent: true, // could be a network error or whatnot
-          informationCollector: () sync* {
-            yield DiagnosticsProperty<PictureProvider>(
-                'Picture provider', this);
-            yield DiagnosticsProperty<T>('Picture key', obtainedKey,
-                defaultValue: null);
-          }));
-      return null;
-    });
+    }();
     return stream;
   }
 
@@ -430,13 +442,17 @@ abstract class AssetBundlePictureProvider
   /// Converts a key into an [PictureStreamCompleter], and begins fetching the
   /// picture using [_loadAsync].
   @override
-  PictureStreamCompleter load(AssetBundlePictureKey key,
-      {PictureErrorListener onError}) {
-    return OneFramePictureStreamCompleter(_loadAsync(key, onError),
-        informationCollector: () sync* {
-      yield DiagnosticsProperty<PictureProvider>('Picture provider', this);
-      yield DiagnosticsProperty<AssetBundlePictureKey>('Picture key', key);
-    });
+  PictureStreamCompleter load(
+    AssetBundlePictureKey key, {
+    PictureErrorListener onError,
+  }) {
+    return OneFramePictureStreamCompleter(
+      _loadAsync(key, onError),
+      informationCollector: () sync* {
+        yield DiagnosticsProperty<PictureProvider>('Picture provider', this);
+        yield DiagnosticsProperty<AssetBundlePictureKey>('Picture key', key);
+      },
+    );
   }
 
   /// Fetches the picture from the asset bundle, decodes it, and returns a
@@ -445,16 +461,19 @@ abstract class AssetBundlePictureProvider
   /// This function is used by [load].
   @protected
   Future<PictureInfo> _loadAsync(
-      AssetBundlePictureKey key, PictureErrorListener onError) async {
-    final String data = await key.bundle.loadString(key.name);
-    if (data == null) {
-      throw 'Unable to read data';
+    AssetBundlePictureKey key,
+    PictureErrorListener onError,
+  ) async {
+    try {
+      final data = await key.bundle.loadString(key.name);
+      if (data == null) {
+        throw Exception('Unable to read data');
+      }
+      return await decoder(data, key.colorFilter, key.toString());
+    } on Exception catch (exception, stackTrace) {
+      onError?.call(exception, stackTrace);
+      rethrow;
     }
-    if (onError != null) {
-      return decoder(data, key.colorFilter, key.toString())
-        ..catchError(onError);
-    }
-    return decoder(data, key.colorFilter, key.toString());
   }
 }
 
@@ -493,23 +512,32 @@ class NetworkPicture extends PictureProvider<NetworkPicture> {
   }
 
   @override
-  PictureStreamCompleter load(NetworkPicture key,
-      {PictureErrorListener onError}) {
-    return OneFramePictureStreamCompleter(_loadAsync(key, onError: onError),
-        informationCollector: () sync* {
-      yield DiagnosticsProperty<PictureProvider>('Picture provider', this);
-      yield DiagnosticsProperty<NetworkPicture>('Picture key', key);
-    });
+  PictureStreamCompleter load(
+    NetworkPicture key, {
+    PictureErrorListener onError,
+  }) {
+    return OneFramePictureStreamCompleter(
+      _loadAsync(key, onError: onError),
+      informationCollector: () sync* {
+        yield DiagnosticsProperty<PictureProvider>('Picture provider', this);
+        yield DiagnosticsProperty<NetworkPicture>('Picture key', key);
+      },
+    );
   }
 
-  Future<PictureInfo> _loadAsync(NetworkPicture key,
-      {PictureErrorListener onError}) async {
+  Future<PictureInfo> _loadAsync(
+    NetworkPicture key, {
+    PictureErrorListener onError,
+  }) async {
     assert(key == this);
-    final Uint8List bytes = await httpGet(url);
-    if (onError != null) {
-      return decoder(bytes, colorFilter, key.toString())..catchError(onError);
+
+    try {
+      final bytes = await httpGet(url);
+      return await decoder(bytes, colorFilter, key.toString());
+    } on Exception catch (exception, stackTrace) {
+      onError?.call(exception, stackTrace);
+      rethrow;
     }
-    return decoder(bytes, colorFilter, key.toString());
   }
 
   @override
@@ -560,24 +588,28 @@ class FilePicture extends PictureProvider<FilePicture> {
 
   @override
   PictureStreamCompleter load(FilePicture key, {PictureErrorListener onError}) {
-    return OneFramePictureStreamCompleter(_loadAsync(key, onError: onError),
-        informationCollector: () sync* {
-      yield DiagnosticsProperty<String>('Path', file?.path);
-    });
+    return OneFramePictureStreamCompleter(
+      _loadAsync(key, onError: onError),
+      informationCollector: () sync* {
+        yield DiagnosticsProperty<String>('Path', file?.path);
+      },
+    );
   }
 
-  Future<PictureInfo> _loadAsync(FilePicture key,
-      {PictureErrorListener onError}) async {
+  Future<PictureInfo> _loadAsync(
+    FilePicture key, {
+    PictureErrorListener onError,
+  }) async {
     assert(key == this);
 
-    final Uint8List data = await file.readAsBytes();
-    if (data == null || data.isEmpty) {
-      return null;
+    try {
+      final data = await file.readAsBytes();
+      if (data == null || data.isEmpty) return null;
+      return await decoder(data, colorFilter, key.toString());
+    } on Exception catch (exception, stackTrace) {
+      onError?.call(exception, stackTrace);
+      rethrow;
     }
-    if (onError != null) {
-      return decoder(data, colorFilter, key.toString())..catchError(onError);
-    }
-    return decoder(data, colorFilter, key.toString());
   }
 
   @override
@@ -632,18 +664,25 @@ class MemoryPicture extends PictureProvider<MemoryPicture> {
   }
 
   @override
-  PictureStreamCompleter load(MemoryPicture key,
-      {PictureErrorListener onError}) {
+  PictureStreamCompleter load(
+    MemoryPicture key, {
+    PictureErrorListener onError,
+  }) {
     return OneFramePictureStreamCompleter(_loadAsync(key, onError: onError));
   }
 
-  Future<PictureInfo> _loadAsync(MemoryPicture key,
-      {PictureErrorListener onError}) async {
+  Future<PictureInfo> _loadAsync(
+    MemoryPicture key, {
+    PictureErrorListener onError,
+  }) async {
     assert(key == this);
-    if (onError != null) {
-      return decoder(bytes, colorFilter, key.toString())..catchError(onError);
+
+    try {
+      return await decoder(bytes, colorFilter, key.toString());
+    } on Exception catch (exception, stackTrace) {
+      onError?.call(exception, stackTrace);
+      rethrow;
     }
-    return decoder(bytes, colorFilter, key.toString());
   }
 
   @override
@@ -697,20 +736,25 @@ class StringPicture extends PictureProvider<StringPicture> {
   }
 
   @override
-  PictureStreamCompleter load(StringPicture key,
-      {PictureErrorListener onError}) {
+  PictureStreamCompleter load(
+    StringPicture key, {
+    PictureErrorListener onError,
+  }) {
     return OneFramePictureStreamCompleter(_loadAsync(key, onError: onError));
   }
 
   Future<PictureInfo> _loadAsync(
     StringPicture key, {
     PictureErrorListener onError,
-  }) {
+  }) async {
     assert(key == this);
-    if (onError != null) {
-      return decoder(string, colorFilter, key.toString())..catchError(onError);
+
+    try {
+      return await decoder(string, colorFilter, key.toString());
+    } on Exception catch (exception, stackTrace) {
+      onError?.call(exception, stackTrace);
+      rethrow;
     }
-    return decoder(string, colorFilter, key.toString());
   }
 
   @override
