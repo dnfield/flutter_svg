@@ -988,7 +988,7 @@ class DrawableRoot implements DrawableParent {
 /// `stroke`, or `fill`.
 class DrawableGroup implements DrawableStyleable, DrawableParent {
   /// Creates a new DrawableGroup.
-  const DrawableGroup(this.children, this.style, {this.transform});
+  const DrawableGroup(this.children, this.style, {this.transform, this.id});
 
   @override
   final List<Drawable> children;
@@ -996,6 +996,9 @@ class DrawableGroup implements DrawableStyleable, DrawableParent {
   final DrawableStyle style;
   @override
   final Float64List transform;
+
+  /// SVG group 'id' attribute.
+  final String id;
 
   @override
   bool get hasDrawableContent => children != null && children.isNotEmpty;
@@ -1188,7 +1191,7 @@ class DrawableRasterImage implements DrawableStyleable {
 /// Represents a drawing element that will be rendered to the canvas.
 class DrawableShape implements DrawableStyleable {
   /// Creates a new [DrawableShape].
-  const DrawableShape(this.path, this.style, {this.transform})
+  const DrawableShape(this.path, this.style, {this.transform, this.id})
       : assert(path != null),
         assert(style != null);
 
@@ -1197,6 +1200,9 @@ class DrawableShape implements DrawableStyleable {
 
   @override
   final DrawableStyle style;
+
+  /// SVG path 'id' attribute.
+  final String id;
 
   /// The [Path] describing this shape.
   final Path path;

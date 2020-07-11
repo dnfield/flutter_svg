@@ -134,6 +134,7 @@ class _Elements {
         parent.style,
       ),
       transform: parseTransform(parserState.attribute('transform'))?.storage,
+      id: parserState.attribute('id'),
     );
     if (!parserState._inDefs) {
       parent.children.add(group);
@@ -847,6 +848,7 @@ class SvgParserState {
         defaultFillColor: colorBlack,
       ),
       transform: parseTransform(getAttribute(attributes, 'transform'))?.storage,
+      id: getAttribute(attributes, 'id'),
     );
     final bool isIri = checkForIri(drawable);
     if (!_inDefs || !isIri) {
