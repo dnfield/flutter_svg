@@ -30,7 +30,7 @@ Basic usage (to create an SVG rendering widget from an asset):
 final String assetName = 'assets/image.svg';
 final Widget svg = SvgPicture.asset(
   assetName,
-  semanticsLabel: 'Acme Logo'
+  semanticLabel: 'Acme Logo'
 );
 ```
 
@@ -41,7 +41,7 @@ final String assetName = 'assets/up_arrow.svg';
 final Widget svgIcon = SvgPicture.asset(
   assetName,
   color: Colors.red,
-  semanticsLabel: 'A red up arrow'
+  semanticLabel: 'A red up arrow'
 );
 ```
 
@@ -63,7 +63,7 @@ final Widget svg = SvgPicture.asset(
 
 final Widget networkSvg = SvgPicture.network(
   'https://site-that-takes-a-while.com/image.svg',
-  semanticsLabel: 'A shark?!',
+  semanticLabel: 'A shark?!',
   placeholderBuilder: (BuildContext context) => Container(
       padding: const EdgeInsets.all(30.0),
       child: const CircularProgressIndicator()),

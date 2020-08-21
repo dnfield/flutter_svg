@@ -1,5 +1,11 @@
 # CHANGES
 
+## 0.19.1
+
+- `semanticsLabel` property is now deprecated in `SvgPicture`
+- `semanticLabel` in `SvgPicture` may be used instead to add semantics
+
+
 ## 0.18.1
 
 - Change type of `alignment` to `AlignmentGeometry` on `SvgPicture`.

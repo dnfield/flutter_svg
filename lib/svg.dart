@@ -611,7 +611,7 @@ class SvgPicture extends StatefulWidget {
   ///
   /// The value indicates the purpose of the picture, and will be
   /// read out by screen readers.
-  @Deprecated('This propert has been deprecated in the favour of semanticLabel')
+  @Deprecated('This property has been deprecated in the favour of semanticLabel')
   final String semanticsLabel;
 
   /// Whether to exclude this picture from semantics.

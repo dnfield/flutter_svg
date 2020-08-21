@@ -228,6 +228,7 @@ void main() {
               key: key,
               child: SvgPicture.asset(
                 'test.svg',
+                //TODO: Change this field to [semanticLabel]
                 semanticsLabel: 'Test SVG',
               ),
             ),
