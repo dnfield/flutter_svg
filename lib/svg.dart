@@ -195,7 +195,7 @@ class SvgPicture extends StatefulWidget {
   /// A custom `placeholderBuilder` can be specified for cases where decoding or
   /// acquiring data may take a noticeably long time, e.g. for a network picture.
   ///
-  /// The `semanticsLabel` can be used to identify the purpose of this picture for
+  /// The `semanticLabel` can be used to identify the purpose of this picture for
   /// screen reading software.
   ///
   /// If [excludeFromSemantics] is true, then [semanticLabel] will be ignored.
@@ -209,7 +209,7 @@ class SvgPicture extends StatefulWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
-    this.semanticsLabel,
+    this.semanticLabel,
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
   }) : super(key: key);
@@ -305,7 +305,7 @@ class SvgPicture extends StatefulWidget {
     this.placeholderBuilder,
     Color color,
     BlendMode colorBlendMode = BlendMode.srcIn,
-    this.semanticsLabel,
+    this.semanticLabel,
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
   })  : pictureProvider = ExactAssetPicture(
@@ -360,7 +360,7 @@ class SvgPicture extends StatefulWidget {
     this.placeholderBuilder,
     Color color,
     BlendMode colorBlendMode = BlendMode.srcIn,
-    this.semanticsLabel,
+    this.semanticLabel,
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
   })  : pictureProvider = NetworkPicture(
@@ -411,7 +411,7 @@ class SvgPicture extends StatefulWidget {
     this.placeholderBuilder,
     Color color,
     BlendMode colorBlendMode = BlendMode.srcIn,
-    this.semanticsLabel,
+    this.semanticLabel,
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
   })  : pictureProvider = FilePicture(
@@ -458,7 +458,7 @@ class SvgPicture extends StatefulWidget {
     this.placeholderBuilder,
     Color color,
     BlendMode colorBlendMode = BlendMode.srcIn,
-    this.semanticsLabel,
+    this.semanticLabel,
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
   })  : pictureProvider = MemoryPicture(
@@ -505,7 +505,7 @@ class SvgPicture extends StatefulWidget {
     this.placeholderBuilder,
     Color color,
     BlendMode colorBlendMode = BlendMode.srcIn,
-    this.semanticsLabel,
+    this.semanticLabel,
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
   })  : pictureProvider = StringPicture(
@@ -599,7 +599,7 @@ class SvgPicture extends StatefulWidget {
   ///
   /// The value indicates the purpose of the picture, and will be
   /// read out by screen readers.
-  final String semanticsLabel;
+  final String semanticLabel;
 
   /// Whether to exclude this picture from semantics.
   ///
@@ -710,9 +710,9 @@ class _SvgPictureState extends State<SvgPicture> {
         return child;
       }
       return Semantics(
-        container: widget.semanticsLabel != null,
+        container: widget.semanticLabel != null,
         image: true,
-        label: widget.semanticsLabel == null ? '' : widget.semanticsLabel,
+        label: widget.semanticLabel == null ? '' : widget.semanticLabel,
         child: child,
       );
     }
