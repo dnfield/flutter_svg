@@ -209,6 +209,7 @@ class SvgPicture extends StatefulWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
+    this.semanticsLabel,
     this.semanticLabel,
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
@@ -305,6 +306,7 @@ class SvgPicture extends StatefulWidget {
     this.placeholderBuilder,
     Color color,
     BlendMode colorBlendMode = BlendMode.srcIn,
+    this.semanticsLabel,
     this.semanticLabel,
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
@@ -360,6 +362,7 @@ class SvgPicture extends StatefulWidget {
     this.placeholderBuilder,
     Color color,
     BlendMode colorBlendMode = BlendMode.srcIn,
+    this.semanticsLabel,
     this.semanticLabel,
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
@@ -411,6 +414,7 @@ class SvgPicture extends StatefulWidget {
     this.placeholderBuilder,
     Color color,
     BlendMode colorBlendMode = BlendMode.srcIn,
+    this.semanticsLabel,
     this.semanticLabel,
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
@@ -458,6 +462,7 @@ class SvgPicture extends StatefulWidget {
     this.placeholderBuilder,
     Color color,
     BlendMode colorBlendMode = BlendMode.srcIn,
+    this.semanticsLabel,
     this.semanticLabel,
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
@@ -505,6 +510,7 @@ class SvgPicture extends StatefulWidget {
     this.placeholderBuilder,
     Color color,
     BlendMode colorBlendMode = BlendMode.srcIn,
+    this.semanticsLabel,
     this.semanticLabel,
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
@@ -600,6 +606,13 @@ class SvgPicture extends StatefulWidget {
   /// The value indicates the purpose of the picture, and will be
   /// read out by screen readers.
   final String semanticLabel;
+
+   /// The [Semantics.label] for this picture.
+  ///
+  /// The value indicates the purpose of the picture, and will be
+  /// read out by screen readers.
+  @Deprecated('This propert has been deprecated in the favour of semanticLabel')
+  final String semanticsLabel;
 
   /// Whether to exclude this picture from semantics.
   ///
@@ -708,11 +721,19 @@ class _SvgPictureState extends State<SvgPicture> {
     Widget _maybeWrapWithSemantics(Widget child) {
       if (widget.excludeFromSemantics) {
         return child;
-      }
-      return Semantics(
+      } else if (widget.semanticLabel != null) {
+         return Semantics(
         container: widget.semanticLabel != null,
         image: true,
         label: widget.semanticLabel == null ? '' : widget.semanticLabel,
+        child: child,
+      );
+      }
+      }
+      return Semantics(
+        container: widget.semanticsLabel != null,
+        image: true,
+        label: widget.semanticsLabel == null ? '' : widget.semanticsLabel,
         child: child,
       );
     }
