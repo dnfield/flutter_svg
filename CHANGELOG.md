@@ -1,6 +1,6 @@
 # CHANGES
 
-## 0.19.1
+## 0.18.2
 
 - `semanticsLabel` property is now deprecated in `SvgPicture`
 - `semanticLabel` in `SvgPicture` may be used instead to add semantics
