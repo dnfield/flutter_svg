@@ -75,13 +75,8 @@ class Avd {
         .map((XmlElement child) => parseAvdElement(child, viewBox.viewBoxRect))
         .toList();
     // todo : style on root
-    return DrawableRoot(
-      getAttribute(svg.attributes, 'id', def: ''),
-      viewBox,
-      children,
-      DrawableDefinitionServer(),
-      null
-    );
+    return DrawableRoot(getAttribute(svg.attributes, 'id', def: ''), viewBox,
+        children, DrawableDefinitionServer(), null);
   }
 }
 
@@ -168,11 +163,6 @@ DrawableRoot fromAvdString(String rawSvg, Rect size) {
       .map((XmlElement child) => parseAvdElement(child, size))
       .toList();
   // todo : style on root
-  return DrawableRoot(
-    getAttribute(svg.attributes, 'id', def: ''),
-    viewBox,
-    children,
-    DrawableDefinitionServer(),
-    null
-  );
+  return DrawableRoot(getAttribute(svg.attributes, 'id', def: ''), viewBox,
+      children, DrawableDefinitionServer(), null);
 }
