@@ -64,6 +64,7 @@ void main() {
   runApp(MyApp());
 }
 
+// ignore: public_member_api_docs
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -77,8 +78,11 @@ class MyApp extends StatelessWidget {
   }
 }
 
+// ignore: public_member_api_docs
 class MyHomePage extends StatefulWidget {
+  // ignore: public_member_api_docs
   const MyHomePage({Key key, this.title}) : super(key: key);
+  // ignore: public_member_api_docs
   final String title;
 
   @override

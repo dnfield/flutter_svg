@@ -209,7 +209,8 @@ class SvgPicture extends StatefulWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
-    this.semanticsLabel,
+    @Deprecated('This property has been deprecated in favour of `semanticLabel`')
+        this.semanticsLabel,
     this.semanticLabel,
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
@@ -306,7 +307,8 @@ class SvgPicture extends StatefulWidget {
     this.placeholderBuilder,
     Color color,
     BlendMode colorBlendMode = BlendMode.srcIn,
-    this.semanticsLabel,
+    @Deprecated('This property has been deprecated in favour of `semanticLabel`')
+        this.semanticsLabel,
     this.semanticLabel,
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
@@ -362,7 +364,8 @@ class SvgPicture extends StatefulWidget {
     this.placeholderBuilder,
     Color color,
     BlendMode colorBlendMode = BlendMode.srcIn,
-    this.semanticsLabel,
+    @Deprecated('This property has been deprecated in favour of `semanticLabel`')
+        this.semanticsLabel,
     this.semanticLabel,
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
@@ -414,7 +417,8 @@ class SvgPicture extends StatefulWidget {
     this.placeholderBuilder,
     Color color,
     BlendMode colorBlendMode = BlendMode.srcIn,
-    this.semanticsLabel,
+    @Deprecated('This property has been deprecated in favour of `semanticLabel`')
+        this.semanticsLabel,
     this.semanticLabel,
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
@@ -462,7 +466,8 @@ class SvgPicture extends StatefulWidget {
     this.placeholderBuilder,
     Color color,
     BlendMode colorBlendMode = BlendMode.srcIn,
-    this.semanticsLabel,
+    @Deprecated('This property has been deprecated in favour of `semanticLabel`')
+        this.semanticsLabel,
     this.semanticLabel,
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
@@ -510,7 +515,8 @@ class SvgPicture extends StatefulWidget {
     this.placeholderBuilder,
     Color color,
     BlendMode colorBlendMode = BlendMode.srcIn,
-    this.semanticsLabel,
+    @Deprecated('This property has been deprecated in favour of `semanticLabel`')
+        this.semanticsLabel,
     this.semanticLabel,
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
@@ -607,11 +613,12 @@ class SvgPicture extends StatefulWidget {
   /// read out by screen readers.
   final String semanticLabel;
 
-   /// The [Semantics.label] for this picture.
+  /// The [Semantics.label] for this picture.
   ///
   /// The value indicates the purpose of the picture, and will be
   /// read out by screen readers.
-  @Deprecated('This property has been deprecated in the favour of semanticLabel')
+  @Deprecated(
+      'This property has been deprecated in the favour of semanticLabel')
   final String semanticsLabel;
 
   /// Whether to exclude this picture from semantics.
@@ -721,19 +728,18 @@ class _SvgPictureState extends State<SvgPicture> {
     Widget _maybeWrapWithSemantics(Widget child) {
       if (widget.excludeFromSemantics) {
         return child;
-      } else if (widget.semanticLabel != null) {
-         return Semantics(
-        container: widget.semanticLabel != null,
-        image: true,
-        label: widget.semanticLabel == null ? '' : widget.semanticLabel,
-        child: child,
-      );
       }
-      }
+
+      // Check if the seprecated [widget.semanticsLabel] has been used
+      // If it is true and the new propert is `null` then
+      // [widget.semanticsLabel] will be used instead
+      final String semanticLabel =
+          widget.semanticLabel ?? widget.semanticsLabel;
+
       return Semantics(
-        container: widget.semanticsLabel != null,
+        container: semanticLabel != null,
         image: true,
-        label: widget.semanticsLabel == null ? '' : widget.semanticsLabel,
+        label: semanticLabel == null ? '' : semanticLabel,
         child: child,
       );
     }

@@ -228,8 +228,8 @@ void main() {
               key: key,
               child: SvgPicture.asset(
                 'test.svg',
-                //TODO: Change this field to [semanticLabel]
                 semanticsLabel: 'Test SVG',
+                semanticLabel: 'Test SVG',
               ),
             ),
           ),
@@ -336,6 +336,7 @@ void main() {
           child: SvgPicture.string(
             svgStr,
             semanticsLabel: 'Flutter Logo',
+            semanticLabel: 'Flutter Logo',
             width: 100.0,
             height: 100.0,
           ),
