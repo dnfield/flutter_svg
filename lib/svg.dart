@@ -212,7 +212,6 @@ class SvgPicture extends StatefulWidget {
     this.semanticsLabel,
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
-    this.colorFilter,
   }) : super(key: key);
 
   /// Instantiates a widget that renders an SVG picture from an [AssetBundle].
@@ -310,14 +309,13 @@ class SvgPicture extends StatefulWidget {
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
   })  : pictureProvider = ExactAssetPicture(
-          allowDrawingOutsideViewBox == true
-              ? svgStringDecoderOutsideViewBox
-              : svgStringDecoder,
-          assetName,
-          bundle: bundle,
-          package: package,
-        ),
-        colorFilter = _getColorFilter(color, colorBlendMode),
+            allowDrawingOutsideViewBox == true
+                ? svgStringDecoderOutsideViewBox
+                : svgStringDecoder,
+            assetName,
+            bundle: bundle,
+            package: package,
+            colorFilter: _getColorFilter(color, colorBlendMode)),
         super(key: key);
 
   /// Creates a widget that displays a [PictureStream] obtained from the network.
@@ -366,13 +364,12 @@ class SvgPicture extends StatefulWidget {
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
   })  : pictureProvider = NetworkPicture(
-          allowDrawingOutsideViewBox == true
-              ? svgByteDecoderOutsideViewBox
-              : svgByteDecoder,
-          url,
-          headers: headers,
-        ),
-        colorFilter = _getColorFilter(color, colorBlendMode),
+            allowDrawingOutsideViewBox == true
+                ? svgByteDecoderOutsideViewBox
+                : svgByteDecoder,
+            url,
+            headers: headers,
+            colorFilter: _getColorFilter(color, colorBlendMode)),
         super(key: key);
 
   /// Creates a widget that displays a [PictureStream] obtained from a [File].
@@ -418,12 +415,11 @@ class SvgPicture extends StatefulWidget {
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
   })  : pictureProvider = FilePicture(
-          allowDrawingOutsideViewBox == true
-              ? svgByteDecoderOutsideViewBox
-              : svgByteDecoder,
-          file,
-        ),
-        colorFilter = _getColorFilter(color, colorBlendMode),
+            allowDrawingOutsideViewBox == true
+                ? svgByteDecoderOutsideViewBox
+                : svgByteDecoder,
+            file,
+            colorFilter: _getColorFilter(color, colorBlendMode)),
         super(key: key);
 
   /// Creates a widget that displays a [PictureStream] obtained from a [Uint8List].
@@ -466,12 +462,11 @@ class SvgPicture extends StatefulWidget {
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
   })  : pictureProvider = MemoryPicture(
-          allowDrawingOutsideViewBox == true
-              ? svgByteDecoderOutsideViewBox
-              : svgByteDecoder,
-          bytes,
-        ),
-        colorFilter = _getColorFilter(color, colorBlendMode),
+            allowDrawingOutsideViewBox == true
+                ? svgByteDecoderOutsideViewBox
+                : svgByteDecoder,
+            bytes,
+            colorFilter: _getColorFilter(color, colorBlendMode)),
         super(key: key);
 
   /// Creates a widget that displays a [PictureStream] obtained from a [String].
@@ -514,12 +509,11 @@ class SvgPicture extends StatefulWidget {
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
   })  : pictureProvider = StringPicture(
-          allowDrawingOutsideViewBox == true
-              ? svgStringDecoderOutsideViewBox
-              : svgStringDecoder,
-          bytes,
-        ),
-        colorFilter = _getColorFilter(color, colorBlendMode),
+            allowDrawingOutsideViewBox == true
+                ? svgStringDecoderOutsideViewBox
+                : svgStringDecoder,
+            bytes,
+            colorFilter: _getColorFilter(color, colorBlendMode)),
         super(key: key);
 
   /// The default placeholder for a SVG that may take time to parse or
@@ -620,9 +614,6 @@ class SvgPicture extends StatefulWidget {
   ///
   /// Defaults to [Clip.hardEdge], and must not be null.
   final Clip clipBehavior;
-
-  /// The color filter, if any, to apply to this widget.
-  final ColorFilter colorFilter;
 
   @override
   State<SvgPicture> createState() => _SvgPictureState();
@@ -726,16 +717,6 @@ class _SvgPictureState extends State<SvgPicture> {
       );
     }
 
-    Widget _maybeWrapColorFilter(Widget child) {
-      if (widget.colorFilter == null) {
-        return child;
-      }
-      return ColorFiltered(
-        colorFilter: widget.colorFilter,
-        child: child,
-      );
-    }
-
     if (_picture != null) {
       final Rect viewport = Offset.zero & _picture.viewport.size;
 
@@ -760,12 +741,10 @@ class _SvgPictureState extends State<SvgPicture> {
             clipBehavior: widget.clipBehavior,
             child: SizedBox.fromSize(
               size: viewport.size,
-              child: _maybeWrapColorFilter(
-                RawPicture(
-                  _picture,
-                  matchTextDirection: widget.matchTextDirection,
-                  allowDrawingOutsideViewBox: widget.allowDrawingOutsideViewBox,
-                ),
+              child: RawPicture(
+                _picture,
+                matchTextDirection: widget.matchTextDirection,
+                allowDrawingOutsideViewBox: widget.allowDrawingOutsideViewBox,
               ),
             ),
           ),

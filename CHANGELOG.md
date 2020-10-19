@@ -1,5 +1,12 @@
 # CHANGES
 
+## 0.20.0
+
+- Revert avoid unnecessary cache invalidation of SVGs drawn with color changes.
+- This turned out to be a breaking change. The layer saving logic does not work
+  in quite the same way when using a `ColorFiltered` widget. Blocked on
+  [flutter/flutter#68501](https://github.com/flutter/flutter/issues/68501).
+
 ## 0.19.0
 
 - Avoid unnecessary cache invalidation of SVGs drawn with color changes by:
@@ -10,9 +17,6 @@
 
 ## 0.18.1
 
-- Bump the path_drawing dependency to 0.4.1+1
-- Expose clipBehavior from FittedBox
-- Expose SVG ids in `Drawable*` classes.
 - Change type of `alignment` to `AlignmentGeometry` on `SvgPicture`.
 - Fixed bug in transform parsing
 
