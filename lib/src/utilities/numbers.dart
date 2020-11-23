@@ -3,7 +3,7 @@
 /// Passing `null` will return `null`.
 ///
 /// Will strip off a `px` prefix.
-double parseDouble(String maybeDouble, {bool tryParse = false}) {
+double? parseDouble(String? maybeDouble, {bool tryParse = false}) {
   assert(tryParse != null);
   if (maybeDouble == null) {
     return null;

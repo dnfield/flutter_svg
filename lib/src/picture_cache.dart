@@ -56,7 +56,7 @@ class PictureCache {
       Object key, PictureStreamCompleter loader()) {
     assert(key != null);
     assert(loader != null);
-    PictureStreamCompleter result = _cache[key];
+    PictureStreamCompleter? result = _cache[key];
     if (result != null) {
       // Remove the provider from the list so that we can put it back in below
       // and thus move it to the end of the list.

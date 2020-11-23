@@ -18,9 +18,9 @@ Future<void> _checkWidgetAndGolden(Key key, String filename) async {
 }
 
 void main() {
-  FakeHttpClientResponse fakeResponse;
+  FakeHttpClientResponse? fakeResponse;
   FakeHttpClientRequest fakeRequest;
-  FakeHttpClient fakeHttpClient;
+  late FakeHttpClient fakeHttpClient;
   setUp(() {
     PictureProvider.clearCache();
     svg.cacheColorFilterOverride = null;
@@ -374,7 +374,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       await _checkWidgetAndGolden(key, 'flutter_logo.network.png');
-    }, createHttpClient: (SecurityContext c) => fakeHttpClient);
+    }, createHttpClient: (SecurityContext? c) => fakeHttpClient);
   });
 
   testWidgets('SvgPicture can be created without a MediaQuery',
@@ -398,7 +398,7 @@ void main() {
   testWidgets('SvgPicture.network HTTP exception', (WidgetTester tester) async {
     await HttpOverrides.runZoned(() async {
       expect(() async {
-        fakeResponse.statusCode = 400;
+        fakeResponse!.statusCode = 400;
         await tester.pumpWidget(
           MediaQuery(
             data: MediaQueryData.fromWindow(window),
@@ -408,7 +408,7 @@ void main() {
           ),
         );
       }, isNotNull);
-    }, createHttpClient: (SecurityContext c) => fakeHttpClient);
+    }, createHttpClient: (SecurityContext? c) => fakeHttpClient);
   });
 
   testWidgets('SvgPicture semantics', (WidgetTester tester) async {
@@ -672,7 +672,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(renderObject.clipBehavior, equals(Clip.antiAlias));
-    }, createHttpClient: (SecurityContext c) => fakeHttpClient);
+    }, createHttpClient: (SecurityContext? c) => fakeHttpClient);
   });
 
   testWidgets('SvgPicture respects clipBehavior', (WidgetTester tester) async {
@@ -719,10 +719,10 @@ class FakeHttpClient extends Fake implements HttpClient {
 class FakeHttpClientRequest extends Fake implements HttpClientRequest {
   FakeHttpClientRequest(this.response);
 
-  FakeHttpClientResponse response;
+  FakeHttpClientResponse? response;
 
   @override
-  Future<HttpClientResponse> close() async => response;
+  Future<HttpClientResponse?> close() async => response;
 }
 
 class FakeHttpClientResponse extends Fake implements HttpClientResponse {
@@ -738,10 +738,10 @@ class FakeHttpClientResponse extends Fake implements HttpClientResponse {
 
   @override
   StreamSubscription<List<int>> listen(
-    void Function(List<int> event) onData, {
-    Function onError,
-    void Function() onDone,
-    bool cancelOnError,
+    void Function(List<int> event)? onData, {
+    Function? onError,
+    void Function()? onDone,
+    bool? cancelOnError,
   }) {
     return Stream<Uint8List>.fromIterable(<Uint8List>[svgBytes]).listen(
       onData,

@@ -8,7 +8,7 @@ import 'package:xml/xml.dart';
 class MockPictureStreamCompleter extends PictureStreamCompleter {}
 
 void main() {
-  PictureCache cache;
+  late PictureCache cache;
 
   setUp(() {
     cache = PictureCache();

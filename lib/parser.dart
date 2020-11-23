@@ -8,7 +8,7 @@ class SvgParser {
   /// Parses SVG from a string to a [DrawableRoot].
   ///
   /// The [key] parameter is used for debugging purposes.
-  Future<DrawableRoot> parse(String str, {String key}) async {
+  Future<DrawableRoot> parse(String str, {String? key}) async {
     return await SvgParserState(xml.parseEvents(str), key).parse();
   }
 }

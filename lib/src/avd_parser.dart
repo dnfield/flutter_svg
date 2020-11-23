@@ -20,19 +20,19 @@ class DrawableAvdRoot extends DrawableRoot {
 
 /// An SVG Shape element that will be drawn to the canvas.
 class DrawableAvdPath extends DrawableShape {
-  const DrawableAvdPath(String id, Path path, DrawableStyle style)
+  const DrawableAvdPath(String? id, Path path, DrawableStyle style)
       : super(id, path, style);
 
   /// Creates a [DrawableAvdPath] from an XML <path> element
   factory DrawableAvdPath.fromXml(XmlElement el) {
     final String d =
-        getAttribute(el.attributes, 'pathData', def: '', namespace: androidNS);
+        getAttribute(el.attributes, 'pathData', def: '', namespace: androidNS)!;
     final Path path = parseSvgPathData(d);
     assert(path != null);
 
     path.fillType = parsePathFillType(el.attributes);
-    final DrawablePaint stroke = parseStroke(el.attributes, path.getBounds());
-    final DrawablePaint fill = parseFill(el.attributes, path.getBounds());
+    final DrawablePaint? stroke = parseStroke(el.attributes, path.getBounds());
+    final DrawablePaint? fill = parseFill(el.attributes, path.getBounds());
 
     return DrawableAvdPath(
       getAttribute(el.attributes, 'id', def: ''),
@@ -70,8 +70,8 @@ Drawable parseAvdGroup(XmlElement el, Rect bounds) {
 
   final Matrix4 transform = parseTransform(el.attributes);
 
-  final DrawablePaint fill = parseFill(el.attributes, bounds);
-  final DrawablePaint stroke = parseStroke(el.attributes, bounds);
+  final DrawablePaint? fill = parseFill(el.attributes, bounds);
+  final DrawablePaint? stroke = parseStroke(el.attributes, bounds);
 
   return DrawableGroup(
     getAttribute(el.attributes, 'id', def: ''),
