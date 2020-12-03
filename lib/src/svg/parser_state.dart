@@ -342,7 +342,7 @@ class _Elements {
     final TileMode spreadMethod = parseTileMode(parserState.attributes);
 
     final List<Color> colors = <Color>[];
-    final List<double?> offsets = <double?>[];
+    final List<double> offsets = <double>[];
     if (parserState._currentStartElement!.isSelfClosing) {
       final String? href = getHrefAttribute(parserState.attributes);
       final DrawableGradient? ref =
@@ -401,7 +401,7 @@ class _Elements {
         from: fromOffset,
         to: toOffset,
         colors: colors,
-        offsets: offsets as List<double>,
+        offsets: offsets,
         spreadMethod: spreadMethod,
         unitMode: isObjectBoundingBox
             ? GradientUnitMode.objectBoundingBox
@@ -794,7 +794,7 @@ class SvgParserState {
       }
     }
     if (_root == null) {
-      throw StateError('Could not parse SVG data');
+      throw StateError('Invalid SVG data');
     }
     return _root!;
   }

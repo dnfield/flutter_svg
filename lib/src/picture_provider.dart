@@ -330,18 +330,20 @@ abstract class PictureProvider<T> {
     assert(picture != null);
     final PictureStream stream = PictureStream();
     T? obtainedKey;
-    obtainKey(picture).then<void>((T key) {
-      obtainedKey = key;
-      stream.setCompleter(
-        _cache.putIfAbsent(
-          key!,
-          () => load(key, onError: onError),
-        ),
-      );
-    }).catchError((Object exception, StackTrace stack) async {
+    obtainKey(picture).then<void>(
+      (T key) {
+        obtainedKey = key;
+        stream.setCompleter(
+          _cache.putIfAbsent(
+            key!,
+            () => load(key, onError: onError),
+          ),
+        );
+      },
+    ).catchError((Object exception, StackTrace stack) async {
       if (onError != null) {
         onError(exception, stack);
-        return null;
+        return Future<PictureStream>.error(exception, stack);
       }
       FlutterError.reportError(FlutterErrorDetails(
           exception: exception,
@@ -461,8 +463,14 @@ abstract class AssetBundlePictureProvider
       AssetBundlePictureKey key, PictureErrorListener? onError) async {
     final String data = await key.bundle.loadString(key.name);
     if (onError != null) {
-      return decoder(data, key.colorFilter, key.toString())
-        ..catchError(onError);
+      return decoder(
+        data,
+        key.colorFilter,
+        key.toString(),
+      ).catchError((Object error, StackTrace stack) {
+        onError(error, stack);
+        return Future<PictureInfo>.error(error, stack);
+      });
     }
     return decoder(data, key.colorFilter, key.toString());
   }
@@ -516,7 +524,14 @@ class NetworkPicture extends PictureProvider<NetworkPicture> {
     assert(key == this);
     final Uint8List bytes = await httpGet(url);
     if (onError != null) {
-      return decoder(bytes, colorFilter, key.toString())..catchError(onError);
+      return decoder(
+        bytes,
+        colorFilter,
+        key.toString(),
+      ).catchError((Object error, StackTrace stack) {
+        onError(error, stack);
+        return Future<PictureInfo>.error(error, stack);
+      });
     }
     return decoder(bytes, colorFilter, key.toString());
   }
@@ -583,7 +598,14 @@ class FilePicture extends PictureProvider<FilePicture> {
       return null;
     }
     if (onError != null) {
-      return decoder(data, colorFilter, key.toString())..catchError(onError);
+      return decoder(
+        data,
+        colorFilter,
+        key.toString(),
+      ).catchError((Object error, StackTrace stack) async {
+        onError(error, stack);
+        return null;
+      });
     }
     return decoder(data, colorFilter, key.toString());
   }
@@ -647,7 +669,14 @@ class MemoryPicture extends PictureProvider<MemoryPicture> {
       {PictureErrorListener? onError}) async {
     assert(key == this);
     if (onError != null) {
-      return decoder(bytes, colorFilter, key.toString())..catchError(onError);
+      return decoder(
+        bytes,
+        colorFilter,
+        key.toString(),
+      ).catchError((Object error, StackTrace stack) {
+        onError(error, stack);
+        return Future<PictureInfo>.error(error, stack);
+      });
     }
     return decoder(bytes, colorFilter, key.toString());
   }
@@ -712,7 +741,14 @@ class StringPicture extends PictureProvider<StringPicture> {
   }) {
     assert(key == this);
     if (onError != null) {
-      return decoder(string, colorFilter, key.toString())..catchError(onError);
+      return decoder(
+        string,
+        colorFilter,
+        key.toString(),
+      ).catchError((Object error, StackTrace stack) {
+        onError(error, stack);
+        return Future<PictureInfo>.error(error, stack);
+      });
     }
     return decoder(string, colorFilter, key.toString());
   }

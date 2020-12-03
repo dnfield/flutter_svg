@@ -84,7 +84,7 @@ void main() {
     );
 
     bool gotError = false;
-    void errorListener(dynamic error, StackTrace stackTrace) {
+    void errorListener(Object error, StackTrace stackTrace) {
       gotError = true;
       expect(error, isInstanceOf<XmlParserException>());
     }
@@ -97,6 +97,8 @@ void main() {
       tester.element(find.text('test_text')),
       onError: errorListener,
     );
+
+    await null;
     expect(tester.takeException(), isInstanceOf<XmlParserException>());
     expect(gotError, isTrue);
   });

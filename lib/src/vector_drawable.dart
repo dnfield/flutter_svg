@@ -352,9 +352,9 @@ class DrawableTextStyle {
   });
 
   /// Merges two drawable text styles together, prefering set properties from [b].
-  factory DrawableTextStyle.merge(DrawableTextStyle? a, DrawableTextStyle? b) {
+  static DrawableTextStyle? merge(DrawableTextStyle? a, DrawableTextStyle? b) {
     if (b == null) {
-      return a!;
+      return a;
     }
     if (a == null) {
       return b;

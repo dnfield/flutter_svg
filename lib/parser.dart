@@ -9,6 +9,7 @@ class SvgParser {
   ///
   /// The [key] parameter is used for debugging purposes.
   Future<DrawableRoot> parse(String str, {String? key}) async {
-    return await SvgParserState(xml.parseEvents(str), key).parse();
+    final SvgParserState state = SvgParserState(xml.parseEvents(str), key);
+    return await state.parse();
   }
 }
