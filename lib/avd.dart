@@ -142,9 +142,7 @@ class AvdPicture extends SvgPicture {
             key: key);
 
   static ColorFilter? _getColorFilter(Color? color, BlendMode colorBlendMode) =>
-      color == null
-          ? null
-          : ColorFilter.mode(color, colorBlendMode ?? BlendMode.srcIn);
+      color == null ? null : ColorFilter.mode(color, colorBlendMode);
 
   static final PictureInfoDecoder<Uint8List> avdByteDecoder =
       (Uint8List bytes, ColorFilter? colorFilter, String key) =>

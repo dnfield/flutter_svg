@@ -91,7 +91,7 @@ class RenderPicture extends RenderBox {
   bool get matchTextDirection => _matchTextDirection;
   bool _matchTextDirection;
   set matchTextDirection(bool value) {
-    assert(value != null);
+    assert(value != null); // ignore: unnecessary_null_comparison
     if (value == _matchTextDirection) {
       return;
     }
@@ -159,7 +159,7 @@ class RenderPicture extends RenderBox {
 
   @override
   void paint(PaintingContext context, Offset offset) {
-    if (picture == null || size == null || size == Size.zero) {
+    if (picture == null || size == Size.zero) {
       return;
     }
     context.canvas.save();

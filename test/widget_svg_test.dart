@@ -18,8 +18,8 @@ Future<void> _checkWidgetAndGolden(Key key, String filename) async {
 }
 
 void main() {
-  FakeHttpClientResponse? fakeResponse;
-  FakeHttpClientRequest fakeRequest;
+  late FakeHttpClientResponse fakeResponse;
+  late FakeHttpClientRequest fakeRequest;
   late FakeHttpClient fakeHttpClient;
   setUp(() {
     PictureProvider.clearCache();
@@ -398,7 +398,7 @@ void main() {
   testWidgets('SvgPicture.network HTTP exception', (WidgetTester tester) async {
     await HttpOverrides.runZoned(() async {
       expect(() async {
-        fakeResponse!.statusCode = 400;
+        fakeResponse.statusCode = 400;
         await tester.pumpWidget(
           MediaQuery(
             data: MediaQueryData.fromWindow(window),
@@ -719,10 +719,10 @@ class FakeHttpClient extends Fake implements HttpClient {
 class FakeHttpClientRequest extends Fake implements HttpClientRequest {
   FakeHttpClientRequest(this.response);
 
-  FakeHttpClientResponse? response;
+  FakeHttpClientResponse response;
 
   @override
-  Future<HttpClientResponse?> close() async => response;
+  Future<HttpClientResponse> close() async => response;
 }
 
 class FakeHttpClientResponse extends Fake implements HttpClientResponse {

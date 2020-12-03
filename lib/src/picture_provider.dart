@@ -326,6 +326,7 @@ abstract class PictureProvider<T> {
   /// method.
   PictureStream resolve(PictureConfiguration picture,
       {PictureErrorListener? onError}) {
+    // ignore: unnecessary_null_comparison
     assert(picture != null);
     final PictureStream stream = PictureStream();
     T? obtainedKey;
@@ -337,7 +338,7 @@ abstract class PictureProvider<T> {
           () => load(key, onError: onError),
         ),
       );
-    }).catchError((dynamic exception, StackTrace stack) async {
+    }).catchError((Object exception, StackTrace stack) async {
       if (onError != null) {
         onError(exception, stack);
         return null;
@@ -389,8 +390,8 @@ class AssetBundlePictureKey {
   /// The arguments must not be null.
   const AssetBundlePictureKey(
       {required this.bundle, required this.name, this.colorFilter})
-      : assert(bundle != null),
-        assert(name != null);
+      : assert(bundle != null), // ignore: unnecessary_null_comparison
+        assert(name != null); // ignore: unnecessary_null_comparison
 
   /// The bundle from which the picture will be obtained.
   ///
@@ -433,7 +434,7 @@ abstract class AssetBundlePictureProvider
   /// Abstract const constructor. This constructor enables subclasses to provide
   /// const constructors so that they can be used in const expressions.
   const AssetBundlePictureProvider(this.decoder, ColorFilter? colorFilter)
-      : assert(decoder != null),
+      : assert(decoder != null), // ignore: unnecessary_null_comparison
         super(colorFilter);
 
   /// The decoder to use to turn a string into a [PictureInfo] object.
@@ -459,9 +460,6 @@ abstract class AssetBundlePictureProvider
   Future<PictureInfo> _loadAsync(
       AssetBundlePictureKey key, PictureErrorListener? onError) async {
     final String data = await key.bundle.loadString(key.name);
-    if (data == null) {
-      throw 'Unable to read data';
-    }
     if (onError != null) {
       return decoder(data, key.colorFilter, key.toString())
         ..catchError(onError);
@@ -486,7 +484,7 @@ class NetworkPicture extends PictureProvider<NetworkPicture> {
   /// The arguments must not be null.
   const NetworkPicture(this.decoder, this.url,
       {this.headers, ColorFilter? colorFilter})
-      : assert(url != null),
+      : assert(url != null), // ignore: unnecessary_null_comparison
         super(colorFilter);
 
   /// The decoder to use to turn a [Uint8List] into a [PictureInfo] object.
@@ -552,8 +550,8 @@ class FilePicture extends PictureProvider<FilePicture> {
   ///
   /// The arguments must not be null.
   const FilePicture(this.decoder, this.file, {ColorFilter? colorFilter})
-      : assert(decoder != null),
-        assert(file != null),
+      : assert(decoder != null), // ignore: unnecessary_null_comparison
+        assert(file != null), // ignore: unnecessary_null_comparison
         super(colorFilter);
 
   /// The file to decode into a picture.
@@ -568,10 +566,11 @@ class FilePicture extends PictureProvider<FilePicture> {
   }
 
   @override
-  PictureStreamCompleter load(FilePicture key, {PictureErrorListener? onError}) {
+  PictureStreamCompleter load(FilePicture key,
+      {PictureErrorListener? onError}) {
     return OneFramePictureStreamCompleter(_loadAsync(key, onError: onError),
         informationCollector: () sync* {
-      yield DiagnosticsProperty<String>('Path', file?.path);
+      yield DiagnosticsProperty<String>('Path', file.path);
     });
   }
 
@@ -580,7 +579,7 @@ class FilePicture extends PictureProvider<FilePicture> {
     assert(key == this);
 
     final Uint8List data = await file.readAsBytes();
-    if (data == null || data.isEmpty) {
+    if (data.isEmpty) {
       return null;
     }
     if (onError != null) {
@@ -595,16 +594,16 @@ class FilePicture extends PictureProvider<FilePicture> {
       return false;
     }
     return other is FilePicture &&
-        file?.path == other.file?.path &&
+        file.path == other.file.path &&
         other.colorFilter == colorFilter;
   }
 
   @override
-  int get hashCode => hashValues(file?.path?.hashCode, colorFilter);
+  int get hashCode => hashValues(file.path.hashCode, colorFilter);
 
   @override
   String toString() =>
-      '$runtimeType("${file?.path}", colorFilter: $colorFilter)';
+      '$runtimeType("${file.path}", colorFilter: $colorFilter)';
 }
 
 /// Decodes the given [String] buffer as a picture, associating it with the
@@ -624,7 +623,7 @@ class MemoryPicture extends PictureProvider<MemoryPicture> {
   ///
   /// The arguments must not be null.
   const MemoryPicture(this.decoder, this.bytes, {ColorFilter? colorFilter})
-      : assert(bytes != null),
+      : assert(bytes != null), // ignore: unnecessary_null_comparison
         super(colorFilter);
 
   /// The [PictureInfoDecoder] to use when drawing this picture.
@@ -687,7 +686,7 @@ class StringPicture extends PictureProvider<StringPicture> {
   ///
   /// The arguments must not be null.
   const StringPicture(this.decoder, this.string, {ColorFilter? colorFilter})
-      : assert(string != null),
+      : assert(string != null), // ignore: unnecessary_null_comparison
         super(colorFilter);
 
   /// The [PictureInfoDecoder] to use for decoding this picture.
@@ -823,7 +822,7 @@ class ExactAssetPicture extends AssetBundlePictureProvider {
     this.bundle,
     this.package,
     ColorFilter? colorFilter,
-  })  : assert(assetName != null),
+  })  : assert(assetName != null), // ignore: unnecessary_null_comparison
         super(decoder, colorFilter);
 
   /// The name of the asset.

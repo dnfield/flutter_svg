@@ -107,10 +107,6 @@ void main() {
     expect(cache.maximumSize, equals(1));
 
     expect(() => cache.maximumSize = -1, throwsAssertionError);
-    expect(() => cache.maximumSize = null, throwsAssertionError);
-
-    expect(() => cache.putIfAbsent(null, null), throwsAssertionError);
-    expect(() => cache.putIfAbsent(1, null), throwsAssertionError);
 
     final MockPictureStreamCompleter completer1 = MockPictureStreamCompleter();
     final MockPictureStreamCompleter completer2 = MockPictureStreamCompleter();

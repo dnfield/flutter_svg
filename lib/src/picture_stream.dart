@@ -9,7 +9,9 @@ import 'package:flutter/foundation.dart';
 
 /// The signature of a method that listens for errors on picture stream resolution.
 typedef PictureErrorListener = void Function(
-    dynamic exception, StackTrace stackTrace);
+  Object exception,
+  StackTrace stackTrace,
+);
 
 @immutable
 class _PictureListenerPair {
@@ -26,9 +28,9 @@ class PictureInfo {
     required this.picture,
     required this.viewport,
     this.size = Size.infinite,
-  })  : assert(picture != null),
-        assert(viewport != null),
-        assert(size != null);
+  })  : assert(picture != null), // ignore: unnecessary_null_comparison
+        assert(viewport != null), // ignore: unnecessary_null_comparison
+        assert(size != null); // ignore: unnecessary_null_comparison
 
   /// The raw picture.
   ///
@@ -250,7 +252,10 @@ abstract class PictureStreamCompleter with Diagnosticable {
   }
 
   void _handleImageError(
-      DiagnosticsNode context, dynamic exception, dynamic stack) {
+    DiagnosticsNode context,
+    Object exception,
+    dynamic stack,
+  ) {
     FlutterError.reportError(FlutterErrorDetails(
       exception: exception,
       stack: stack as StackTrace,
@@ -270,7 +275,7 @@ abstract class PictureStreamCompleter with Diagnosticable {
       'listeners',
       _listeners,
       ifPresent:
-          '${_listeners?.length} listener${_listeners?.length == 1 ? "" : "s"}',
+          '${_listeners.length} listener${_listeners.length == 1 ? "" : "s"}',
     ));
   }
 }
@@ -292,10 +297,12 @@ class OneFramePictureStreamCompleter extends PictureStreamCompleter {
   /// argument on [FlutterErrorDetails] set to true, meaning that by default the
   /// message is only dumped to the console in debug mode (see [new
   /// FlutterErrorDetails]).
-  OneFramePictureStreamCompleter(Future<PictureInfo?> picture,
-      {InformationCollector? informationCollector})
-      : assert(picture != null) {
-    picture.then<void>(setPicture, onError: (dynamic error, StackTrace stack) {
+  OneFramePictureStreamCompleter(
+    Future<PictureInfo?> picture, {
+    InformationCollector? informationCollector,
+    // ignore: unnecessary_null_comparison
+  }) : assert(picture != null) {
+    picture.then<void>(setPicture, onError: (Object error, StackTrace stack) {
       FlutterError.reportError(FlutterErrorDetails(
         exception: error,
         stack: stack,

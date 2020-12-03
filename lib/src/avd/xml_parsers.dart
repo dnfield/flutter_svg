@@ -44,8 +44,8 @@ DrawableViewport parseViewBox(List<XmlAttribute> el) {
 }
 
 Matrix4 parseTransform(List<XmlAttribute> el) {
-  final double rotation =
-      parseDouble(getAttribute(el, 'rotation', def: '0', namespace: androidNS))!;
+  final double rotation = parseDouble(
+      getAttribute(el, 'rotation', def: '0', namespace: androidNS))!;
   final double pivotX =
       parseDouble(getAttribute(el, 'pivotX', def: '0', namespace: androidNS))!;
   final double pivotY =

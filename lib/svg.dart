@@ -158,7 +158,7 @@ Future<void> precachePicture(
     stream?.removeListener(listener);
   }
 
-  void errorListener(dynamic exception, StackTrace stackTrace) {
+  void errorListener(Object exception, StackTrace stackTrace) {
     if (onError != null) {
       onError(exception, stackTrace);
     } else {
@@ -557,9 +557,7 @@ class SvgPicture extends StatefulWidget {
       (BuildContext ctx) => const LimitedBox();
 
   static ColorFilter? _getColorFilter(Color? color, BlendMode colorBlendMode) =>
-      color == null
-          ? null
-          : ColorFilter.mode(color, colorBlendMode ?? BlendMode.srcIn);
+      color == null ? null : ColorFilter.mode(color, colorBlendMode);
 
   /// A [PictureInfoDecoder] for [Uint8List]s that will clip to the viewBox.
   static final PictureInfoDecoder<Uint8List> svgByteDecoder =
@@ -703,7 +701,7 @@ class _SvgPictureState extends State<SvgPicture> {
   void _resolveImage() {
     final PictureStream newStream = widget.pictureProvider
         .resolve(createLocalPictureConfiguration(context));
-    assert(newStream != null);
+    assert(newStream != null); // ignore: unnecessary_null_comparison
     _updateSourceStream(newStream);
   }
 
@@ -717,7 +715,7 @@ class _SvgPictureState extends State<SvgPicture> {
   // registration from the old stream to the new stream (if a listener was
   // registered).
   void _updateSourceStream(PictureStream newStream) {
-    if (_pictureStream?.key == newStream?.key) {
+    if (_pictureStream?.key == newStream.key) {
       return;
     }
 

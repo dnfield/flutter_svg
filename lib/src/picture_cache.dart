@@ -22,7 +22,7 @@ class PictureCache {
   /// returning it to its original value will therefore immediately clear the
   /// cache.
   set maximumSize(int value) {
-    assert(value != null);
+    assert(value != null); // ignore: unnecessary_null_comparison
     assert(value >= 0);
     if (value == maximumSize) {
       return;
@@ -54,8 +54,8 @@ class PictureCache {
   /// The arguments must not be null. The `loader` cannot return null.
   PictureStreamCompleter putIfAbsent(
       Object key, PictureStreamCompleter loader()) {
-    assert(key != null);
-    assert(loader != null);
+    assert(key != null); // ignore: unnecessary_null_comparison
+    assert(loader != null); // ignore: unnecessary_null_comparison
     PictureStreamCompleter? result = _cache[key];
     if (result != null) {
       // Remove the provider from the list so that we can put it back in below

@@ -28,7 +28,7 @@ class DrawableAvdPath extends DrawableShape {
     final String d =
         getAttribute(el.attributes, 'pathData', def: '', namespace: androidNS)!;
     final Path path = parseSvgPathData(d);
-    assert(path != null);
+    assert(path != null); // ignore: unnecessary_null_comparison
 
     path.fillType = parsePathFillType(el.attributes);
     final DrawablePaint? stroke = parseStroke(el.attributes, path.getBounds());
@@ -62,9 +62,7 @@ Drawable parseAvdGroup(XmlElement el, Rect bounds) {
   for (XmlNode child in el.children) {
     if (child is XmlElement) {
       final Drawable el = parseAvdElement(child, bounds);
-      if (el != null) {
-        children.add(el);
-      }
+      children.add(el);
     }
   }
 
@@ -81,6 +79,6 @@ Drawable parseAvdGroup(XmlElement el, Rect bounds) {
       fill: fill,
       groupOpacity: 1.0,
     ),
-    transform: transform?.storage,
+    transform: transform.storage,
   );
 }

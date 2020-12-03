@@ -111,7 +111,7 @@ TileMode parseTileMode(List<XmlEventAttribute>? attributes) {
 /// Parses an @stroke-dasharray attribute into a [CircularIntervalList].
 ///
 /// Does not currently support percentages.
-CircularIntervalList<double?>? parseDashArray(
+CircularIntervalList<double>? parseDashArray(
   List<XmlEventAttribute>? attributes,
 ) {
   final String? rawDashArray = getAttribute(attributes, 'stroke-dasharray');
@@ -122,8 +122,8 @@ CircularIntervalList<double?>? parseDashArray(
   }
 
   final List<String> parts = rawDashArray!.split(RegExp(r'[ ,]+'));
-  return CircularIntervalList<double?>(
-      parts.map((String part) => parseDouble(part)).toList());
+  return CircularIntervalList<double>(
+      parts.map((String part) => parseDouble(part)!).toList());
 }
 
 /// Parses a @stroke-dashoffset into a [DashOffset].
@@ -135,7 +135,8 @@ DashOffset? parseDashOffset(List<XmlEventAttribute>? attributes) {
 
   if (rawDashOffset!.endsWith('%')) {
     final double percentage =
-        parseDouble(rawDashOffset.substring(0, rawDashOffset.length - 1))! / 100;
+        parseDouble(rawDashOffset.substring(0, rawDashOffset.length - 1))! /
+            100;
     return DashOffset.percentage(percentage);
   } else {
     return DashOffset.absolute(parseDouble(rawDashOffset)!);
@@ -214,13 +215,13 @@ DrawablePaint? parseStroke(
     strokeCap: rawStrokeCap == 'null'
         ? parentStroke?.strokeCap ?? StrokeCap.butt
         : StrokeCap.values.firstWhere(
-            ((StrokeCap sc) => sc.toString() == 'StrokeCap.$rawStrokeCap') as bool Function(StrokeCap),
-            orElse: (() => StrokeCap.butt) as StrokeCap Function()?,
+            (StrokeCap sc) => sc.toString() == 'StrokeCap.$rawStrokeCap',
+            orElse: () => StrokeCap.butt,
           ),
     strokeJoin: rawLineJoin == ''
         ? parentStroke?.strokeJoin ?? StrokeJoin.miter
         : StrokeJoin.values.firstWhere(
-            ((StrokeJoin sj) => sj.toString() == 'StrokeJoin.$rawLineJoin') as bool Function(StrokeJoin),
+            (StrokeJoin sj) => sj.toString() == 'StrokeJoin.$rawLineJoin',
             orElse: () => StrokeJoin.miter,
           ),
     strokeMiterLimit: rawMiterLimit == ''

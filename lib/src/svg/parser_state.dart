@@ -481,6 +481,9 @@ class _Elements {
 
   static Future<void> image(SvgParserState parserState) async {
     final String? href = getHrefAttribute(parserState.attributes);
+    if (href == null) {
+      return;
+    }
     final Offset offset = Offset(
       parseDouble(parserState.attribute('x', def: '0'))!,
       parseDouble(parserState.attribute('y', def: '0'))!,
@@ -489,7 +492,7 @@ class _Elements {
       parseDouble(parserState.attribute('width', def: '0'))!,
       parseDouble(parserState.attribute('height', def: '0'))!,
     );
-    final Image image = await (resolveImage(href) as FutureOr<Image>);
+    final Image image = await resolveImage(href);
     final DrawableParent parent = parserState._parentDrawables.last.drawable!;
     final DrawableStyle? parentStyle = parent.style;
     final DrawableRasterImage drawable = DrawableRasterImage(
@@ -512,7 +515,7 @@ class _Elements {
   }
 
   static Future<void> text(SvgParserState parserState) async {
-    assert(parserState != null);
+    assert(parserState != null); // ignore: unnecessary_null_comparison
     assert(parserState.currentGroup != null);
     if (parserState._currentStartElement!.isSelfClosing) {
       return;
@@ -564,7 +567,7 @@ class _Elements {
       }
       final Offset currentOffset = _parseCurrentOffset(
         parserState,
-        lastTextInfo?.offset?.translate(lastTextWidth, 0),
+        lastTextInfo?.offset.translate(lastTextWidth, 0),
       );
       Matrix4? transform = parseTransform(parserState.attribute('transform'));
       if (lastTextInfo?.transform != null) {
@@ -696,7 +699,7 @@ class _SvgGroupTuple {
 class SvgParserState {
   /// Creates a new [SvgParserState].
   SvgParserState(Iterable<XmlEvent> events, this._key)
-      : assert(events != null),
+      : assert(events != null), // ignore: unnecessary_null_comparison
         _eventIterator = events.iterator;
 
   final Iterator<XmlEvent> _eventIterator;
@@ -715,9 +718,6 @@ class SvgParserState {
     final int subtreeStartDepth = depth;
     while (_eventIterator.moveNext()) {
       final XmlEvent event = _eventIterator.current;
-      if (event == null) {
-        return;
-      }
       if (event is XmlStartElementEvent && !event.isSelfClosing) {
         depth += 1;
       } else if (event is XmlEndElementEvent) {
@@ -736,9 +736,6 @@ class SvgParserState {
     final int subtreeStartDepth = depth;
     while (_eventIterator.moveNext()) {
       final XmlEvent event = _eventIterator.current;
-      if (event == null) {
-        return;
-      }
       bool isSelfClosing = false;
       if (event is XmlStartElementEvent) {
         if (getAttribute(event.attributes, 'display') == 'none' ||
@@ -811,7 +808,7 @@ class SvgParserState {
 
   /// The current group, if any, in the [Drawable] heirarchy.
   DrawableParent? get currentGroup {
-    assert(_parentDrawables != null);
+    assert(_parentDrawables != null); // ignore: unnecessary_null_comparison
     assert(_parentDrawables.isNotEmpty);
     return _parentDrawables.last.drawable;
   }
@@ -819,7 +816,7 @@ class SvgParserState {
   /// The root bounds of the drawable.
   Rect get rootBounds {
     assert(_root != null, 'Cannot get rootBounds with null root');
-    assert(_root!.viewport != null);
+    assert(_root!.viewport != null); // ignore: unnecessary_null_comparison
     return _root!.viewport.viewBoxRect;
   }
 

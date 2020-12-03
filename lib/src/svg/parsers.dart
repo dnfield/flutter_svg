@@ -196,10 +196,8 @@ PathFillType? parseRawFillRule(String? rawFillRule) {
 final RegExp _whitespacePattern = RegExp(r'\s');
 
 /// Resolves an image reference, potentially downloading it via HTTP.
-Future<Image?> resolveImage(String? href) async {
-  if (href == null || href == '') {
-    return null;
-  }
+Future<Image> resolveImage(String href) async {
+  assert(href != '');
 
   final Future<Image> Function(Uint8List) decodeImage =
       (Uint8List bytes) async {

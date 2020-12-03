@@ -28,7 +28,7 @@ String? getAttribute(
 }) {
   String raw = '';
   if (checkStyle) {
-    final String style = _getAttribute(el!, 'style')?.trim();
+    final String? style = _getAttribute(el!, 'style').trim();
     if (style != '' && style != null) {
       // Probably possible to slightly optimize this (e.g. use indexOf instead of split),
       // but handling potential whitespace will get complicated and this just works.
@@ -39,18 +39,18 @@ String? getAttribute(
           orElse: () => '');
 
       if (raw != '') {
-        raw = raw.substring(raw.indexOf(':') + 1)?.trim();
+        raw = raw.substring(raw.indexOf(':') + 1).trim();
       }
     }
 
-    if (raw == '' || raw == null) {
-      raw = _getAttribute(el, name, namespace: namespace)?.trim();
+    if (raw == '') {
+      raw = _getAttribute(el, name, namespace: namespace).trim();
     }
   } else {
-    raw = _getAttribute(el!, name, namespace: namespace)?.trim();
+    raw = _getAttribute(el!, name, namespace: namespace).trim();
   }
 
-  return raw == '' || raw == null ? def : raw;
+  return raw == '' ? def : raw;
 }
 
 String _getAttribute(
@@ -60,10 +60,9 @@ String _getAttribute(
   String? namespace,
 }) {
   return list
-          .firstWhereOrNull(
-              (XmlEventAttribute attr) =>
-                  attr.name.replaceFirst('${attr.namespacePrefix}:', '') ==
-                  localName)
+          .firstWhereOrNull((XmlEventAttribute attr) =>
+              attr.name.replaceFirst('${attr.namespacePrefix}:', '') ==
+              localName)
           ?.value ??
       def;
 }

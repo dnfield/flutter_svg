@@ -94,7 +94,7 @@ void main() {
   });
 
   T? find<T extends Drawable>(Drawable drawable, String id) {
-    if (drawable?.id == id && drawable is T) {
+    if (drawable.id == id && drawable is T) {
       return drawable;
     }
 

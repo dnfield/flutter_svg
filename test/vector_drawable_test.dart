@@ -37,7 +37,7 @@ void main() {
       'test',
     );
     final Image image = await info.picture.toImage(2, 2);
-    final ByteData data = await (image.toByteData() as FutureOr<ByteData>);
+    final ByteData data = (await image.toByteData())!;
 
     const List<int> expected = <int>[
       0, 48, 0, 255, //

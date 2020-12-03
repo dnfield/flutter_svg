@@ -125,7 +125,7 @@ class DrawableStyle {
     DrawableStyle? parent, {
     DrawablePaint? fill,
     DrawablePaint? stroke,
-    CircularIntervalList<double?>? dashArray,
+    CircularIntervalList<double>? dashArray,
     DashOffset? dashOffset,
     DrawableTextStyle? textStyle,
     PathFillType? pathFillType,
@@ -528,31 +528,27 @@ class DrawableText implements Drawable {
     DrawableTextAnchorPosition anchor,
     Offset offset,
   ) {
-    assert(paragraph != null);
-    assert(anchor != null);
-    assert(offset != null);
+    assert(paragraph != null); // ignore: unnecessary_null_comparison
+    assert(anchor != null); // ignore: unnecessary_null_comparison
+    assert(offset != null); // ignore: unnecessary_null_comparison
     switch (anchor) {
       case DrawableTextAnchorPosition.middle:
         return Offset(
           offset.dx - paragraph.minIntrinsicWidth / 2,
           offset.dy - paragraph.alphabeticBaseline,
         );
-        break;
       case DrawableTextAnchorPosition.end:
         return Offset(
           offset.dx - paragraph.minIntrinsicWidth,
           offset.dy - paragraph.alphabeticBaseline,
         );
-        break;
       case DrawableTextAnchorPosition.start:
         return Offset(
           offset.dx,
           offset.dy - paragraph.alphabeticBaseline,
         );
-        break;
       default:
         return offset;
-        break;
     }
   }
 }
@@ -566,7 +562,7 @@ class DrawableDefinitionServer {
 
   /// Attempt to lookup a [Drawable] by [id].
   DrawableStyleable? getDrawable(String id, {bool nullOk = false}) {
-    assert(id != null);
+    assert(id != null); // ignore: unnecessary_null_comparison
     final DrawableStyleable? value = _drawables[id];
     if (value == null && nullOk != true) {
       throw StateError('Expected to find Drawable with id $id.\n'
@@ -577,8 +573,8 @@ class DrawableDefinitionServer {
 
   /// Add a [Drawable] that can later be referred to by [id].
   void addDrawable(String id, DrawableStyleable drawable) {
-    assert(id != null);
-    assert(drawable != null);
+    assert(id != null); // ignore: unnecessary_null_comparison
+    assert(drawable != null); // ignore: unnecessary_null_comparison
     assert(id != emptyUrlIri);
     _drawables[id] = drawable;
   }
@@ -587,35 +583,35 @@ class DrawableDefinitionServer {
   ///
   /// [id] and [bounds] must not be null.
   Shader? getShader(String id, Rect bounds) {
-    assert(id != null);
-    assert(bounds != null);
+    assert(id != null); // ignore: unnecessary_null_comparison
+    assert(bounds != null); // ignore: unnecessary_null_comparison
     final DrawableGradient? srv = _gradients[id];
     return srv != null ? srv.createShader(bounds) : null;
   }
 
   /// Retreive a gradient from the pre-defined [DrawableGradient] collection.
   T? getGradient<T extends DrawableGradient?>(String id) {
-    assert(id != null);
+    assert(id != null); // ignore: unnecessary_null_comparison
     return _gradients[id] as T?;
   }
 
   /// Add a [DrawableGradient] to the pre-defined collection by [id].
   void addGradient(String id, DrawableGradient gradient) {
-    assert(id != null);
-    assert(gradient != null);
+    assert(id != null); // ignore: unnecessary_null_comparison
+    assert(gradient != null); // ignore: unnecessary_null_comparison
     _gradients[id] = gradient;
   }
 
   /// Get a [List<Path>] of clip paths by [id].
   List<Path>? getClipPath(String id) {
-    assert(id != null);
+    assert(id != null); // ignore: unnecessary_null_comparison
     return _clipPaths[id];
   }
 
   /// Add a [List<Path>] of clip paths by [id].
   void addClipPath(String id, List<Path?> paths) {
-    assert(id != null);
-    assert(paths != null);
+    assert(id != null); // ignore: unnecessary_null_comparison
+    assert(paths != null); // ignore: unnecessary_null_comparison
     _clipPaths[id] = paths as List<Path>;
   }
 }
@@ -805,9 +801,9 @@ class DrawableViewport {
     this.size,
     this.viewBox, {
     this.viewBoxOffset = Offset.zero,
-  })  : assert(size != null),
-        assert(viewBox != null),
-        assert(viewBoxOffset != null);
+  })  : assert(size != null), // ignore: unnecessary_null_comparison
+        assert(viewBox != null), // ignore: unnecessary_null_comparison
+        assert(viewBoxOffset != null); // ignore: unnecessary_null_comparison
 
   /// The offset for all drawing commands in this Drawable.
   final Offset viewBoxOffset;
@@ -887,9 +883,7 @@ class DrawableRoot implements DrawableParent {
 
   @override
   bool get hasDrawableContent =>
-      children.isNotEmpty == true &&
-      viewport != null &&
-      !viewport.viewBox.isEmpty;
+      children.isNotEmpty == true && !viewport.viewBox.isEmpty;
 
   @override
   void draw(Canvas canvas, Rect bounds) {
@@ -927,7 +921,7 @@ class DrawableRoot implements DrawableParent {
     bool clipToViewBox = true,
     ColorFilter? colorFilter,
   }) {
-    if (viewport == null || viewport.viewBox.width == 0) {
+    if (viewport.viewBox.width == 0) {
       throw StateError('Cannot convert to picture with $viewport');
     }
 
@@ -952,7 +946,7 @@ class DrawableRoot implements DrawableParent {
 
   @override
   DrawableRoot mergeStyle(DrawableStyle newStyle) {
-    assert(newStyle != null);
+    assert(newStyle != null); // ignore: unnecessary_null_comparison
     final DrawableStyle mergedStyle = DrawableStyle.mergeAndBlend(
       style,
       fill: newStyle.fill,
@@ -1072,7 +1066,7 @@ class DrawableGroup implements DrawableStyleable, DrawableParent {
 
   @override
   DrawableGroup mergeStyle(DrawableStyle newStyle) {
-    assert(newStyle != null);
+    assert(newStyle != null); // ignore: unnecessary_null_comparison
     final DrawableStyle mergedStyle = DrawableStyle.mergeAndBlend(
       style,
       fill: newStyle.fill,
@@ -1111,8 +1105,8 @@ class DrawableRasterImage implements DrawableStyleable {
     this.style, {
     this.size,
     this.transform,
-  })  : assert(image != null),
-        assert(offset != null);
+  })  : assert(image != null), // ignore: unnecessary_null_comparison
+        assert(offset != null); // ignore: unnecessary_null_comparison
 
   @override
   final String? id;
@@ -1172,7 +1166,7 @@ class DrawableRasterImage implements DrawableStyleable {
 
   @override
   DrawableRasterImage mergeStyle(DrawableStyle newStyle) {
-    assert(newStyle != null);
+    assert(newStyle != null); // ignore: unnecessary_null_comparison
     return DrawableRasterImage(
       id,
       image,
@@ -1198,8 +1192,8 @@ class DrawableRasterImage implements DrawableStyleable {
 class DrawableShape implements DrawableStyleable {
   /// Creates a new [DrawableShape].
   const DrawableShape(this.id, this.path, this.style, {this.transform})
-      : assert(path != null),
-        assert(style != null);
+      : assert(path != null), // ignore: unnecessary_null_comparison
+        assert(style != null); // ignore: unnecessary_null_comparison
 
   @override
   final String? id;
@@ -1225,7 +1219,7 @@ class DrawableShape implements DrawableStyleable {
 
   @override
   void draw(Canvas canvas, Rect bounds) {
-    if (!hasDrawableContent || style == null) {
+    if (!hasDrawableContent) {
       return;
     }
 
@@ -1292,7 +1286,7 @@ class DrawableShape implements DrawableStyleable {
 
   @override
   DrawableShape mergeStyle(DrawableStyle newStyle) {
-    assert(newStyle != null);
+    assert(newStyle != null); // ignore: unnecessary_null_comparison
     return DrawableShape(
       id,
       path,
