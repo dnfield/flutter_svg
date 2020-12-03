@@ -609,10 +609,10 @@ class DrawableDefinitionServer {
   }
 
   /// Add a [List<Path>] of clip paths by [id].
-  void addClipPath(String id, List<Path?> paths) {
+  void addClipPath(String id, List<Path> paths) {
     assert(id != null); // ignore: unnecessary_null_comparison
     assert(paths != null); // ignore: unnecessary_null_comparison
-    _clipPaths[id] = paths as List<Path>;
+    _clipPaths[id] = paths;
   }
 }
 

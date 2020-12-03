@@ -205,7 +205,7 @@ class _Elements {
   static Future<void>? parseStops(
     SvgParserState parserState,
     List<Color> colors,
-    List<double?> offsets,
+    List<double> offsets,
   ) {
     for (XmlEvent event in parserState._readSubtree()) {
       if (event is XmlEndElementEvent) {
@@ -252,7 +252,7 @@ class _Elements {
       parserState.attribute('gradientTransform', def: null),
     );
 
-    final List<double?> offsets = <double?>[];
+    final List<double> offsets = <double>[];
     final List<Color> colors = <Color>[];
 
     if (parserState._currentStartElement!.isSelfClosing) {
@@ -273,7 +273,7 @@ class _Elements {
       parseStops(parserState, colors, offsets);
     }
 
-    double? cx, cy, r, fx, fy;
+    late double cx, cy, r, fx, fy;
     if (isObjectBoundingBox) {
       cx = parseDecimalOrPercentage(rawCx!);
       cy = parseDecimalOrPercentage(rawCy!);
@@ -284,35 +284,35 @@ class _Elements {
       cx = isPercentage(rawCx!)
           ? parsePercentage(rawCx) * parserState.rootBounds.width +
               parserState.rootBounds.left
-          : parseDouble(rawCx);
+          : parseDouble(rawCx)!;
       cy = isPercentage(rawCy!)
           ? parsePercentage(rawCy) * parserState.rootBounds.height +
               parserState.rootBounds.top
-          : parseDouble(rawCy);
+          : parseDouble(rawCy)!;
       r = isPercentage(rawR!)
           ? parsePercentage(rawR) *
               ((parserState.rootBounds.height + parserState.rootBounds.width) /
                   2)
-          : parseDouble(rawR);
+          : parseDouble(rawR)!;
       fx = isPercentage(rawFx!)
           ? parsePercentage(rawFx) * parserState.rootBounds.width +
               parserState.rootBounds.left
-          : parseDouble(rawFx);
+          : parseDouble(rawFx)!;
       fy = isPercentage(rawFy!)
           ? parsePercentage(rawFy) * parserState.rootBounds.height +
               parserState.rootBounds.top
-          : parseDouble(rawFy);
+          : parseDouble(rawFy)!;
     }
 
     parserState._definitions.addGradient(
       id,
       DrawableRadialGradient(
-        center: Offset(cx!, cy!),
+        center: Offset(cx, cy),
         radius: r,
-        focal: (fx != cx || fy != cy) ? Offset(fx!, fy!) : Offset(cx, cy),
+        focal: (fx != cx || fy != cy) ? Offset(fx, fy) : Offset(cx, cy),
         focalRadius: 0.0,
         colors: colors,
-        offsets: offsets as List<double>,
+        offsets: offsets,
         unitMode: isObjectBoundingBox
             ? GradientUnitMode.objectBoundingBox
             : GradientUnitMode.userSpaceOnUse,
@@ -364,12 +364,12 @@ class _Elements {
     Offset fromOffset, toOffset;
     if (isObjectBoundingBox) {
       fromOffset = Offset(
-        parseDecimalOrPercentage(x1!)!,
-        parseDecimalOrPercentage(y1!)!,
+        parseDecimalOrPercentage(x1!),
+        parseDecimalOrPercentage(y1!),
       );
       toOffset = Offset(
-        parseDecimalOrPercentage(x2!)!,
-        parseDecimalOrPercentage(y2!)!,
+        parseDecimalOrPercentage(x2!),
+        parseDecimalOrPercentage(y2!),
       );
     } else {
       fromOffset = Offset(
@@ -416,7 +416,7 @@ class _Elements {
   static Future<void>? clipPath(SvgParserState parserState) {
     final String id = buildUrlIri(parserState.attributes);
 
-    final List<Path?> paths = <Path?>[];
+    final List<Path> paths = <Path>[];
     Path? currentPath;
     for (XmlEvent event in parserState._readSubtree()) {
       if (event is XmlEndElementEvent) {

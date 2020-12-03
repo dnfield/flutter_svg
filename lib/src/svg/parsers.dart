@@ -247,11 +247,11 @@ Paragraph createParagraph(
 }
 
 /// Parses strings in the form of '1.0' or '100%'.
-double? parseDecimalOrPercentage(String val, {double multiplier = 1.0}) {
+double parseDecimalOrPercentage(String val, {double multiplier = 1.0}) {
   if (isPercentage(val)) {
     return parsePercentage(val, multiplier: multiplier);
   } else {
-    return parseDouble(val);
+    return parseDouble(val)!;
   }
 }
 
