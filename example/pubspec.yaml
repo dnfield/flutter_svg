@@ -1,14 +1,13 @@
 name: flutter_svg_example
 description: An SVG samnple app.
-author: Dan Field <dfield@gmail.com>
 homepage: https://github.com/dnfield/flutter_svg
-version: 0.0.1
+publish_to: none
 
 dependencies:
-  flutter_svg:
-    path: ../
   flutter:
     sdk: flutter
+  flutter_svg:
+    path: ../
 
 # For information on the generic Dart part of this file, see the
 # following page: https://www.dartlang.org/tools/pub/pubspec
@@ -31,8 +30,8 @@ flutter:
     - assets/android_vd/
 
 environment:
-  sdk: ">=1.19.0 <3.0.0"
-  flutter: ">=0.7.3 <2.0.0"
+  sdk: '>=2.12.0-0 <3.0.0'
+  flutter: ">=1.24.0-6.0.pre"
 
 # dependency_overrides:
 #  sky_engine:

@@ -1,13 +1,11 @@
 // ignore_for_file: public_member_api_docs
-import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui' show Picture;
 
 import 'package:flutter/services.dart' show AssetBundle;
 import 'package:flutter/widgets.dart';
-import 'package:xml/xml.dart' hide parse;
-import 'package:xml/xml.dart' as xml show parse;
+import 'package:xml/xml.dart';
 
 import './svg.dart';
 import 'src/avd/xml_parsers.dart';
@@ -24,7 +22,7 @@ class Avd {
   Future<PictureInfo> avdPictureDecoder(
       Uint8List raw,
       bool allowDrawingOutsideOfViewBox,
-      ColorFilter colorFilter,
+      ColorFilter? colorFilter,
       String key) async {
     final DrawableRoot avdRoot = await fromAvdBytes(raw, key);
     final Picture pic = avdRoot.toPicture(
@@ -36,7 +34,7 @@ class Avd {
   Future<PictureInfo> avdPictureStringDecoder(
     String raw,
     bool allowDrawingOutsideOfViewBox,
-    ColorFilter colorFilter,
+    ColorFilter? colorFilter,
     String key,
   ) async {
     final DrawableRoot avd = fromAvdString(raw, key);
@@ -69,99 +67,106 @@ class Avd {
 
   /// Creates a [DrawableRoot] from a string of Android Vector Drawable data.
   DrawableRoot fromAvdString(String rawSvg, String key) {
-    final XmlElement svg = xml.parse(rawSvg).rootElement;
+    final XmlElement svg = XmlDocument.parse(rawSvg).rootElement;
     final DrawableViewport viewBox = parseViewBox(svg.attributes);
     final List<Drawable> children = svg.children
         .whereType<XmlElement>()
         .map((XmlElement child) => parseAvdElement(child, viewBox.viewBoxRect))
         .toList();
     // todo : style on root
-    return DrawableRoot(viewBox, children, DrawableDefinitionServer(), null);
+    return DrawableRoot(getAttribute(svg.attributes, 'id', def: ''), viewBox,
+        children, DrawableDefinitionServer(), null);
   }
 }
 
 /// Extends [VectorDrawableImage] to parse SVG data to [Drawable].
 class AvdPicture extends SvgPicture {
-  const AvdPicture(PictureProvider pictureProvider,
-      {Key key,
-      bool matchTextDirection = false,
-      bool allowDrawingOutsideViewBox = false,
-      WidgetBuilder placeholderBuilder})
-      : super(pictureProvider,
-            key: key,
-            matchTextDirection: matchTextDirection,
-            allowDrawingOutsideViewBox: allowDrawingOutsideViewBox,
-            placeholderBuilder: placeholderBuilder);
+  const AvdPicture(
+    PictureProvider pictureProvider, {
+    Key? key,
+    bool matchTextDirection = false,
+    bool allowDrawingOutsideViewBox = false,
+    WidgetBuilder? placeholderBuilder,
+    ColorFilter? colorFilter,
+  }) : super(
+          pictureProvider,
+          key: key,
+          matchTextDirection: matchTextDirection,
+          allowDrawingOutsideViewBox: allowDrawingOutsideViewBox,
+          placeholderBuilder: placeholderBuilder,
+          colorFilter: colorFilter,
+        );
 
   AvdPicture.string(String bytes,
       {bool matchTextDirection = false,
       bool allowDrawingOutsideViewBox = false,
-      WidgetBuilder placeholderBuilder,
-      Color color,
+      WidgetBuilder? placeholderBuilder,
+      Color? color,
       BlendMode colorBlendMode = BlendMode.srcIn,
-      Key key})
+      Key? key})
       : this(
             StringPicture(
-                allowDrawingOutsideViewBox == true
-                    ? avdStringDecoderOutsideViewBox
-                    : avdStringDecoder,
-                bytes,
-                colorFilter: _getColorFilter(color, colorBlendMode)),
+              allowDrawingOutsideViewBox == true
+                  ? avdStringDecoderOutsideViewBox
+                  : avdStringDecoder,
+              bytes,
+            ),
+            colorFilter: _getColorFilter(color, colorBlendMode),
             matchTextDirection: matchTextDirection,
             allowDrawingOutsideViewBox: allowDrawingOutsideViewBox,
             placeholderBuilder: placeholderBuilder,
             key: key);
 
   AvdPicture.asset(String assetName,
-      {Key key,
+      {Key? key,
       bool matchTextDirection = false,
-      AssetBundle bundle,
-      String package,
+      AssetBundle? bundle,
+      String? package,
       bool allowDrawingOutsideViewBox = false,
-      WidgetBuilder placeholderBuilder,
-      Color color,
+      WidgetBuilder? placeholderBuilder,
+      Color? color,
       BlendMode colorBlendMode = BlendMode.srcIn})
       : this(
             ExactAssetPicture(
-                allowDrawingOutsideViewBox == true
-                    ? avdStringDecoderOutsideViewBox
-                    : avdStringDecoder,
-                assetName,
-                bundle: bundle,
-                package: package,
-                colorFilter: _getColorFilter(color, colorBlendMode)),
+              allowDrawingOutsideViewBox == true
+                  ? avdStringDecoderOutsideViewBox
+                  : avdStringDecoder,
+              assetName,
+              bundle: bundle,
+              package: package,
+            ),
+            colorFilter: _getColorFilter(color, colorBlendMode),
             matchTextDirection: matchTextDirection,
             allowDrawingOutsideViewBox: allowDrawingOutsideViewBox,
             placeholderBuilder: placeholderBuilder,
             key: key);
 
-  static ColorFilter _getColorFilter(Color color, BlendMode colorBlendMode) =>
-      color == null
-          ? null
-          : ColorFilter.mode(color, colorBlendMode ?? BlendMode.srcIn);
+  static ColorFilter? _getColorFilter(Color? color, BlendMode colorBlendMode) =>
+      color == null ? null : ColorFilter.mode(color, colorBlendMode);
 
   static final PictureInfoDecoder<Uint8List> avdByteDecoder =
-      (Uint8List bytes, ColorFilter colorFilter, String key) =>
+      (Uint8List bytes, ColorFilter? colorFilter, String key) =>
           avd.avdPictureDecoder(bytes, false, colorFilter, key);
   static final PictureInfoDecoder<String> avdStringDecoder =
-      (String data, ColorFilter colorFilter, String key) =>
+      (String data, ColorFilter? colorFilter, String key) =>
           avd.avdPictureStringDecoder(data, false, colorFilter, key);
   static final PictureInfoDecoder<Uint8List> avdByteDecoderOutsideViewBox =
-      (Uint8List bytes, ColorFilter colorFilter, String key) =>
+      (Uint8List bytes, ColorFilter? colorFilter, String key) =>
           avd.avdPictureDecoder(bytes, true, colorFilter, key);
   static final PictureInfoDecoder<String> avdStringDecoderOutsideViewBox =
-      (String data, ColorFilter colorFilter, String key) =>
+      (String data, ColorFilter? colorFilter, String key) =>
           avd.avdPictureStringDecoder(data, true, colorFilter, key);
 }
 
 /// Creates a [DrawableRoot] from a string of SVG data.
 DrawableRoot fromAvdString(String rawSvg, Rect size) {
-  final XmlElement svg = xml.parse(rawSvg).rootElement;
+  final XmlElement svg = XmlDocument.parse(rawSvg).rootElement;
   final DrawableViewport viewBox = parseViewBox(svg.attributes);
   final List<Drawable> children = svg.children
       .whereType<XmlElement>()
       .map((XmlElement child) => parseAvdElement(child, size))
       .toList();
   // todo : style on root
-  return DrawableRoot(viewBox, children, DrawableDefinitionServer(), null);
+  return DrawableRoot(getAttribute(svg.attributes, 'id', def: ''), viewBox,
+      children, DrawableDefinitionServer(), null);
 }

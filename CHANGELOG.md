@@ -1,5 +1,50 @@
 # CHANGES
 
+## 0.20.0-nullsafety.1
+
+- Remove unnecessary package:collection dependency
+
+## 0.20.0-nullsafety.0
+
+- Initial release with null safety
+- Remove dead code
+- Fix up incorrect `catchError` usages
+
+## 0.19.2+1
+
+- Fix a bug where color filters were applied when they should not be.
+
+## 0.19.2
+
+- Allow for opt-in/out of color filter caching behavior, undeprecate color
+  filtering on the providers, and allow for a global override.
+
+## 0.19.1
+
+- Fix color filtering when BlendMode.color is used.
+
+## 0.19.0
+
+- Avoid unnecessary cache invalidation of SVGs drawn with color changes by:
+  - Deprecate color filter related options on PictureProvider classes.
+  - Make ColorFilter a property on SvgPicture
+  - Use the ColorFiltered widget for filtered SVGs.
+- Fix RTL rendering bug
+
+## 0.18.1
+
+- Bump the path_drawing dependency to 0.4.1+1
+- Expose clipBehavior from FittedBox
+- Expose SVG ids in `Drawable*` classes.
+- Change type of `alignment` to `AlignmentGeometry` on `SvgPicture`.
+- Fixed bug in transform parsing
+
+## 0.18.0
+
+- Drop DiagnosticbleMixin usage.
+- Bump XML dependency to ^4.1.0 and resolve deprecated API usages.
+- Await futures in tests.
+
 ## 0.17.4
 
 - Allow `precachePicture` to take `null` for a `BuildContext`.
