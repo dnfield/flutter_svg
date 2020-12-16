@@ -159,7 +159,7 @@ class PictureConfiguration {
     result.write('PictureConfiguration(');
     bool hasArguments = false;
     if (bundle != null) {
-      if (hasArguments) {
+      if (hasArguments) { // ignore: dead_code
         result.write(', ');
       }
       result.write('bundle: $bundle');
