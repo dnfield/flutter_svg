@@ -1,5 +1,9 @@
 # CHANGES
 
+## 0.20.0-nullsafety.4
+
+- Adds a dry-run mode to check if an SVG is supported.
+
 ## 0.20.0-nullsafety.3
 
 - Fix broken image for pub.
