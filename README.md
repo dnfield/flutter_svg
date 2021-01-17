@@ -105,6 +105,23 @@ mechanism for rendering rather than `Image`s.
 
 See [main.dart](/../master/example/lib/main.dart) for a complete sample.
 
+## Check SVG compatibility
+
+As not all SVG features are supported by this library (see below), sometimes we have to dynamically check if an SVG contains any unsupported features resulting in broken images. This can be done by using the snippet below:
+
+```dart
+final SvgParser parser = SvgParser();
+try {
+  parser.parse(svgString, dryRun: true);
+  print('SVG is supported');
+} catch (e) {
+  print('SVG contains unsupported features');
+}
+```
+
+> Note:
+> The library currently only detects unsupported elements (like the `<style>`-tag), but not unsupported attributes.
+
 ## Use Cases
 
 - Your designer creates a vector asset that you want to include without
