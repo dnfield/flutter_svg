@@ -17,7 +17,7 @@ import 'xml_parsers.dart';
 final Set<String> _unhandledElements = <String>{'title', 'desc'};
 
 typedef _ParseFunc = Future<void>? Function(
-    SvgParserState parserState, bool dryRun);
+    SvgParserState parserState, bool warningsAsErrors);
 typedef _PathFunc = Path? Function(List<XmlEventAttribute>? attributes);
 
 const Map<String, _ParseFunc> _svgElementParsers = <String, _ParseFunc>{
@@ -76,14 +76,14 @@ class _TextInfo {
 }
 
 class _Elements {
-  static Future<void>? svg(SvgParserState parserState, bool dryRun) {
+  static Future<void>? svg(SvgParserState parserState, bool warningsAsErrors) {
     final DrawableViewport? viewBox = parseViewBox(parserState.attributes);
     final String? id = parserState.attribute('id', def: '');
 
     // TODO(dnfield): Support nested SVG elements. https://github.com/dnfield/flutter_svg/issues/132
     if (parserState._root != null) {
       const String errorMessage = 'Unsupported nested <svg> element.';
-      if (dryRun) {
+      if (warningsAsErrors) {
         throw UnsupportedError(errorMessage);
       }
       FlutterError.reportError(FlutterErrorDetails(
@@ -132,7 +132,7 @@ class _Elements {
     return null;
   }
 
-  static Future<void>? g(SvgParserState parserState, bool dryRun) {
+  static Future<void>? g(SvgParserState parserState, bool warningsAsErrors) {
     final DrawableParent parent = parserState.currentGroup!;
     final DrawableGroup group = DrawableGroup(
       parserState.attribute('id', def: ''),
@@ -152,7 +152,8 @@ class _Elements {
     return null;
   }
 
-  static Future<void>? symbol(SvgParserState parserState, bool dryRun) {
+  static Future<void>? symbol(
+      SvgParserState parserState, bool warningsAsErrors) {
     final DrawableParent parent = parserState.currentGroup!;
     final DrawableGroup group = DrawableGroup(
       parserState.attribute('id', def: ''),
@@ -169,7 +170,7 @@ class _Elements {
     return null;
   }
 
-  static Future<void>? use(SvgParserState parserState, bool dryRun) {
+  static Future<void>? use(SvgParserState parserState, bool warningsAsErrors) {
     final DrawableParent? parent = parserState.currentGroup;
     final String xlinkHref = getHrefAttribute(parserState.attributes)!;
     if (xlinkHref.isEmpty) {
@@ -238,7 +239,8 @@ class _Elements {
     return null;
   }
 
-  static Future<void>? radialGradient(SvgParserState parserState, bool dryRun) {
+  static Future<void>? radialGradient(
+      SvgParserState parserState, bool warningsAsErrors) {
     final String? gradientUnits = getAttribute(
       parserState.attributes,
       'gradientUnits',
@@ -328,7 +330,8 @@ class _Elements {
     return null;
   }
 
-  static Future<void>? linearGradient(SvgParserState parserState, bool dryRun) {
+  static Future<void>? linearGradient(
+      SvgParserState parserState, bool warningsAsErrors) {
     final String? gradientUnits = getAttribute(
       parserState.attributes,
       'gradientUnits',
@@ -418,7 +421,8 @@ class _Elements {
     return null;
   }
 
-  static Future<void>? clipPath(SvgParserState parserState, bool dryRun) {
+  static Future<void>? clipPath(
+      SvgParserState parserState, bool warningsAsErrors) {
     final String id = buildUrlIri(parserState.attributes);
 
     final List<Path> paths = <Path>[];
@@ -464,7 +468,7 @@ class _Elements {
         } else {
           final String errorMessage =
               'Unsupported clipPath child ${event.name}';
-          if (dryRun) {
+          if (warningsAsErrors) {
             throw UnsupportedError(errorMessage);
           }
           FlutterError.reportError(FlutterErrorDetails(
@@ -488,7 +492,8 @@ class _Elements {
     return null;
   }
 
-  static Future<void> image(SvgParserState parserState, bool dryRun) async {
+  static Future<void> image(
+      SvgParserState parserState, bool warningsAsErrors) async {
     final String? href = getHrefAttribute(parserState.attributes);
     if (href == null) {
       return;
@@ -523,7 +528,8 @@ class _Elements {
     }
   }
 
-  static Future<void> text(SvgParserState parserState, bool dryRun) async {
+  static Future<void> text(
+      SvgParserState parserState, bool warningsAsErrors) async {
     assert(parserState != null); // ignore: unnecessary_null_comparison
     assert(parserState.currentGroup != null);
     if (parserState._currentStartElement!.isSelfClosing) {
@@ -707,14 +713,14 @@ class _SvgGroupTuple {
 /// Maintains state while pushing an [XmlPushReader] through the SVG tree.
 class SvgParserState {
   /// Creates a new [SvgParserState].
-  SvgParserState(Iterable<XmlEvent> events, this._key, this._dryRun)
+  SvgParserState(Iterable<XmlEvent> events, this._key, this._warningsAsErrors)
+      // ignore: unnecessary_null_comparison
       : assert(events != null),
-        // ignore: unnecessary_null_comparison
         _eventIterator = events.iterator;
 
   final Iterator<XmlEvent> _eventIterator;
   final String? _key;
-  final bool _dryRun;
+  final bool _warningsAsErrors;
   final DrawableDefinitionServer _definitions = DrawableDefinitionServer();
   final Queue<_SvgGroupTuple> _parentDrawables = ListQueue<_SvgGroupTuple>(10);
   DrawableRoot? _root;
@@ -790,7 +796,7 @@ class SvgParserState {
           continue;
         }
         final _ParseFunc? parseFunc = _svgElementParsers[event.name];
-        await parseFunc?.call(this, _dryRun);
+        await parseFunc?.call(this, _warningsAsErrors);
         if (parseFunc == null) {
           if (!event.isSelfClosing) {
             _discardSubtree();
@@ -903,8 +909,8 @@ class SvgParserState {
   void unhandledElement(XmlStartElementEvent event) {
     final String errorMessage =
         'unhandled element ${event.name}; Picture key: $_key';
-    // Throw rather than log errors in dry run.
-    if (_dryRun) {
+    if (_warningsAsErrors) {
+      // Throw error instead of log warning.
       throw UnimplementedError(errorMessage);
     }
     if (event.name == 'style') {

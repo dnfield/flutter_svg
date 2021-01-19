@@ -9,17 +9,19 @@ class SvgParser {
   ///
   /// The [key] parameter is used for debugging purposes.
   ///
-  /// The [dryRun] detects if an SVG contains contains unsupported features.
-  /// If true the function will throw with an error.
-  /// If false only warnings are logged to the console.
+  /// By default SVG parsing will only log warnings when detecting unsupported
+  /// elements in an SVG.
+  /// If [warningsAsErrors] is true the function will throw with an error
+  /// instead.
+  /// You might want to set this to true for test and to false at runtime.
   /// Defaults to false.
   Future<DrawableRoot> parse(
     String str, {
     String? key,
-    bool dryRun = false,
+    bool warningsAsErrors = false,
   }) async {
     final SvgParserState state =
-        SvgParserState(xml.parseEvents(str), key, dryRun);
+        SvgParserState(xml.parseEvents(str), key, warningsAsErrors);
     return await state.parse();
   }
 }

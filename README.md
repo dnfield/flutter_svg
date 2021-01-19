@@ -107,12 +107,15 @@ See [main.dart](/../master/example/lib/main.dart) for a complete sample.
 
 ## Check SVG compatibility
 
-As not all SVG features are supported by this library (see below), sometimes we have to dynamically check if an SVG contains any unsupported features resulting in broken images. This can be done by using the snippet below:
+As not all SVG features are supported by this library (see below), sometimes we have to dynamically
+check if an SVG contains any unsupported features resulting in broken images.
+You might also want to throw errors in tests, but only warn about them at runtime.
+This can be done by using the snippet below:
 
 ```dart
 final SvgParser parser = SvgParser();
 try {
-  parser.parse(svgString, dryRun: true);
+  parser.parse(svgString, warningsAsErrors: true);
   print('SVG is supported');
 } catch (e) {
   print('SVG contains unsupported features');

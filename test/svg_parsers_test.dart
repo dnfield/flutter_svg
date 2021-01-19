@@ -206,7 +206,8 @@ void main() {
     expect(find<DrawableShape>(root, 'Oval') != null, true);
   });
 
-  test('Throws with unsupported elements in dry run', () async {
+  test('Throws with unsupported elements with warnings as errors enabled',
+      () async {
     const String svgStr = '''<?xml version="1.0" encoding="UTF-8"?>
 <svg width="27px" height="90px" viewBox="5 10 18 70" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
     <!-- Generator: Sketch 53 (72520) - https://sketchapp.com -->
@@ -228,7 +229,7 @@ void main() {
 </svg>''';
     final SvgParser parser = SvgParser();
     expect(
-      parser.parse(svgStr, dryRun: true),
+      parser.parse(svgStr, warningsAsErrors: true),
       throwsA(anything),
     );
   });
