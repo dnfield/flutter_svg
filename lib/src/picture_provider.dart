@@ -340,7 +340,6 @@ abstract class PictureProvider<T> {
     ).catchError((Object exception, StackTrace stack) async {
       if (onError != null) {
         onError(exception, stack);
-        return Future<PictureStream>.error(exception, stack);
       }
       FlutterError.reportError(FlutterErrorDetails(
           exception: exception,
