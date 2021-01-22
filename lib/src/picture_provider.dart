@@ -353,7 +353,6 @@ abstract class PictureProvider<T> {
             yield DiagnosticsProperty<T>('Picture key', obtainedKey,
                 defaultValue: null);
           }));
-      return null;
     });
     return stream;
   }
