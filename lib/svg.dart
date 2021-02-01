@@ -58,6 +58,7 @@ class Svg {
     return PictureInfo(
       picture: pic,
       viewport: svgRoot.viewport.viewBoxRect,
+      offset: svgRoot.viewport.viewBoxOffset,
       size: svgRoot.viewport.size,
     );
   }

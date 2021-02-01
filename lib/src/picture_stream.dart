@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import 'dart:async';
-import 'dart:ui' show Picture, Rect, hashValues, Size;
+import 'dart:ui' show Picture, Rect, hashValues, Size, Offset;
 
 import 'package:flutter/foundation.dart';
 
@@ -27,6 +27,7 @@ class PictureInfo {
   const PictureInfo({
     required this.picture,
     required this.viewport,
+    this.offset = Offset.zero,
     this.size = Size.infinite,
   })  : assert(picture != null), // ignore: unnecessary_null_comparison
         assert(viewport != null), // ignore: unnecessary_null_comparison
@@ -39,6 +40,9 @@ class PictureInfo {
 
   /// The viewport enclosing the coordinates used in the picture.
   final Rect viewport;
+
+    /// The offset enclosing the View Box Offset in the picture.
+  final Offset offset;
 
   /// The requested size for this picture, which may be different than the
   /// [viewport.size].
