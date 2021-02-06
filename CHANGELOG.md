@@ -1,5 +1,27 @@
 # CHANGES
 
+## 0.20.0-nullsafety.4
+
+- Adds option `warningsAsErrors` that throws errors when detecting unsupported SVG elements.
+
+## 0.20.0-nullsafety.3
+
+- Fix broken image for pub.
+
+## 0.20.0-nullsafety.2
+
+- Fix bug where HTTP headers were not passed along to the HTTP client.
+
+## 0.20.0-nullsafety.1
+
+- Remove unnecessary package:collection dependency
+
+## 0.20.0-nullsafety.0
+
+- Initial release with null safety
+- Remove dead code
+- Fix up incorrect `catchError` usages
+
 ## 0.19.2+1
 
 - Fix a bug where color filters were applied when they should not be.

@@ -3,7 +3,7 @@
 [![Pub](https://img.shields.io/pub/v/flutter_svg.svg)](https://pub.dartlang.org/packages/flutter_svg) [![Build Status](https://travis-ci.org/dnfield/flutter_svg.svg?branch=master)](https://travis-ci.org/dnfield/flutter_svg) [![Coverage Status](https://coveralls.io/repos/github/dnfield/flutter_svg/badge.svg?branch=master)](https://coveralls.io/github/dnfield/flutter_svg?branch=master)
 
 <!-- markdownlint-disable MD033 -->
-<img src="/../master/example/assets/flutter_logo.svg?sanitize=true" width="200px" alt="Flutter Logo which can be rendered by this package!">
+<img src="https://raw.githubusercontent.com/dnfield/flutter_svg/7d374d7107561cbd906d7c0ca26fef02cc01e7c8/example/assets/flutter_logo.svg?sanitize=true" width="200px" alt="Flutter Logo which can be rendered by this package!">
 <!-- markdownlint-enable MD033 -->
 
 Draw SVG (and _some_ Android VectorDrawable (XML)) files on a Flutter Widget.
@@ -104,6 +104,26 @@ became very confusing to maintain that name, as `Picture`s are the underlying
 mechanism for rendering rather than `Image`s.
 
 See [main.dart](/../master/example/lib/main.dart) for a complete sample.
+
+## Check SVG compatibility
+
+As not all SVG features are supported by this library (see below), sometimes we have to dynamically
+check if an SVG contains any unsupported features resulting in broken images.
+You might also want to throw errors in tests, but only warn about them at runtime.
+This can be done by using the snippet below:
+
+```dart
+final SvgParser parser = SvgParser();
+try {
+  parser.parse(svgString, warningsAsErrors: true);
+  print('SVG is supported');
+} catch (e) {
+  print('SVG contains unsupported features');
+}
+```
+
+> Note:
+> The library currently only detects unsupported elements (like the `<style>`-tag), but not unsupported attributes.
 
 ## Use Cases
 
