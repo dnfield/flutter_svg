@@ -546,7 +546,7 @@ class DrawableText implements Drawable {
     switch (anchor) {
       case DrawableTextAnchorPosition.middle:
         return Offset(
-          offset.dx - paragraph.minIntrinsicWidth / 2,
+          offset.dx - paragraph.maxIntrinsicWidth / 2,
           offset.dy - paragraph.alphabeticBaseline,
         );
         break;
