@@ -196,3 +196,7 @@ licensed under the Apache license.
 Please submit SVGs this can't render properly (e.g. that don't render here the
 way they do in chrome), as long as they're not using anything "probably out of
 scope" (above).
+
+## Alternative tool to convert SVG to a custom paint code
+- You could use custom paint to make animation or any effect you want as you have full control on the SVG code
+[Flutter Shape Maker](https://fluttershapemaker.com)
