@@ -142,12 +142,6 @@ of something that's broken.
 
 - Support Radial gradients that use percentages in the offsets.
 - Dash path with percentage dasharray values (need good examples).
-- Display/visibility support. My hunch is that this is usually used more for SVG
-  specific interactivity, which isn't supported or planned.
-- Inheritance of inheritable properties (~~necessary? preprocess?~~ significant
-  progress, still some rough edges, particularly for definitions).
-- Support for minimal CSS/styles? See also [usvg](https://github.com/RazrFalcon/resvg/tree/master/usvg)
-  (partial style attribute mostly supported).
 - Markers.
 - Filters/effects (will require upstream engine changes, but doable).
 - Android Vector Drawable support beyond PoC - I'm willing to put more time into
