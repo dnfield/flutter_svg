@@ -8,7 +8,7 @@ import 'package:xml/xml.dart';
 class MockPictureStreamCompleter extends PictureStreamCompleter {}
 
 void main() {
-  PictureCache cache;
+  late PictureCache cache;
 
   setUp(() {
     cache = PictureCache();
@@ -58,6 +58,22 @@ void main() {
     expect(PictureProvider.cacheCount, 0);
   });
 
+  testWidgets('Precache - null context', (WidgetTester tester) async {
+    const String svgString = '''<svg viewBox="0 0 10 10">
+<rect x="1" y="1" width="5" height="5" fill="black" />
+</svg>''';
+
+    expect(PictureProvider.cacheCount, 0);
+    await precachePicture(
+      StringPicture(
+        SvgPicture.svgStringDecoder,
+        svgString,
+      ),
+      null,
+    );
+    expect(PictureProvider.cacheCount, 1);
+  });
+
   testWidgets('Precache with error', (WidgetTester tester) async {
     const String svgString = '<svg';
     await tester.pumpWidget(
@@ -68,7 +84,7 @@ void main() {
     );
 
     bool gotError = false;
-    void errorListener(dynamic error, StackTrace stackTrace) {
+    void errorListener(Object error, StackTrace stackTrace) {
       gotError = true;
       expect(error, isInstanceOf<XmlParserException>());
     }
@@ -81,6 +97,8 @@ void main() {
       tester.element(find.text('test_text')),
       onError: errorListener,
     );
+
+    await null;
     expect(tester.takeException(), isInstanceOf<XmlParserException>());
     expect(gotError, isTrue);
   });
@@ -91,10 +109,6 @@ void main() {
     expect(cache.maximumSize, equals(1));
 
     expect(() => cache.maximumSize = -1, throwsAssertionError);
-    expect(() => cache.maximumSize = null, throwsAssertionError);
-
-    expect(() => cache.putIfAbsent(null, null), throwsAssertionError);
-    expect(() => cache.putIfAbsent(1, null), throwsAssertionError);
 
     final MockPictureStreamCompleter completer1 = MockPictureStreamCompleter();
     final MockPictureStreamCompleter completer2 = MockPictureStreamCompleter();
