@@ -25,8 +25,10 @@ void main() {
     final SvgParser parser = SvgParser();
     await parser.parse(svgStr, key: 'some_svg.svg');
 
-    expect(error.context.toString(),
-        contains('while parsing some_svg.svg in _getDefinitionPaint'));
+    expect(
+      error.context.toString(),
+      contains('while parsing some_svg.svg in _getDefinitionPaint'),
+    );
     FlutterError.onError = oldHandler;
   });
 }
