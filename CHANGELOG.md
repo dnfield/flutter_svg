@@ -1,5 +1,8 @@
 # CHANGES
 
+## 0.19.3
+
+- Use `maybeLocaleOf` and bump minimum Flutter version.
 ## 0.19.2+1
 
 - Fix a bug where color filters were applied when they should not be.
