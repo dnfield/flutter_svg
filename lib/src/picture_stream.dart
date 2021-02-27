@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import 'dart:async';
-import 'dart:ui' show Picture, Rect, hashValues, Size;
+import 'dart:ui' show Offset, Picture, Rect, Size, hashValues;
 
 import 'package:flutter/foundation.dart';
 
@@ -28,9 +28,11 @@ class PictureInfo {
     required this.picture,
     required this.viewport,
     this.size = Size.infinite,
+    this.offset = Offset.zero,
   })  : assert(picture != null), // ignore: unnecessary_null_comparison
         assert(viewport != null), // ignore: unnecessary_null_comparison
-        assert(size != null); // ignore: unnecessary_null_comparison
+        assert(size != null), // ignore: unnecessary_null_comparison
+        assert(offset != null); // ignore: unnecessary_null_comparison
 
   /// The raw picture.
   ///
@@ -44,8 +46,11 @@ class PictureInfo {
   /// [viewport.size].
   final Size size;
 
+  /// View Box Offset
+  final Offset offset;
+
   @override
-  int get hashCode => hashValues(picture, viewport, size);
+  int get hashCode => hashValues(picture, viewport, size, offset);
 
   @override
   bool operator ==(Object other) {
@@ -55,7 +60,8 @@ class PictureInfo {
     return other is PictureInfo &&
         other.picture == picture &&
         other.viewport == viewport &&
-        other.size == size;
+        other.size == size &&
+        other.offset == offset;
   }
 }
 
