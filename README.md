@@ -26,8 +26,28 @@ do not break known-good renderings.
 
 Basic usage (to create an SVG rendering widget from an asset):
 
+1. Install dependecies in pubspec.yaml:
 ```dart
-final String assetName = 'assets/image.svg';
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_svg:
+```
+2. Create `assets` folder on the root level
+3. Add some svg to assets. We've added `icon-product.svg` for example
+4. Inject assets in pubspec.yaml
+```dart
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/icon-product.svg
+```
+
+5. Import and use your svg
+```dart
+import 'package:flutter_svg/svg.dart';
+
+final String assetName = 'assets/icon-product.svg';
 final Widget svg = SvgPicture.asset(
   assetName,
   semanticsLabel: 'Acme Logo'
