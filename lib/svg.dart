@@ -760,7 +760,6 @@ class _SvgPictureState extends State<SvgPicture> {
 
       double? width = widget.width;
       double? height = widget.height;
-
       if (width == null && height == null) {
         width = viewport.width;
         height = viewport.height;
@@ -769,8 +768,6 @@ class _SvgPictureState extends State<SvgPicture> {
       } else if (width != null) {
         height = width / viewport.width * viewport.height;
       }
-      assert(height != null);
-      assert(width != null);
 
       child = SizedBox(
         width: width,
