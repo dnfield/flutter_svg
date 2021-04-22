@@ -9,7 +9,7 @@ env:
 test_task:
   container:
     matrix:
-      - image: cirrusci/flutter:latest
+      - image: cirrusci/flutter:dev
       - image: cirrusci/flutter:stable
   pub_cache:
     folder: ~/.pub-cache
