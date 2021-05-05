@@ -27,7 +27,7 @@ void main() {
                 'style="stroke-opacity:1;fill-opacity:.23" />')
             .first as XmlStartElementEvent;
 
-    final attributes = el.attributes.toAttributeMap();
+    final Map<String, String> attributes = el.attributes.toAttributeMap();
     expect(getAttribute(attributes, 'stroke'), '#fff');
     expect(getAttribute(attributes, 'fill'), '#eee');
     expect(getAttribute(attributes, 'stroke-dashpattern'), '1 2');

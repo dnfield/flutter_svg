@@ -750,7 +750,7 @@ class SvgParserState {
         depth -= 1;
         assert(depth >= 0);
       }
-      _currentAttributes = {};
+      _currentAttributes = <String, String>{};
       _currentStartElement = null;
       if (depth < subtreeStartDepth) {
         return;
@@ -764,7 +764,7 @@ class SvgParserState {
       final XmlEvent event = _eventIterator.current;
       bool isSelfClosing = false;
       if (event is XmlStartElementEvent) {
-        final attributeMap = event.attributes.toAttributeMap();
+        final Map<String, String> attributeMap = event.attributes.toAttributeMap();
         if (getAttribute(attributeMap, 'display') == 'none' ||
             getAttribute(attributeMap, 'visibility') == 'hidden') {
           print('SVG Warning: Discarding:\n\n  $event\n\n'
@@ -789,7 +789,7 @@ class SvgParserState {
       if (isSelfClosing || event is XmlEndElementEvent) {
         depth -= 1;
         assert(depth >= 0);
-        _currentAttributes = {};
+        _currentAttributes = <String, String>{};
         _currentStartElement = null;
       }
       if (depth < subtreeStartDepth) {
