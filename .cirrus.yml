@@ -15,6 +15,10 @@ test_task:
     folder: ~/.pub-cache
   analyze_script: flutter analyze .
   test_script: flutter test --coverage
+
+coverage_task:
+  depends_on: test
+  only_if: $COVERALLS_REPO_TOKEN != 'ENCRYPTED[61ba3fee193a9ed6116e0f61bbe26fe8c0452287e5dfd86c728e2f1f24327818d6c74c956d7b9cbf3bd6236489af0fd1]'
   coveralls_script: |
     dart pub global activate coveralls
     dart pub global run coveralls coverage/lcov.info
