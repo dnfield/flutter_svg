@@ -62,7 +62,7 @@ String _getAttribute(
 /// map.
 extension AttributeMapXmlEventAttributeExtension on List<XmlEventAttribute> {
   /// Converts the List<XmlEventAttribute> to an attribute map.
-  Map<String, String> toAttributeMap() => <String, STring>{
+  Map<String, String> toAttributeMap() => <String, String>{
     for (final XmlEventAttribute attribute in this)
       attribute.localName: attribute.value.trim(),
   };
