@@ -2,7 +2,7 @@
 
 set -x
 
-if [[ $COVERALLS_REPO_TOKEN == ENCRYPTED* ]]; then
+if [[ -z $COVERALLS_REPO_TOKEN ]]; then
   echo "Skipping coveralls, user not authorized"
   exit 0
 fi
