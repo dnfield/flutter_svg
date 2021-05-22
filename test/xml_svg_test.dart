@@ -145,4 +145,12 @@ void main() {
 
     expect(() => parseFontWeight('invalid'), throwsUnsupportedError);
   });
+
+  test('font-style tests', () {
+    expect(parseFontStyle('normal'), FontStyle.normal);
+    expect(parseFontStyle('italic'), FontStyle.italic);
+    expect(parseFontStyle('oblique'), FontStyle.italic);
+
+    expect(() => parseFontStyle('invalid'), throwsUnsupportedError);
+  });
 }
