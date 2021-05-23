@@ -151,6 +151,7 @@ void main() {
     expect(parseFontStyle('italic'), FontStyle.italic);
     expect(parseFontStyle('oblique'), FontStyle.italic);
 
+    expect(parseFontStyle(null), isNull);
     expect(() => parseFontStyle('invalid'), throwsUnsupportedError);
   });
 }
