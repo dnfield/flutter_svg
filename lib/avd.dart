@@ -34,7 +34,7 @@ class Avd {
     final Picture pic = avdRoot.toPicture(
         clipToViewBox: allowDrawingOutsideOfViewBox == true ? false : true,
         colorFilter: colorFilter);
-    return PictureInfo(picture: pic, viewport: avdRoot.viewport.viewBoxRect);
+    return PictureInfo(picture: pic, viewport: avdRoot.viewport.viewBoxRect,  offset: avdRoot.viewport.viewBoxOffset);
   }
 
   /// Decodes an Android Vector Drawable from a [String] to a [PictureInfo]
@@ -52,6 +52,7 @@ class Avd {
           colorFilter: colorFilter),
       viewport: avd.viewport.viewBoxRect,
       size: avd.viewport.size,
+      offset: avd.viewport.viewBoxOffset
     );
   }
 

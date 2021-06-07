@@ -59,6 +59,7 @@ class Svg {
       picture: pic,
       viewport: svgRoot.viewport.viewBoxRect,
       size: svgRoot.viewport.size,
+      offset: svgRoot.viewport.viewBoxOffset
     );
   }
 
@@ -86,6 +87,7 @@ class Svg {
       ),
       viewport: svg.viewport.viewBoxRect,
       size: svg.viewport.size,
+      offset: svg.viewport.viewBoxOffset
     );
   }
 

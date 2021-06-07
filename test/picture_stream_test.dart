@@ -14,12 +14,14 @@ void main() {
       picture: picture,
       viewport: Rect.zero,
       size: Size.zero,
+      offset: Offset.zero
     );
 
     final PictureInfo info2 = PictureInfo(
       picture: picture,
       viewport: Rect.zero,
       size: Size.zero,
+      offset: Offset.zero
     );
     expect(info1.hashCode, equals(info2.hashCode));
     expect(info1, equals(info2));
