@@ -586,7 +586,7 @@ class DrawableDefinitionServer {
     assert(id != null); // ignore: unnecessary_null_comparison
     assert(bounds != null); // ignore: unnecessary_null_comparison
     final DrawableGradient? srv = _gradients[id];
-    return srv != null ? srv.createShader(bounds) : null;
+    return srv?.createShader(bounds);
   }
 
   /// Retreive a gradient from the pre-defined [DrawableGradient] collection.
@@ -1003,7 +1003,7 @@ class DrawableGroup implements DrawableStyleable, DrawableParent {
       return;
     }
 
-    final Function innerDraw = () {
+    void innerDraw() {
       if (style!.groupOpacity == 0) {
         return;
       }
@@ -1042,7 +1042,7 @@ class DrawableGroup implements DrawableStyleable, DrawableParent {
       if (transform != null) {
         canvas.restore();
       }
-    };
+    }
 
     if (style?.clipPath?.isNotEmpty == true) {
       for (Path clipPath in style!.clipPath!) {
@@ -1225,7 +1225,7 @@ class DrawableShape implements DrawableStyleable {
 
     path.fillType = style.pathFillType ?? PathFillType.nonZero;
     // if we have multiple clips to apply, need to wrap this in a loop.
-    final Function innerDraw = () {
+    void innerDraw() {
       if (transform != null) {
         canvas.save();
         canvas.transform(transform!);
@@ -1270,7 +1270,7 @@ class DrawableShape implements DrawableStyleable {
       if (transform != null) {
         canvas.restore();
       }
-    };
+    }
 
     if (style.clipPath?.isNotEmpty == true) {
       for (Path clip in style.clipPath!) {

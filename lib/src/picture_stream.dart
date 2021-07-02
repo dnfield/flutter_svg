@@ -162,7 +162,7 @@ class PictureStream with Diagnosticable {
   /// will go from being different than other [PictureStream]'s keys to
   /// potentially being the same as others'. No notification is sent when this
   /// happens.
-  Object? get key => _completer != null ? _completer : this;
+  Object? get key => _completer ?? this;
 
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
