@@ -74,7 +74,7 @@ void main() {
 
     expect(PictureProvider.cache.count, 0);
     await precachePicture(
-      StringPicture(
+      const StringPicture(
         SvgPicture.svgStringDecoder,
         svgString,
       ),
@@ -109,7 +109,7 @@ void main() {
 
     expect(PictureProvider.cache.count, 0);
     await precachePicture(
-      StringPicture(
+      const StringPicture(
         SvgPicture.svgStringDecoder,
         svgString,
       ),
@@ -134,7 +134,7 @@ void main() {
     }
 
     await precachePicture(
-      StringPicture(
+      const StringPicture(
         SvgPicture.svgStringDecoder,
         svgString,
       ),

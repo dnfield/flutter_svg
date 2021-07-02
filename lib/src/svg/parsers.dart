@@ -94,8 +94,9 @@ Matrix4? parseTransform(String? transform) {
     return null;
   }
 
-  if (!_transformValidator.hasMatch(transform))
+  if (!_transformValidator.hasMatch(transform)) {
     throw StateError('illegal or unsupported transform: $transform');
+  }
   final Iterable<Match> matches =
       _transformCommand.allMatches(transform).toList().reversed;
   Matrix4 result = Matrix4.identity();
@@ -199,12 +200,11 @@ final RegExp _whitespacePattern = RegExp(r'\s');
 Future<Image> resolveImage(String href) async {
   assert(href != '');
 
-  final Future<Image> Function(Uint8List) decodeImage =
-      (Uint8List bytes) async {
+  Future<Image> decodeImage(Uint8List bytes) async {
     final Codec codec = await instantiateImageCodec(bytes);
     final FrameInfo frame = await codec.getNextFrame();
     return frame.image;
-  };
+  }
 
   if (href.startsWith('http')) {
     final Uint8List bytes = await httpGet(href);
@@ -227,7 +227,7 @@ const ParagraphConstraints _infiniteParagraphConstraints = ParagraphConstraints(
 
 /// A [DrawablePaint] with a transparent stroke.
 const DrawablePaint transparentStroke =
-    DrawablePaint(PaintingStyle.stroke, color: Color(0x0));
+    DrawablePaint(PaintingStyle.stroke, color: Color(0x00000000));
 
 /// Creates a [Paragraph] object using the specified [text], [style], and
 /// [foregroundOverride].

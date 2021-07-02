@@ -52,7 +52,7 @@ class PictureCache {
   ///
   /// The arguments must not be null. The `loader` cannot return null.
   PictureStreamCompleter putIfAbsent(
-      Object key, PictureStreamCompleter loader()) {
+      Object key, PictureStreamCompleter Function() loader) {
     assert(key != null); // ignore: unnecessary_null_comparison
     assert(loader != null); // ignore: unnecessary_null_comparison
     PictureStreamCompleter? result = _cache[key];
@@ -61,8 +61,9 @@ class PictureCache {
       // and thus move it to the end of the list.
       _cache.remove(key);
     } else {
-      if (_cache.length == maximumSize && maximumSize > 0)
+      if (_cache.length == maximumSize && maximumSize > 0) {
         _cache.remove(_cache.keys.first);
+      }
       result = loader();
     }
     if (maximumSize > 0) {

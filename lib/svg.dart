@@ -554,31 +554,31 @@ class SvgPicture extends StatefulWidget {
 
   /// The default placeholder for a SVG that may take time to parse or
   /// retrieve, e.g. from a network location.
-  static WidgetBuilder defaultPlaceholderBuilder =
-      (BuildContext ctx) => const LimitedBox();
+  static Widget defaultPlaceholderBuilder(BuildContext ctx) =>
+      const LimitedBox();
 
   static ColorFilter? _getColorFilter(Color? color, BlendMode colorBlendMode) =>
       color == null ? null : ColorFilter.mode(color, colorBlendMode);
 
   /// A [PictureInfoDecoder] for [Uint8List]s that will clip to the viewBox.
-  static final PictureInfoDecoder<Uint8List> svgByteDecoder =
-      (Uint8List bytes, ColorFilter? colorFilter, String key) =>
-          svg.svgPictureDecoder(bytes, false, colorFilter, key);
+  static Future<PictureInfo> svgByteDecoder(
+          Uint8List bytes, ColorFilter? colorFilter, String key) =>
+      svg.svgPictureDecoder(bytes, false, colorFilter, key);
 
   /// A [PictureInfoDecoder] for strings that will clip to the viewBox.
-  static final PictureInfoDecoder<String> svgStringDecoder =
-      (String data, ColorFilter? colorFilter, String key) =>
-          svg.svgPictureStringDecoder(data, false, colorFilter, key);
+  static Future<PictureInfo> svgStringDecoder(
+          String data, ColorFilter? colorFilter, String key) =>
+      svg.svgPictureStringDecoder(data, false, colorFilter, key);
 
   /// A [PictureInfoDecoder] for [Uint8List]s that will not clip to the viewBox.
-  static final PictureInfoDecoder<Uint8List> svgByteDecoderOutsideViewBox =
-      (Uint8List bytes, ColorFilter? colorFilter, String key) =>
-          svg.svgPictureDecoder(bytes, true, colorFilter, key);
+  static Future<PictureInfo> svgByteDecoderOutsideViewBox(
+          Uint8List bytes, ColorFilter? colorFilter, String key) =>
+      svg.svgPictureDecoder(bytes, true, colorFilter, key);
 
   /// A [PictureInfoDecoder] for [String]s that will not clip to the viewBox.
-  static final PictureInfoDecoder<String> svgStringDecoderOutsideViewBox =
-      (String data, ColorFilter? colorFilter, String key) =>
-          svg.svgPictureStringDecoder(data, true, colorFilter, key);
+  static Future<PictureInfo> svgStringDecoderOutsideViewBox(
+          String data, ColorFilter? colorFilter, String key) =>
+      svg.svgPictureStringDecoder(data, true, colorFilter, key);
 
   /// If specified, the width to use for the SVG.  If unspecified, the SVG
   /// will take the width of its parent.
@@ -720,8 +720,9 @@ class _SvgPictureState extends State<SvgPicture> {
       return;
     }
 
-    if (_isListeningToStream)
+    if (_isListeningToStream) {
       _pictureStream!.removeListener(_handleImageChanged);
+    }
 
     _pictureStream = newStream;
     if (_isListeningToStream) {
@@ -803,7 +804,7 @@ class _SvgPictureState extends State<SvgPicture> {
       child = Semantics(
         container: widget.semanticsLabel != null,
         image: true,
-        label: widget.semanticsLabel == null ? '' : widget.semanticsLabel,
+        label: widget.semanticsLabel ?? '',
         child: child,
       );
     }
