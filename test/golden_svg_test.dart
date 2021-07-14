@@ -41,7 +41,8 @@ void main() {
       final Codec testImageCodec =
           await instantiateImageCodec(await goldenFile.readAsBytes());
       final Image testImage = (await testImageCodec.getNextFrame()).image;
-      final ByteData? goldenRgba = await testImage.toByteData();
+      final ByteData? goldenRgba =
+          await testImage.toByteData(format: ImageByteFormat.rawRgba);
       final Uint8List goldenBytes = goldenRgba!.buffer.asUint8List();
 
       expect(
