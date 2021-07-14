@@ -38,12 +38,16 @@ void main() {
       final Uint8List bytes =
           await golden.getSvgRgbaBytes(await svgAssetFile.readAsString());
 
-      final Codec testImageCodec = await instantiateImageCodec(await goldenFile.readAsBytes());
+      final Codec testImageCodec =
+          await instantiateImageCodec(await goldenFile.readAsBytes());
       final Image testImage = (await testImageCodec.getNextFrame()).image;
       final ByteData? goldenRgba = await testImage.toByteData();
       final Uint8List goldenBytes = goldenRgba!.buffer.asUint8List();
 
-      expect(bytes, pairwiseCompare(goldenBytes, colorComponentsSimilar, 'components nearly equal to'),
+      expect(
+          bytes,
+          pairwiseCompare(goldenBytes, colorComponentsSimilar,
+              'components nearly equal to'),
           reason:
               '${goldenFile.path} does not match rendered output of ${svgAssetFile.path}!');
     }
