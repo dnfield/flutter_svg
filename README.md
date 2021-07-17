@@ -8,6 +8,20 @@
 
 Draw SVG (and _some_ Android VectorDrawable (XML)) files on a Flutter Widget.
 
+## Installation
+
+ In the `pubspec.yaml` of your flutter project, add the following dependency:
+
+ ```yaml
+ dependencies:
+   ...
+   flutter_svg: <latest_version>
+ ```
+ Or Run this command in `Root` directory
+ ```
+ flutter pub add flutter_svg
+ ```
+
 ## Getting Started
 
 This is a Dart-native rendering library. Issues/PRs will be raised in Flutter
@@ -104,6 +118,8 @@ became very confusing to maintain that name, as `Picture`s are the underlying
 mechanism for rendering rather than `Image`s.
 
 See [main.dart](/../master/example/lib/main.dart) for a complete sample.
+>  For help getting started with Flutter, view the online [documentation](https://pub.dev/packages/flutter_svg).
+
 
 ## Check SVG compatibility
 
