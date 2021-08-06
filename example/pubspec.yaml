@@ -8,6 +8,8 @@ dependencies:
     sdk: flutter
   flutter_svg:
     path: ../
+  flutter_driver:
+    sdk: flutter
 
 # The following section is specific to Flutter.
 flutter:
