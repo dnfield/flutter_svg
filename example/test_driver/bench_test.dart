@@ -6,11 +6,9 @@ Future<void> main() async {
   final FlutterDriver driver = await FlutterDriver.connect();
   try {
     await driver.waitUntilFirstFrameRasterized();
-    print('first frame rasterized');
     await Future<void>.delayed(const Duration(milliseconds: 1000));
     await driver.forceGC();
     await driver.clearTimeline();
-    print('gc and timeline cleared');
     await Future<void>.delayed(const Duration(milliseconds: 1000));
 
     final Timeline timeline = await driver.traceAction(() async {
