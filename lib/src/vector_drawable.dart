@@ -885,8 +885,12 @@ class DrawableRoot implements DrawableParent {
   bool get hasDrawableContent =>
       children.isNotEmpty == true && !viewport.viewBox.isEmpty;
 
+  /// Draws the contents or children of this [Drawable] to the `canvas`, using
+  /// the `parentPaint` to optionally override the child's paint.
+  ///
+  /// The `_` is not used.
   @override
-  void draw(Canvas canvas, Rect bounds) {
+  void draw(Canvas canvas, _) {
     if (!hasDrawableContent) {
       return;
     }
