@@ -88,7 +88,8 @@ svgRoot.scaleCanvasToViewBox(canvas);
 // Optional, but probably normally desireable: ensure the SVG isn't rendered
 // outside of the viewbox bounds
 svgRoot.clipCanvasToViewBox(canvas);
-svgRoot.draw(canvas, size);
+// The second parameter is not used
+svgRoot.draw(canvas, null);
 ```
 
 The `SvgPicture` helps to automate this logic, and it provides some convenience
