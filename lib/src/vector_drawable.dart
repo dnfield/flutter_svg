@@ -888,9 +888,9 @@ class DrawableRoot implements DrawableParent {
   /// Draws the contents or children of this [Drawable] to the `canvas`, using
   /// the `parentPaint` to optionally override the child's paint.
   ///
-  /// The `_` is not used.
+  /// The `bounds` is not used.
   @override
-  void draw(Canvas canvas, _) {
+  void draw(Canvas canvas, Rect bounds) {
     if (!hasDrawableContent) {
       return;
     }
