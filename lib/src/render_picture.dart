@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
 import 'picture_stream.dart';
@@ -63,10 +64,11 @@ class RenderPicture extends RenderBox {
     bool matchTextDirection = false,
     TextDirection? textDirection,
     bool? allowDrawingOutsideViewBox,
-  })  : _picture = picture,
-        _matchTextDirection = matchTextDirection,
+  })  : _matchTextDirection = matchTextDirection,
         _textDirection = textDirection,
-        _allowDrawingOutsideViewBox = allowDrawingOutsideViewBox;
+        _allowDrawingOutsideViewBox = allowDrawingOutsideViewBox {
+    this.picture = picture;
+  }
 
   /// Optional color to use to draw a thin rectangle around the canvas.
   ///
@@ -123,7 +125,13 @@ class RenderPicture extends RenderBox {
     if (val == picture) {
       return;
     }
+    print('setter: $val');
     _picture = val;
+    if (val != null) {
+      _pictureHandle.layer = PictureLayer(val.viewport)..picture = val.picture;
+    } else {
+      _pictureHandle.layer = null;
+    }
     markNeedsPaint();
   }
 
@@ -157,15 +165,72 @@ class RenderPicture extends RenderBox {
   }
 
   @override
+  bool get isRepaintBoundary => true;
+
+  final LayerHandle<TransformLayer> _transformHandle =
+      LayerHandle<TransformLayer>();
+  final LayerHandle<PictureLayer> _pictureHandle = LayerHandle<PictureLayer>();
+
+  void _addPicture(PaintingContext context, Offset offset) {
+    assert(picture != null);
+    assert(_pictureHandle.layer != null);
+    if (allowDrawingOutsideViewBox != true) {
+      final Rect viewportRect = Offset.zero & _picture!.viewport.size;
+      context.pushClipRect(
+        needsCompositing,
+        offset,
+        viewportRect,
+        (PaintingContext context, Offset offset) {
+          context.addLayer(_pictureHandle.layer!);
+        },
+      );
+    } else {
+      context.addLayer(_pictureHandle.layer!);
+    }
+  }
+
+  @override
+  void dispose() {
+    _transformHandle.layer = null;
+    _pictureHandle.layer = null;
+    super.dispose();
+  }
+
+  @override
   void paint(PaintingContext context, Offset offset) {
     if (picture == null || size == Size.zero) {
       return;
     }
-    context.canvas.save();
-    context.canvas.translate(offset.dx, offset.dy);
+
+    bool needsTransform = false;
+    final Matrix4 transform = Matrix4.identity();
+
     if (_flipHorizontally) {
-      context.canvas.translate(size.width, 0.0);
-      context.canvas.scale(-1.0, 1.0);
+      needsTransform = true;
+      transform
+        ..translate(size.width, 0.0)
+        ..scale(-1.0, 1.0);
+    }
+
+    if (scaleCanvasToViewBox(
+      transform,
+      size,
+      _picture!.viewport,
+      _picture!.size,
+    )) {
+      needsTransform = true;
+    }
+
+    if (needsTransform) {
+      _transformHandle.layer = context.pushTransform(
+        needsCompositing,
+        offset,
+        transform,
+        _addPicture,
+      );
+    } else {
+      _transformHandle.layer = null;
+      _addPicture(context, offset);
     }
 
     // this is sometimes useful for debugging, e.g. to draw
@@ -181,41 +246,34 @@ class RenderPicture extends RenderBox {
       }
       return true;
     }());
-    scaleCanvasToViewBox(
-      context.canvas,
-      size,
-      _picture!.viewport,
-      _picture!.size,
-    );
-    final Rect viewportRect = Offset.zero & _picture!.viewport.size;
-    if (allowDrawingOutsideViewBox != true) {
-      context.canvas.clipRect(viewportRect);
-    }
-    context.canvas.drawPicture(picture!.picture);
-    context.canvas.restore();
   }
 }
 
-/// Scales a [Canvas] to a given [viewBox] based on the [desiredSize]
+/// Scales a matrix to the given [viewBox] based on the [desiredSize]
 /// of the widget.
-void scaleCanvasToViewBox(
-  Canvas canvas,
+///
+/// Returns true if the supplied matrix was modified.
+bool scaleCanvasToViewBox(
+  Matrix4 matrix,
   Size desiredSize,
   Rect viewBox,
   Size pictureSize,
 ) {
-  if (desiredSize != viewBox.size) {
-    final double scale = math.min(
-      desiredSize.width / viewBox.width,
-      desiredSize.height / viewBox.height,
-    );
-    final Size scaledHalfViewBoxSize = viewBox.size * scale / 2.0;
-    final Size halfDesiredSize = desiredSize / 2.0;
-    final Offset shift = Offset(
-      halfDesiredSize.width - scaledHalfViewBoxSize.width,
-      halfDesiredSize.height - scaledHalfViewBoxSize.height,
-    );
-    canvas.translate(shift.dx, shift.dy);
-    canvas.scale(scale, scale);
+  if (desiredSize == viewBox.size) {
+    return false;
   }
+  final double scale = math.min(
+    desiredSize.width / viewBox.width,
+    desiredSize.height / viewBox.height,
+  );
+  final Size scaledHalfViewBoxSize = viewBox.size * scale / 2.0;
+  final Size halfDesiredSize = desiredSize / 2.0;
+  final Offset shift = Offset(
+    halfDesiredSize.width - scaledHalfViewBoxSize.width,
+    halfDesiredSize.height - scaledHalfViewBoxSize.height,
+  );
+  matrix
+    ..translate(shift.dx, shift.dy)
+    ..scale(scale, scale);
+  return true;
 }
