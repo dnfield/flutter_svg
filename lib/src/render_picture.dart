@@ -125,13 +125,7 @@ class RenderPicture extends RenderBox {
     if (val == picture) {
       return;
     }
-    print('setter: $val');
     _picture = val;
-    if (val != null) {
-      _pictureHandle.layer = PictureLayer(val.viewport)..picture = val.picture;
-    } else {
-      _pictureHandle.layer = null;
-    }
     markNeedsPaint();
   }
 
@@ -157,9 +151,7 @@ class RenderPicture extends RenderBox {
   @override
   bool get sizedByParent => true;
 
-  // TODO(goderbauer): Remove the ignore when https://github.com/flutter/flutter/pull/70656 has landed.
   @override
-  // ignore: override_on_non_overriding_member
   Size computeDryLayout(BoxConstraints constraints) {
     return constraints.smallest;
   }
@@ -169,11 +161,9 @@ class RenderPicture extends RenderBox {
 
   final LayerHandle<TransformLayer> _transformHandle =
       LayerHandle<TransformLayer>();
-  final LayerHandle<PictureLayer> _pictureHandle = LayerHandle<PictureLayer>();
 
   void _addPicture(PaintingContext context, Offset offset) {
     assert(picture != null);
-    assert(_pictureHandle.layer != null);
     if (allowDrawingOutsideViewBox != true) {
       final Rect viewportRect = Offset.zero & _picture!.viewport.size;
       context.pushClipRect(
@@ -181,18 +171,17 @@ class RenderPicture extends RenderBox {
         offset,
         viewportRect,
         (PaintingContext context, Offset offset) {
-          context.addLayer(_pictureHandle.layer!);
+          context.addLayer(picture!.layerHandle.layer!);
         },
       );
     } else {
-      context.addLayer(_pictureHandle.layer!);
+      context.addLayer(picture!.layerHandle.layer!);
     }
   }
 
   @override
   void dispose() {
     _transformHandle.layer = null;
-    _pictureHandle.layer = null;
     super.dispose();
   }
 

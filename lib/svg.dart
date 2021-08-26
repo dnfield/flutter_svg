@@ -13,7 +13,6 @@ import 'parser.dart';
 import 'src/picture_provider.dart';
 import 'src/picture_stream.dart';
 import 'src/render_picture.dart';
-import 'src/unbounded_color_filtered.dart';
 import 'src/vector_drawable.dart';
 
 /// Instance for [Svg]'s utility methods, which can produce a [DrawableRoot]
@@ -55,8 +54,10 @@ class Svg {
       clipToViewBox: allowDrawingOutsideOfViewBox == true ? false : true,
       colorFilter: colorFilter,
     );
+    final LayerHandle<PictureLayer> handle = LayerHandle<PictureLayer>();
+    handle.layer = PictureLayer(svgRoot.viewport.viewBoxRect)..picture = pic;
     return PictureInfo(
-      picture: pic,
+      layerHandle: handle,
       viewport: svgRoot.viewport.viewBoxRect,
       size: svgRoot.viewport.size,
     );
@@ -77,15 +78,18 @@ class Svg {
       bool allowDrawingOutsideOfViewBox,
       ColorFilter? colorFilter,
       String key) async {
-    final DrawableRoot svg = await fromSvgString(raw, key);
+    final DrawableRoot svgRoot = await fromSvgString(raw, key);
+    final Picture pic = svgRoot.toPicture(
+      clipToViewBox: allowDrawingOutsideOfViewBox == true ? false : true,
+      colorFilter: colorFilter,
+      size: svgRoot.viewport.viewBox,
+    );
+    final LayerHandle<PictureLayer> handle = LayerHandle<PictureLayer>();
+    handle.layer = PictureLayer(svgRoot.viewport.viewBoxRect)..picture = pic;
     return PictureInfo(
-      picture: svg.toPicture(
-        clipToViewBox: allowDrawingOutsideOfViewBox == true ? false : true,
-        colorFilter: colorFilter,
-        size: svg.viewport.viewBox,
-      ),
-      viewport: svg.viewport.viewBoxRect,
-      size: svg.viewport.size,
+      layerHandle: handle,
+      viewport: svgRoot.viewport.viewBoxRect,
+      size: svgRoot.viewport.size,
     );
   }
 
@@ -676,12 +680,7 @@ class _SvgPictureState extends State<SvgPicture> {
   @override
   void didChangeDependencies() {
     _resolveImage();
-
-    if (TickerMode.of(context)) {
-      _listenToStream();
-    } else {
-      _stopListeningToStream();
-    }
+    _listenToStream();
     super.didChangeDependencies();
   }
 
@@ -789,8 +788,8 @@ class _SvgPictureState extends State<SvgPicture> {
 
       if (widget.pictureProvider.colorFilter == null &&
           widget.colorFilter != null) {
-        child = UnboundedColorFiltered(
-          colorFilter: widget.colorFilter,
+        child = ColorFiltered(
+          colorFilter: widget.colorFilter!,
           child: child,
         );
       }

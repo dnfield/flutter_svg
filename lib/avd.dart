@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui' show Picture;
 
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart' show AssetBundle;
 import 'package:flutter/widgets.dart';
 import 'package:xml/xml.dart';
@@ -34,7 +35,12 @@ class Avd {
     final Picture pic = avdRoot.toPicture(
         clipToViewBox: allowDrawingOutsideOfViewBox == true ? false : true,
         colorFilter: colorFilter);
-    return PictureInfo(picture: pic, viewport: avdRoot.viewport.viewBoxRect);
+    final LayerHandle<PictureLayer> handle = LayerHandle<PictureLayer>();
+    handle.layer = PictureLayer(avdRoot.viewport.viewBoxRect)..picture = pic;
+    return PictureInfo(
+      layerHandle: handle,
+      viewport: avdRoot.viewport.viewBoxRect,
+    );
   }
 
   /// Decodes an Android Vector Drawable from a [String] to a [PictureInfo]
@@ -45,13 +51,17 @@ class Avd {
     ColorFilter? colorFilter,
     String key,
   ) async {
-    final DrawableRoot avd = fromAvdString(raw, key);
+    final DrawableRoot avdRoot = fromAvdString(raw, key);
+    final Picture pic = avdRoot.toPicture(
+      clipToViewBox: allowDrawingOutsideOfViewBox == true ? false : true,
+      colorFilter: colorFilter,
+    );
+    final LayerHandle<PictureLayer> handle = LayerHandle<PictureLayer>();
+    handle.layer = PictureLayer(avdRoot.viewport.viewBoxRect)..picture = pic;
     return PictureInfo(
-      picture: avd.toPicture(
-          clipToViewBox: allowDrawingOutsideOfViewBox == true ? false : true,
-          colorFilter: colorFilter),
-      viewport: avd.viewport.viewBoxRect,
-      size: avd.viewport.size,
+      layerHandle: handle,
+      viewport: avdRoot.viewport.viewBoxRect,
+      size: avdRoot.viewport.size,
     );
   }
 
