@@ -162,19 +162,23 @@ class RenderPicture extends RenderBox {
   final LayerHandle<TransformLayer> _transformHandle =
       LayerHandle<TransformLayer>();
 
+  final LayerHandle<ClipRectLayer> _clipHandle = LayerHandle<ClipRectLayer>();
+
   void _addPicture(PaintingContext context, Offset offset) {
     assert(picture != null);
     if (allowDrawingOutsideViewBox != true) {
       final Rect viewportRect = Offset.zero & _picture!.viewport.size;
-      context.pushClipRect(
+      _clipHandle.layer = context.pushClipRect(
         needsCompositing,
         offset,
         viewportRect,
         (PaintingContext context, Offset offset) {
           context.addLayer(picture!.layerHandle.layer!);
         },
+        oldLayer: _clipHandle.layer,
       );
     } else {
+      _clipHandle.layer = null;
       context.addLayer(picture!.layerHandle.layer!);
     }
   }
@@ -216,6 +220,7 @@ class RenderPicture extends RenderBox {
         offset,
         transform,
         _addPicture,
+        oldLayer: _transformHandle.layer,
       );
     } else {
       _transformHandle.layer = null;
