@@ -52,11 +52,11 @@ Offset _parseCurrentOffset(SvgParserState parserState, Offset? lastOffset) {
 
   return Offset(
     x != null
-        ? parseDouble(x)!
+        ? parseDouble(x, xy: 'x')!
         : parseDouble(parserState.attribute('dx', def: '0'))! +
             (lastOffset?.dx ?? 0),
     y != null
-        ? parseDouble(y)!
+        ? parseDouble(y, xy: 'y')!
         : parseDouble(parserState.attribute('dy', def: '0'))! +
             (lastOffset?.dy ?? 0),
   );
