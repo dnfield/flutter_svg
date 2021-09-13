@@ -16,7 +16,7 @@ Color? parseColor(String? colorString) {
   }
 
   if (colorString.toLowerCase() == 'currentcolor') {
-    return colorBlack;
+    return null;
   }
 
   // handle hex colors e.g. #fff or #ffffff.  This supports #RRGGBBAA
