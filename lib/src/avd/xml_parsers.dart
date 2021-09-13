@@ -70,7 +70,7 @@ Matrix4 parseTransform(List<XmlAttribute> el) {
 /// Parses an AVD stroke related attributes to a [DrawablePaint].
 DrawablePaint? parseStroke(List<XmlAttribute> el, Rect bounds) {
   final String? rawStroke =
-      getAttribute(el, 'stroke', def: null, namespace: androidNS);
+      getAttribute(el, 'strokeColor', def: null, namespace: androidNS);
   if (rawStroke == null) {
     return null;
   }
