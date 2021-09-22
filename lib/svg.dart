@@ -134,7 +134,7 @@ class Svg {
     String key,
   ) async {
     final SvgParser parser = SvgParser();
-    return await parser.parse(rawSvg, key: key);
+    return await parser.parse(rawSvg, theme: theme, key: key);
   }
 }
 

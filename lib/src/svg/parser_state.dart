@@ -6,6 +6,7 @@ import 'package:path_drawing/path_drawing.dart';
 import 'package:vector_math/vector_math_64.dart';
 import 'package:xml/xml_events.dart' hide parseEvents;
 
+import '../svg/theme.dart';
 import '../utilities/errors.dart';
 import '../utilities/numbers.dart';
 import '../utilities/xml.dart';
@@ -114,6 +115,7 @@ class _Elements {
               parserState._definitions,
               viewBox!.viewBoxRect,
               null,
+              currentColor: parserState.theme?.currentColor,
             ),
           ),
         ),
@@ -131,6 +133,7 @@ class _Elements {
         parserState._definitions,
         viewBox.viewBoxRect,
         null,
+        currentColor: parserState.theme?.currentColor,
       ),
     );
     parserState.addGroup(parserState._currentStartElement!, parserState._root);
@@ -148,6 +151,7 @@ class _Elements {
         parserState._definitions,
         parserState.rootBounds,
         parent.style,
+        currentColor: parserState.theme?.currentColor,
       ),
       transform: parseTransform(parserState.attribute('transform'))?.storage,
     );
@@ -170,6 +174,7 @@ class _Elements {
         parserState._definitions,
         null,
         parent.style,
+        currentColor: parserState.theme?.currentColor,
       ),
       transform: parseTransform(parserState.attribute('transform'))?.storage,
     );
@@ -190,6 +195,7 @@ class _Elements {
       parserState._definitions,
       parserState.rootBounds,
       parent!.style,
+      currentColor: parserState.theme?.currentColor,
     );
 
     final Matrix4 transform =
@@ -529,6 +535,7 @@ class _Elements {
         parserState._definitions,
         parserState.rootBounds,
         parentStyle,
+        currentColor: parserState.theme?.currentColor,
       ),
       size: size,
       transform: parseTransform(parserState.attribute('transform'))?.storage,
@@ -611,6 +618,7 @@ class _Elements {
           parserState._definitions,
           parserState.rootBounds,
           lastTextInfo?.style ?? parserState.currentGroup!.style,
+          currentColor: parserState.theme?.currentColor,
         ),
         currentOffset,
         transform,
@@ -731,10 +739,18 @@ class _SvgGroupTuple {
 /// Maintains state while pushing an [XmlPushReader] through the SVG tree.
 class SvgParserState {
   /// Creates a new [SvgParserState].
-  SvgParserState(Iterable<XmlEvent> events, this._key, this._warningsAsErrors)
-      // ignore: unnecessary_null_comparison
-      : assert(events != null),
+  SvgParserState(
+    Iterable<XmlEvent> events,
+    this.theme,
+    this._key,
+    this._warningsAsErrors,
+  )   
+  // ignore: unnecessary_null_comparison
+  : assert(events != null),
         _eventIterator = events.iterator;
+
+  /// A theme used when parsing SVG elements.
+  final SvgTheme? theme;
 
   final Iterator<XmlEvent> _eventIterator;
   final String? _key;
@@ -893,6 +909,7 @@ class SvgParserState {
         path.getBounds(),
         parentStyle,
         defaultFillColor: colorBlack,
+        currentColor: theme?.currentColor,
       ),
       transform: parseTransform(getAttribute(attributes, 'transform'))?.storage,
     );
