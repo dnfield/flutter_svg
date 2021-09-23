@@ -2,14 +2,10 @@ import 'dart:ui';
 
 /// A theme used when decoding an SVG picture.
 class SvgTheme {
-  /// Instantiates an SVG theme with the [colorFilter] and [currentColor].
+  /// Instantiates an SVG theme with the [currentColor].
   const SvgTheme({
-    this.colorFilter,
     this.currentColor,
   });
-
-  /// The color filter, if any, to apply to this widget.
-  final ColorFilter? colorFilter;
 
   /// The default color applied to SVG elements that inherit the color property.
   /// See: https://developer.mozilla.org/en-US/docs/Web/CSS/color_value#currentcolor_keyword
@@ -20,11 +16,9 @@ class SvgTheme {
     if (other.runtimeType != runtimeType) {
       return false;
     }
-    return other is SvgTheme &&
-        colorFilter == other.colorFilter &&
-        currentColor == other.currentColor;
+    return other is SvgTheme && currentColor == other.currentColor;
   }
 
   @override
-  int get hashCode => hashValues(colorFilter, currentColor);
+  int get hashCode => currentColor.hashCode;
 }
