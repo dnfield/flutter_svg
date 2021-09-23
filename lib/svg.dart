@@ -56,13 +56,14 @@ class Svg {
   Future<PictureInfo> svgPictureDecoder(
     Uint8List raw,
     bool allowDrawingOutsideOfViewBox,
+    ColorFilter? colorFilter,
     SvgTheme theme,
     String key,
   ) async {
     final DrawableRoot svgRoot = await fromSvgBytes(raw, theme, key);
     final Picture pic = svgRoot.toPicture(
       clipToViewBox: allowDrawingOutsideOfViewBox == true ? false : true,
-      colorFilter: theme.colorFilter,
+      colorFilter: colorFilter,
     );
     return PictureInfo(
       picture: pic,
@@ -84,6 +85,7 @@ class Svg {
   Future<PictureInfo> svgPictureStringDecoder(
     String raw,
     bool allowDrawingOutsideOfViewBox,
+    ColorFilter? colorFilter,
     SvgTheme theme,
     String key,
   ) async {
@@ -91,7 +93,7 @@ class Svg {
     return PictureInfo(
       picture: svg.toPicture(
         clipToViewBox: allowDrawingOutsideOfViewBox == true ? false : true,
-        colorFilter: theme.colorFilter,
+        colorFilter: colorFilter,
         size: svg.viewport.viewBox,
       ),
       viewport: svg.viewport.viewBoxRect,
@@ -606,7 +608,8 @@ class SvgPicture extends StatefulWidget {
               svg.svgPictureDecoder(
                 bytes,
                 false,
-                SvgTheme(colorFilter: colorFilter, currentColor: currentColor),
+                colorFilter,
+                SvgTheme(currentColor: currentColor),
                 key,
               );
 
@@ -617,7 +620,8 @@ class SvgPicture extends StatefulWidget {
               svg.svgPictureStringDecoder(
                 data,
                 false,
-                SvgTheme(colorFilter: colorFilter, currentColor: currentColor),
+                colorFilter,
+                SvgTheme(currentColor: currentColor),
                 key,
               );
 
@@ -628,7 +632,8 @@ class SvgPicture extends StatefulWidget {
               svg.svgPictureDecoder(
                 bytes,
                 true,
-                SvgTheme(colorFilter: colorFilter, currentColor: currentColor),
+                colorFilter,
+                SvgTheme(currentColor: currentColor),
                 key,
               );
 
@@ -639,7 +644,8 @@ class SvgPicture extends StatefulWidget {
               svg.svgPictureStringDecoder(
                 data,
                 true,
-                SvgTheme(colorFilter: colorFilter, currentColor: currentColor),
+                colorFilter,
+                SvgTheme(currentColor: currentColor),
                 key,
               );
 
