@@ -34,9 +34,8 @@ void main() {
 </svg>
 ''',
       false,
-      const SvgTheme(
-        colorFilter: ColorFilter.mode(Color(0xFF00FF00), BlendMode.color),
-      ),
+      const ColorFilter.mode(Color(0xFF00FF00), BlendMode.color),
+      const SvgTheme(),
       'test',
     );
     final Image image = await info.picture.toImage(2, 2);
