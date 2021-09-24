@@ -103,6 +103,7 @@ class _Elements {
         library: 'SVG',
         context: ErrorDescription('in _Element.svg'),
       ));
+
       parserState._parentDrawables.addLast(
         _SvgGroupTuple(
           'svg',
@@ -151,7 +152,6 @@ class _Elements {
         parserState._definitions,
         parserState.rootBounds,
         parent.style,
-        currentColor: parserState.theme?.currentColor,
       ),
       transform: parseTransform(parserState.attribute('transform'))?.storage,
     );
@@ -174,7 +174,6 @@ class _Elements {
         parserState._definitions,
         null,
         parent.style,
-        currentColor: parserState.theme?.currentColor,
       ),
       transform: parseTransform(parserState.attribute('transform'))?.storage,
     );
@@ -195,7 +194,6 @@ class _Elements {
       parserState._definitions,
       parserState.rootBounds,
       parent!.style,
-      currentColor: parserState.theme?.currentColor,
     );
 
     final Matrix4 transform =
@@ -535,7 +533,6 @@ class _Elements {
         parserState._definitions,
         parserState.rootBounds,
         parentStyle,
-        currentColor: parserState.theme?.currentColor,
       ),
       size: size,
       transform: parseTransform(parserState.attribute('transform'))?.storage,
@@ -618,7 +615,6 @@ class _Elements {
           parserState._definitions,
           parserState.rootBounds,
           lastTextInfo?.style ?? parserState.currentGroup!.style,
-          currentColor: parserState.theme?.currentColor,
         ),
         currentOffset,
         transform,
@@ -909,7 +905,6 @@ class SvgParserState {
         path.getBounds(),
         parentStyle,
         defaultFillColor: colorBlack,
-        currentColor: theme?.currentColor,
       ),
       transform: parseTransform(getAttribute(attributes, 'transform'))?.storage,
     );
