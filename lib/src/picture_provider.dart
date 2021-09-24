@@ -201,6 +201,24 @@ class PictureConfiguration {
   }
 }
 
+/// A type of the [PictureProvider].
+enum PictureProviderType {
+  /// Refers to the provider of type [ExactAssetPicture].
+  asset,
+
+  /// Refers to the provider of type [NetworkPicture].
+  network,
+
+  /// Refers to the provider of type [FilePicture].
+  file,
+
+  /// Refers to the provider of type [MemoryPicture].
+  memory,
+
+  /// Refers to the provider of type [StringPicture].
+  string,
+}
+
 /// Identifies a picture without committing to the precise final asset. This
 /// allows a set of pictures to be identified and for the precise picture to later
 /// be resolved based on the environment, e.g. the device pixel ratio.

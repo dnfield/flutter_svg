@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart' show AssetBundle;
 import 'package:flutter/widgets.dart';
+import 'package:flutter_svg/src/svg/default_theme.dart';
 
 import 'parser.dart';
 import 'src/picture_provider.dart';
@@ -200,13 +201,64 @@ Future<void> precachePicture(
   return completer.future;
 }
 
+/// Metadata to initialize a [PictureProvider] of the provided type [pictureProviderType].
+class PictureProviderMetadata {
+  /// Creates a new instance of [PictureProviderMetadata].
+  PictureProviderMetadata({
+    required this.pictureProviderType,
+    this.assetName,
+    this.bundle,
+    this.package,
+    this.url,
+    this.headers,
+    this.file,
+    this.bytes,
+    this.string,
+  });
+
+  /// The type of the [PictureProvider] to initialize.
+  final PictureProviderType pictureProviderType;
+
+  /// The name of the asset.
+  /// Used for the [ExactAssetPicture.assetName].
+  final String? assetName;
+
+  /// The bundle from which the picture will be obtained.
+  /// Used for the [ExactAssetPicture.bundle].
+  final AssetBundle? bundle;
+
+  /// The name of the package from which the picture is included.
+  /// Used for the [ExactAssetPicture.package].
+  final String? package;
+
+  /// The URL from which the picture will be fetched.
+  /// Used for the [NetworkPicture.url].
+  final String? url;
+
+  /// The HTTP headers that will be used with [HttpClient.get] to fetch picture from network.
+  /// Used for the [NetworkPicture.headers].
+  final Map<String, String>? headers;
+
+  /// The file to decode into a picture.
+  /// Used for the [FilePicture.file].
+  final File? file;
+
+  /// The bytes to decode into a picture.
+  /// Used for the [MemoryPicture.bytes].
+  final Uint8List? bytes;
+
+  /// The string to decode into a picture.
+  /// Used for the [StringPicture.string].
+  final String? string;
+}
+
 /// A widget that will parse SVG data into a [Picture] using a [PictureProvider].
 ///
 /// The picture will be cached using the [PictureCache], incorporating any color
 /// filtering used into the key (meaning the same SVG with two different `color`
 /// arguments applied would be two cache entries).
 class SvgPicture extends StatefulWidget {
-  /// Instantiates a widget that renders an SVG picture using the `pictureProvider`.
+  /// Instantiates a widget that renders an SVG picture using the `_pictureProviderMetadata`.
   ///
   /// Either the [width] and [height] arguments should be specified, or the
   /// widget should be placed in a context that sets tight layout constraints.
@@ -229,7 +281,7 @@ class SvgPicture extends StatefulWidget {
   ///
   /// If [excludeFromSemantics] is true, then [semanticLabel] will be ignored.
   const SvgPicture(
-    this.pictureProvider, {
+    this._pictureProviderMetadata, {
     Key? key,
     this.width,
     this.height,
@@ -345,16 +397,11 @@ class SvgPicture extends StatefulWidget {
     this.clipBehavior = Clip.hardEdge,
     this.cacheColorFilter = false,
     this.currentColor,
-  })  : pictureProvider = ExactAssetPicture(
-          allowDrawingOutsideViewBox == true
-              ? svgStringDecoderOutsideViewBoxBuilder(currentColor)
-              : svgStringDecoderBuilder(currentColor),
-          assetName,
+  })  : _pictureProviderMetadata = PictureProviderMetadata(
+          pictureProviderType: PictureProviderType.asset,
+          assetName: assetName,
           bundle: bundle,
           package: package,
-          colorFilter: svg.cacheColorFilterOverride ?? cacheColorFilter
-              ? _getColorFilter(color, colorBlendMode)
-              : null,
         ),
         colorFilter = _getColorFilter(color, colorBlendMode),
         super(key: key);
@@ -409,15 +456,10 @@ class SvgPicture extends StatefulWidget {
     this.clipBehavior = Clip.hardEdge,
     this.cacheColorFilter = false,
     this.currentColor,
-  })  : pictureProvider = NetworkPicture(
-          allowDrawingOutsideViewBox == true
-              ? svgByteDecoderOutsideViewBoxBuilder(currentColor)
-              : svgByteDecoderBuilder(currentColor),
-          url,
+  })  : _pictureProviderMetadata = PictureProviderMetadata(
+          pictureProviderType: PictureProviderType.network,
+          url: url,
           headers: headers,
-          colorFilter: svg.cacheColorFilterOverride ?? cacheColorFilter
-              ? _getColorFilter(color, colorBlendMode)
-              : null,
         ),
         colorFilter = _getColorFilter(color, colorBlendMode),
         super(key: key);
@@ -469,14 +511,9 @@ class SvgPicture extends StatefulWidget {
     this.clipBehavior = Clip.hardEdge,
     this.cacheColorFilter = false,
     this.currentColor,
-  })  : pictureProvider = FilePicture(
-          allowDrawingOutsideViewBox == true
-              ? svgByteDecoderOutsideViewBoxBuilder(currentColor)
-              : svgByteDecoderBuilder(currentColor),
-          file,
-          colorFilter: svg.cacheColorFilterOverride ?? cacheColorFilter
-              ? _getColorFilter(color, colorBlendMode)
-              : null,
+  })  : _pictureProviderMetadata = PictureProviderMetadata(
+          pictureProviderType: PictureProviderType.file,
+          file: file,
         ),
         colorFilter = _getColorFilter(color, colorBlendMode),
         super(key: key);
@@ -525,14 +562,9 @@ class SvgPicture extends StatefulWidget {
     this.clipBehavior = Clip.hardEdge,
     this.cacheColorFilter = false,
     this.currentColor,
-  })  : pictureProvider = MemoryPicture(
-          allowDrawingOutsideViewBox == true
-              ? svgByteDecoderOutsideViewBoxBuilder(currentColor)
-              : svgByteDecoderBuilder(currentColor),
-          bytes,
-          colorFilter: svg.cacheColorFilterOverride ?? cacheColorFilter
-              ? _getColorFilter(color, colorBlendMode)
-              : null,
+  })  : _pictureProviderMetadata = PictureProviderMetadata(
+          pictureProviderType: PictureProviderType.memory,
+          bytes: bytes,
         ),
         colorFilter = _getColorFilter(color, colorBlendMode),
         super(key: key);
@@ -565,7 +597,7 @@ class SvgPicture extends StatefulWidget {
   ///
   /// If [excludeFromSemantics] is true, then [semanticLabel] will be ignored.
   SvgPicture.string(
-    String bytes, {
+    String string, {
     Key? key,
     this.width,
     this.height,
@@ -581,14 +613,9 @@ class SvgPicture extends StatefulWidget {
     this.clipBehavior = Clip.hardEdge,
     this.cacheColorFilter = false,
     this.currentColor,
-  })  : pictureProvider = StringPicture(
-          allowDrawingOutsideViewBox == true
-              ? svgStringDecoderOutsideViewBoxBuilder(currentColor)
-              : svgStringDecoderBuilder(currentColor),
-          bytes,
-          colorFilter: svg.cacheColorFilterOverride ?? cacheColorFilter
-              ? _getColorFilter(color, colorBlendMode)
-              : null,
+  })  : _pictureProviderMetadata = PictureProviderMetadata(
+          pictureProviderType: PictureProviderType.string,
+          string: string,
         ),
         colorFilter = _getColorFilter(color, colorBlendMode),
         super(key: key);
@@ -685,8 +712,8 @@ class SvgPicture extends StatefulWidget {
   ///    relative to text direction.
   final AlignmentGeometry alignment;
 
-  /// The [PictureProvider] used to resolve the SVG.
-  final PictureProvider pictureProvider;
+  /// Metadata to initialize the [PictureProvider].
+  final PictureProviderMetadata? _pictureProviderMetadata;
 
   /// The placeholder to use while fetching, decoding, and parsing the SVG data.
   final WidgetBuilder? placeholderBuilder;
@@ -742,12 +769,17 @@ class SvgPicture extends StatefulWidget {
 }
 
 class _SvgPictureState extends State<SvgPicture> {
+  /// The [PictureProvider] used to resolve the SVG.
+  /// Initialized based on the widget's [PictureProviderMetadata].
+  PictureProvider? pictureProvider;
+
   PictureInfo? _picture;
   PictureStream? _pictureStream;
   bool _isListeningToStream = false;
 
   @override
   void didChangeDependencies() {
+    _buildPictureProvider();
     _resolveImage();
 
     if (TickerMode.of(context)) {
@@ -761,20 +793,93 @@ class _SvgPictureState extends State<SvgPicture> {
   @override
   void didUpdateWidget(SvgPicture oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.pictureProvider != oldWidget.pictureProvider) {
+    if (widget._pictureProviderMetadata != oldWidget._pictureProviderMetadata) {
+      _buildPictureProvider();
       _resolveImage();
     }
   }
 
   @override
   void reassemble() {
+    _buildPictureProvider();
     _resolveImage(); // in case the image cache was flushed
     super.reassemble();
   }
 
+  /// Builds a [pictureProvider] based on the widget's [PictureProviderMetadata].
+  void _buildPictureProvider() {
+    final SvgTheme? svgTheme = DefaultSvgTheme.of(context)?.theme;
+    final PictureProviderMetadata? metadata = widget._pictureProviderMetadata;
+
+    if (metadata != null) {
+      final Color? currentColor = widget.currentColor ?? svgTheme?.currentColor;
+
+      switch (metadata.pictureProviderType) {
+        case PictureProviderType.asset:
+          pictureProvider = ExactAssetPicture(
+            widget.allowDrawingOutsideViewBox == true
+                ? SvgPicture.svgStringDecoderOutsideViewBoxBuilder(currentColor)
+                : SvgPicture.svgStringDecoderBuilder(currentColor),
+            metadata.assetName!,
+            bundle: metadata.bundle!,
+            package: metadata.package!,
+            colorFilter: svg.cacheColorFilterOverride ?? widget.cacheColorFilter
+                ? widget.colorFilter
+                : null,
+          );
+          break;
+        case PictureProviderType.network:
+          pictureProvider = NetworkPicture(
+            widget.allowDrawingOutsideViewBox == true
+                ? SvgPicture.svgByteDecoderOutsideViewBoxBuilder(currentColor)
+                : SvgPicture.svgByteDecoderBuilder(currentColor),
+            metadata.url!,
+            headers: metadata.headers,
+            colorFilter: svg.cacheColorFilterOverride ?? widget.cacheColorFilter
+                ? widget.colorFilter
+                : null,
+          );
+          break;
+        case PictureProviderType.file:
+          pictureProvider = FilePicture(
+            widget.allowDrawingOutsideViewBox == true
+                ? SvgPicture.svgByteDecoderOutsideViewBoxBuilder(currentColor)
+                : SvgPicture.svgByteDecoderBuilder(currentColor),
+            metadata.file!,
+            colorFilter: svg.cacheColorFilterOverride ?? widget.cacheColorFilter
+                ? widget.colorFilter
+                : null,
+          );
+          break;
+        case PictureProviderType.memory:
+          pictureProvider = MemoryPicture(
+            widget.allowDrawingOutsideViewBox == true
+                ? SvgPicture.svgByteDecoderOutsideViewBoxBuilder(currentColor)
+                : SvgPicture.svgByteDecoderBuilder(currentColor),
+            metadata.bytes!,
+            colorFilter: svg.cacheColorFilterOverride ?? widget.cacheColorFilter
+                ? widget.colorFilter
+                : null,
+          );
+          break;
+        case PictureProviderType.string:
+          pictureProvider = StringPicture(
+            widget.allowDrawingOutsideViewBox == true
+                ? SvgPicture.svgStringDecoderOutsideViewBoxBuilder(currentColor)
+                : SvgPicture.svgStringDecoderBuilder(currentColor),
+            metadata.string!,
+            colorFilter: svg.cacheColorFilterOverride ?? widget.cacheColorFilter
+                ? widget.colorFilter
+                : null,
+          );
+          break;
+      }
+    }
+  }
+
   void _resolveImage() {
-    final PictureStream newStream = widget.pictureProvider
-        .resolve(createLocalPictureConfiguration(context));
+    final PictureStream newStream =
+        pictureProvider!.resolve(createLocalPictureConfiguration(context));
     assert(newStream != null); // ignore: unnecessary_null_comparison
     _updateSourceStream(newStream);
   }
@@ -860,8 +965,7 @@ class _SvgPictureState extends State<SvgPicture> {
         ),
       );
 
-      if (widget.pictureProvider.colorFilter == null &&
-          widget.colorFilter != null) {
+      if (pictureProvider?.colorFilter == null && widget.colorFilter != null) {
         child = UnboundedColorFiltered(
           colorFilter: widget.colorFilter,
           child: child,
