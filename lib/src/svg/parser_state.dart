@@ -84,6 +84,12 @@ class _Elements {
     final DrawableViewport? viewBox = parseViewBox(parserState.attributes);
     final String? id = parserState.attribute('id', def: '');
 
+    final Color? color =
+        parseColor(parserState.attribute('color', def: null)) ??
+            // Fallback to the currentColor from theme if no color is defined
+            // on the root SVG element.
+            parserState.theme?.currentColor;
+
     // TODO(dnfield): Support nested SVG elements. https://github.com/dnfield/flutter_svg/issues/132
     if (parserState._root != null) {
       const String errorMessage = 'Unsupported nested <svg> element.';
@@ -116,8 +122,9 @@ class _Elements {
               parserState._definitions,
               viewBox!.viewBoxRect,
               null,
-              currentColor: parserState.theme?.currentColor,
+              currentColor: color,
             ),
+            color: color,
           ),
         ),
       );
@@ -134,8 +141,9 @@ class _Elements {
         parserState._definitions,
         viewBox.viewBoxRect,
         null,
-        currentColor: parserState.theme?.currentColor,
+        currentColor: color,
       ),
+      color: color,
     );
     parserState.addGroup(parserState._currentStartElement!, parserState._root);
     return null;
@@ -143,6 +151,9 @@ class _Elements {
 
   static Future<void>? g(SvgParserState parserState, bool warningsAsErrors) {
     final DrawableParent parent = parserState.currentGroup!;
+    final Color? color =
+        parseColor(parserState.attribute('color', def: null)) ?? parent.color;
+
     final DrawableGroup group = DrawableGroup(
       parserState.attribute('id', def: ''),
       <Drawable>[],
@@ -152,8 +163,10 @@ class _Elements {
         parserState._definitions,
         parserState.rootBounds,
         parent.style,
+        currentColor: color,
       ),
       transform: parseTransform(parserState.attribute('transform'))?.storage,
+      color: color,
     );
     if (!parserState._inDefs) {
       parent.children!.add(group);
@@ -165,6 +178,9 @@ class _Elements {
   static Future<void>? symbol(
       SvgParserState parserState, bool warningsAsErrors) {
     final DrawableParent parent = parserState.currentGroup!;
+    final Color? color =
+        parseColor(parserState.attribute('color', def: null)) ?? parent.color;
+
     final DrawableGroup group = DrawableGroup(
       parserState.attribute('id', def: ''),
       <Drawable>[],
@@ -174,8 +190,10 @@ class _Elements {
         parserState._definitions,
         null,
         parent.style,
+        currentColor: color,
       ),
       transform: parseTransform(parserState.attribute('transform'))?.storage,
+      color: color,
     );
     parserState.addGroup(parserState._currentStartElement!, group);
     return null;
@@ -194,6 +212,7 @@ class _Elements {
       parserState._definitions,
       parserState.rootBounds,
       parent!.style,
+      currentColor: parent.color,
     );
 
     final Matrix4 transform =
@@ -225,6 +244,8 @@ class _Elements {
     List<Color> colors,
     List<double> offsets,
   ) {
+    final DrawableParent parent = parserState.currentGroup!;
+
     for (XmlEvent event in parserState._readSubtree()) {
       if (event is XmlEndElementEvent) {
         continue;
@@ -237,6 +258,7 @@ class _Elements {
         );
         final Color stopColor =
             parseColor(getAttribute(parserState.attributes, 'stop-color')) ??
+                parent.color ??
                 colorBlack;
         colors.add(stopColor.withOpacity(parseDouble(rawOpacity)!));
 
@@ -533,6 +555,7 @@ class _Elements {
         parserState._definitions,
         parserState.rootBounds,
         parentStyle,
+        currentColor: parent.color,
       ),
       size: size,
       transform: parseTransform(parserState.attribute('transform'))?.storage,
@@ -905,6 +928,7 @@ class SvgParserState {
         path.getBounds(),
         parentStyle,
         defaultFillColor: colorBlack,
+        currentColor: parent.color,
       ),
       transform: parseTransform(getAttribute(attributes, 'transform'))?.storage,
     );
