@@ -323,6 +323,8 @@ abstract class PictureProvider<T> {
   final ColorFilter? colorFilter;
 
   /// The default color applied to SVG elements that inherit the color property.
+  @visibleForTesting
+  Color? get currentColor => _currentColor;
   Color? _currentColor;
 
   /// Sets the [_currentColor] to [color].
