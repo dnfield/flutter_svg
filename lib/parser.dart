@@ -18,7 +18,7 @@ class SvgParser {
   /// Defaults to false.
   Future<DrawableRoot> parse(
     String str, {
-    SvgTheme? theme,
+    required SvgTheme theme,
     String? key,
     bool warningsAsErrors = false,
   }) async {
