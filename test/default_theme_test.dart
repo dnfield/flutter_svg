@@ -71,7 +71,10 @@ void main() {
 <svg viewBox="0 0 10 10">
   <rect x="0" y="0" width="10" height="10" fill="currentColor" />
 </svg>''',
-        currentColor: Color(0xFF05290E),
+        theme: SvgTheme(
+          currentColor: Color(0xFF05290E),
+          fontSize: 14.0,
+        ),
       );
 
       await tester.pumpWidget(DefaultSvgTheme(
@@ -91,7 +94,6 @@ void main() {
         'fontSize widget property takes precedence over '
         'the theme from DefaultSvgTheme', (WidgetTester tester) async {
       const SvgTheme svgTheme = SvgTheme(
-        currentColor: Color(0xFF733821),
         fontSize: 14.0,
       );
 
@@ -100,7 +102,9 @@ void main() {
 <svg viewBox="0 0 10 10">
   <rect x="0" y="0" width="10" height="10" fill="currentColor" />
 </svg>''',
-        fontSize: 12.0,
+        theme: SvgTheme(
+          fontSize: 12.0,
+        ),
       );
 
       await tester.pumpWidget(DefaultSvgTheme(

@@ -225,8 +225,8 @@ class SvgPicture extends StatefulWidget {
   /// The `color` and `colorBlendMode` arguments, if specified, will be used to set a
   /// [ColorFilter] on any [Paint]s created for this drawing.
   ///
-  /// The `currentColor` argument, if provided, will override the default color
-  /// of any SVG element that inherits its color.
+  /// The `theme` argument, if provided, will override the default theme
+  /// used when parsing SVG elements.
   ///
   /// ## Assets in packages
   ///
@@ -297,8 +297,7 @@ class SvgPicture extends StatefulWidget {
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
     this.cacheColorFilter = false,
-    this.currentColor,
-    this.fontSize,
+    this.theme,
   })  : pictureProvider = ExactAssetPicture(
           allowDrawingOutsideViewBox == true
               ? svgStringDecoderOutsideViewBoxBuilder
@@ -336,8 +335,8 @@ class SvgPicture extends StatefulWidget {
   /// The `color` and `colorBlendMode` arguments, if specified, will be used to set a
   /// [ColorFilter] on any [Paint]s created for this drawing.
   ///
-  /// The `currentColor` argument, if provided, will override the default color
-  /// of any SVG element that inherits its color.
+  /// The `theme` argument, if provided, will override the default theme
+  /// used when parsing SVG elements.
   ///
   /// All network images are cached regardless of HTTP headers.
   ///
@@ -362,8 +361,7 @@ class SvgPicture extends StatefulWidget {
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
     this.cacheColorFilter = false,
-    this.currentColor,
-    this.fontSize,
+    this.theme,
   })  : pictureProvider = NetworkPicture(
           allowDrawingOutsideViewBox == true
               ? svgByteDecoderOutsideViewBoxBuilder
@@ -400,8 +398,8 @@ class SvgPicture extends StatefulWidget {
   /// The `color` and `colorBlendMode` arguments, if specified, will be used to set a
   /// [ColorFilter] on any [Paint]s created for this drawing.
   ///
-  /// The `currentColor` argument, if provided, will override the default color
-  /// of any SVG element that inherits its color.
+  /// The `theme` argument, if provided, will override the default theme
+  /// used when parsing SVG elements.
   ///
   /// On Android, this may require the
   /// `android.permission.READ_EXTERNAL_STORAGE` permission.
@@ -423,8 +421,7 @@ class SvgPicture extends StatefulWidget {
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
     this.cacheColorFilter = false,
-    this.currentColor,
-    this.fontSize,
+    this.theme,
   })  : pictureProvider = FilePicture(
           allowDrawingOutsideViewBox == true
               ? svgByteDecoderOutsideViewBoxBuilder
@@ -460,8 +457,8 @@ class SvgPicture extends StatefulWidget {
   /// The `color` and `colorBlendMode` arguments, if specified, will be used to set a
   /// [ColorFilter] on any [Paint]s created for this drawing.
   ///
-  /// The `currentColor` argument, if provided, will override the default color
-  /// of any SVG element that inherits its color.
+  /// The `theme` argument, if provided, will override the default theme
+  /// used when parsing SVG elements.
   ///
   /// If [excludeFromSemantics] is true, then [semanticLabel] will be ignored.
   SvgPicture.memory(
@@ -480,8 +477,7 @@ class SvgPicture extends StatefulWidget {
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
     this.cacheColorFilter = false,
-    this.currentColor,
-    this.fontSize,
+    this.theme,
   })  : pictureProvider = MemoryPicture(
           allowDrawingOutsideViewBox == true
               ? svgByteDecoderOutsideViewBoxBuilder
@@ -517,8 +513,8 @@ class SvgPicture extends StatefulWidget {
   /// The `color` and `colorBlendMode` arguments, if specified, will be used to set a
   /// [ColorFilter] on any [Paint]s created for this drawing.
   ///
-  /// The `currentColor` argument, if provided, will override the default color
-  /// of any SVG element that inherits its color.
+  /// The `theme` argument, if provided, will override the default theme
+  /// used when parsing SVG elements.
   ///
   /// If [excludeFromSemantics] is true, then [semanticLabel] will be ignored.
   SvgPicture.string(
@@ -537,8 +533,7 @@ class SvgPicture extends StatefulWidget {
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
     this.cacheColorFilter = false,
-    this.currentColor,
-    this.fontSize,
+    this.theme,
   })  : pictureProvider = StringPicture(
           allowDrawingOutsideViewBox == true
               ? svgStringDecoderOutsideViewBoxBuilder
@@ -705,13 +700,8 @@ class SvgPicture extends StatefulWidget {
   /// This defaults to false and must not be null.
   final bool cacheColorFilter;
 
-  /// The default color applied to SVG elements that inherit the color property.
-  /// See: https://developer.mozilla.org/en-US/docs/Web/CSS/color_value#currentcolor_keyword
-  final Color? currentColor;
-
-  /// The font size used when calculating em units of SVG elements.
-  /// See: https://www.w3.org/TR/SVG11/coords.html#Units
-  final double? fontSize;
+  /// The theme used when parsing SVG elements.
+  final SvgTheme? theme;
 
   @override
   State<SvgPicture> createState() => _SvgPictureState();
@@ -752,18 +742,24 @@ class _SvgPictureState extends State<SvgPicture> {
   }
 
   /// Updates the `currentColor` of the picture provider based on
-  /// either the widget's `currentColor` property or [DefaultSvgTheme].
+  /// either the widget's [SvgTheme] or an inherited [DefaultSvgTheme].
   ///
   /// Updates the `fontSize` of the picture provider based on
-  /// either the widget's `fontSize` property, [DefaultSvgTheme] or [DefaultTextStyle].
+  /// either the widget's [SvgTheme], an inherited [DefaultSvgTheme]
+  /// or an inherited [DefaultTextStyle]. If the property does not exist,
+  /// then the font size defaults to 14.0.
   void _updatePictureProvider() {
-    final SvgTheme? svgTheme = DefaultSvgTheme.of(context)?.theme;
+    final SvgTheme? defaultSvgTheme = DefaultSvgTheme.of(context)?.theme;
     final TextStyle defaultTextStyle = DefaultTextStyle.of(context).style;
 
-    final Color? currentColor = widget.currentColor ?? svgTheme?.currentColor;
-    final double fontSize = widget.fontSize ??
-        svgTheme?.fontSize ??
+    final Color? currentColor =
+        widget.theme?.currentColor ?? defaultSvgTheme?.currentColor;
+
+    final double fontSize = widget.theme?.fontSize ??
+        defaultSvgTheme?.fontSize ??
         defaultTextStyle.fontSize ??
+        // Fallback to the default font size if a font size is missing in DefaultTextStyle.
+        // See: https://api.flutter.dev/flutter/painting/TextStyle/fontSize.html
         14.0;
 
     widget.pictureProvider.currentColor = currentColor;
