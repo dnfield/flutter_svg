@@ -298,6 +298,7 @@ class SvgPicture extends StatefulWidget {
     this.clipBehavior = Clip.hardEdge,
     this.cacheColorFilter = false,
     this.currentColor,
+    this.fontSize,
   })  : pictureProvider = ExactAssetPicture(
           allowDrawingOutsideViewBox == true
               ? svgStringDecoderOutsideViewBoxBuilder
@@ -362,6 +363,7 @@ class SvgPicture extends StatefulWidget {
     this.clipBehavior = Clip.hardEdge,
     this.cacheColorFilter = false,
     this.currentColor,
+    this.fontSize,
   })  : pictureProvider = NetworkPicture(
           allowDrawingOutsideViewBox == true
               ? svgByteDecoderOutsideViewBoxBuilder
@@ -422,6 +424,7 @@ class SvgPicture extends StatefulWidget {
     this.clipBehavior = Clip.hardEdge,
     this.cacheColorFilter = false,
     this.currentColor,
+    this.fontSize,
   })  : pictureProvider = FilePicture(
           allowDrawingOutsideViewBox == true
               ? svgByteDecoderOutsideViewBoxBuilder
@@ -478,6 +481,7 @@ class SvgPicture extends StatefulWidget {
     this.clipBehavior = Clip.hardEdge,
     this.cacheColorFilter = false,
     this.currentColor,
+    this.fontSize,
   })  : pictureProvider = MemoryPicture(
           allowDrawingOutsideViewBox == true
               ? svgByteDecoderOutsideViewBoxBuilder
@@ -534,6 +538,7 @@ class SvgPicture extends StatefulWidget {
     this.clipBehavior = Clip.hardEdge,
     this.cacheColorFilter = false,
     this.currentColor,
+    this.fontSize,
   })  : pictureProvider = StringPicture(
           allowDrawingOutsideViewBox == true
               ? svgStringDecoderOutsideViewBoxBuilder
@@ -556,49 +561,63 @@ class SvgPicture extends StatefulWidget {
 
   /// A [PictureInfoDecoderBuilder] for [Uint8List]s that will clip to the viewBox.
   static final PictureInfoDecoderBuilder<Uint8List> svgByteDecoderBuilder =
-      (Color? currentColor) =>
+      (Color? currentColor, double fontSize) =>
           (Uint8List bytes, ColorFilter? colorFilter, String key) =>
               svg.svgPictureDecoder(
                 bytes,
                 false,
                 colorFilter,
-                SvgTheme(currentColor: currentColor),
+                SvgTheme(
+                  currentColor: currentColor,
+                  fontSize: fontSize,
+                ),
                 key,
               );
 
   /// A [PictureInfoDecoderBuilder] for strings that will clip to the viewBox.
   static final PictureInfoDecoderBuilder<String> svgStringDecoderBuilder =
-      (Color? currentColor) =>
+      (Color? currentColor, double fontSize) =>
           (String data, ColorFilter? colorFilter, String key) =>
               svg.svgPictureStringDecoder(
                 data,
                 false,
                 colorFilter,
-                SvgTheme(currentColor: currentColor),
+                SvgTheme(
+                  currentColor: currentColor,
+                  fontSize: fontSize,
+                ),
                 key,
               );
 
   /// A [PictureInfoDecoderBuilder] for [Uint8List]s that will not clip to the viewBox.
   static final PictureInfoDecoderBuilder<Uint8List>
-      svgByteDecoderOutsideViewBoxBuilder = (Color? currentColor) =>
+      svgByteDecoderOutsideViewBoxBuilder =
+      (Color? currentColor, double fontSize) =>
           (Uint8List bytes, ColorFilter? colorFilter, String key) =>
               svg.svgPictureDecoder(
                 bytes,
                 true,
                 colorFilter,
-                SvgTheme(currentColor: currentColor),
+                SvgTheme(
+                  currentColor: currentColor,
+                  fontSize: fontSize,
+                ),
                 key,
               );
 
   /// A [PictureInfoDecoderBuilder] for [String]s that will not clip to the viewBox.
   static final PictureInfoDecoderBuilder<String>
-      svgStringDecoderOutsideViewBoxBuilder = (Color? currentColor) =>
+      svgStringDecoderOutsideViewBoxBuilder =
+      (Color? currentColor, double fontSize) =>
           (String data, ColorFilter? colorFilter, String key) =>
               svg.svgPictureStringDecoder(
                 data,
                 true,
                 colorFilter,
-                SvgTheme(currentColor: currentColor),
+                SvgTheme(
+                  currentColor: currentColor,
+                  fontSize: fontSize,
+                ),
                 key,
               );
 
@@ -690,6 +709,10 @@ class SvgPicture extends StatefulWidget {
   /// See: https://developer.mozilla.org/en-US/docs/Web/CSS/color_value#currentcolor_keyword
   final Color? currentColor;
 
+  /// The font size used when calculating em units of SVG elements.
+  /// See: https://www.w3.org/TR/SVG11/coords.html#Units
+  final double? fontSize;
+
   @override
   State<SvgPicture> createState() => _SvgPictureState();
 }
@@ -728,12 +751,23 @@ class _SvgPictureState extends State<SvgPicture> {
     super.reassemble();
   }
 
-  /// Updates the `currentColor` of the picture provider based on either
-  /// the widget's `currentColor` property or [DefaultSvgTheme].
+  /// Updates the `currentColor` of the picture provider based on
+  /// either the widget's `currentColor` property or [DefaultSvgTheme].
+  ///
+  /// Updates the `fontSize` of the picture provider based on
+  /// either the widget's `fontSize` property, [DefaultSvgTheme] or [DefaultTextStyle].
   void _updatePictureProvider() {
     final SvgTheme? svgTheme = DefaultSvgTheme.of(context)?.theme;
+    final TextStyle defaultTextStyle = DefaultTextStyle.of(context).style;
+
     final Color? currentColor = widget.currentColor ?? svgTheme?.currentColor;
+    final double fontSize = widget.fontSize ??
+        svgTheme?.fontSize ??
+        defaultTextStyle.fontSize ??
+        14.0;
+
     widget.pictureProvider.currentColor = currentColor;
+    widget.pictureProvider.fontSize = fontSize;
   }
 
   void _resolveImage() {

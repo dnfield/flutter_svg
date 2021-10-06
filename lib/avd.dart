@@ -130,8 +130,8 @@ class AvdPicture extends StatefulWidget {
       : this(
             StringPicture(
               allowDrawingOutsideViewBox == true
-                  ? (_) => avdStringDecoderOutsideViewBox
-                  : (_) => avdStringDecoder,
+                  ? (_, __) => avdStringDecoderOutsideViewBox
+                  : (_, __) => avdStringDecoder,
               bytes,
             ),
             colorFilter: _getColorFilter(color, colorBlendMode),
@@ -153,8 +153,8 @@ class AvdPicture extends StatefulWidget {
       : this(
             ExactAssetPicture(
               allowDrawingOutsideViewBox == true
-                  ? (_) => avdStringDecoderOutsideViewBox
-                  : (_) => avdStringDecoder,
+                  ? (_, __) => avdStringDecoderOutsideViewBox
+                  : (_, __) => avdStringDecoder,
               assetName,
               bundle: bundle,
               package: package,

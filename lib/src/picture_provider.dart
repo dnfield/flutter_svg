@@ -28,9 +28,10 @@ typedef PictureInfoDecoder<T> = Future<PictureInfo> Function(
 );
 
 /// The signature of a builder that returns a [PictureInfoDecoder]
-/// based on the [currentColor].
+/// based on the [currentColor] and [fontSize].
 typedef PictureInfoDecoderBuilder<T> = PictureInfoDecoder<T> Function(
   Color? currentColor,
+  double fontSize,
 );
 
 /// Creates an [PictureConfiguration] based on the given [BuildContext] (and
@@ -330,6 +331,14 @@ abstract class PictureProvider<T> {
   /// Sets the [_currentColor] to [color].
   set currentColor(Color? color);
 
+  /// The font size used when calculating em units of SVG elements.
+  @visibleForTesting
+  double? get fontSize => _fontSize;
+  double? _fontSize;
+
+  /// Sets the [_fontSize] to [size].
+  set fontSize(double? size);
+
   /// Resolves this Picture provider using the given `configuration`, returning
   /// an [PictureStream].
   ///
@@ -449,7 +458,6 @@ abstract class AssetBundlePictureProvider
   /// const constructors so that they can be used in const expressions.
   AssetBundlePictureProvider(this.decoderBuilder, ColorFilter? colorFilter)
       : assert(decoderBuilder != null), // ignore: unnecessary_null_comparison
-        decoder = decoderBuilder(null),
         super(colorFilter);
 
   /// The decoder builder to build a [decoder] when [currentColor] changes.
@@ -457,12 +465,24 @@ abstract class AssetBundlePictureProvider
 
   /// The decoder to use to turn a string into a [PictureInfo] object.
   @visibleForTesting
-  PictureInfoDecoder<String> decoder;
+  PictureInfoDecoder<String>? decoder;
 
   @override
   set currentColor(Color? color) {
     _currentColor = color;
-    decoder = decoderBuilder(_currentColor);
+
+    if (_currentColor != null && _fontSize != null) {
+      decoder = decoderBuilder(_currentColor, _fontSize!);
+    }
+  }
+
+  @override
+  set fontSize(double? size) {
+    _fontSize = size;
+
+    if (_currentColor != null && _fontSize != null) {
+      decoder = decoderBuilder(_currentColor, _fontSize!);
+    }
   }
 
   /// Converts a key into an [PictureStreamCompleter], and begins fetching the
@@ -482,11 +502,15 @@ abstract class AssetBundlePictureProvider
   ///
   /// This function is used by [load].
   @protected
-  Future<PictureInfo> _loadAsync(
+  Future<PictureInfo?> _loadAsync(
       AssetBundlePictureKey key, PictureErrorListener? onError) async {
+    if (decoder == null) {
+      return null;
+    }
+
     final String data = await key.bundle.loadString(key.name);
     if (onError != null) {
-      return decoder(
+      return decoder!(
         data,
         key.colorFilter,
         key.toString(),
@@ -495,7 +519,7 @@ abstract class AssetBundlePictureProvider
         return Future<PictureInfo>.error(error, stack);
       });
     }
-    return decoder(data, key.colorFilter, key.toString());
+    return decoder!(data, key.colorFilter, key.toString());
   }
 }
 
@@ -516,7 +540,6 @@ class NetworkPicture extends PictureProvider<NetworkPicture> {
   NetworkPicture(this.decoderBuilder, this.url,
       {this.headers, ColorFilter? colorFilter})
       : assert(url != null), // ignore: unnecessary_null_comparison
-        decoder = decoderBuilder(null),
         super(colorFilter);
 
   /// The decoder builder to build a [decoder] when [currentColor] changes.
@@ -524,7 +547,7 @@ class NetworkPicture extends PictureProvider<NetworkPicture> {
 
   /// The decoder to use to turn a [Uint8List] into a [PictureInfo] object.
   @visibleForTesting
-  PictureInfoDecoder<Uint8List> decoder;
+  PictureInfoDecoder<Uint8List>? decoder;
 
   /// The URL from which the picture will be fetched.
   final String url;
@@ -535,7 +558,19 @@ class NetworkPicture extends PictureProvider<NetworkPicture> {
   @override
   set currentColor(Color? color) {
     _currentColor = color;
-    decoder = decoderBuilder(_currentColor);
+
+    if (_currentColor != null && _fontSize != null) {
+      decoder = decoderBuilder(_currentColor, _fontSize!);
+    }
+  }
+
+  @override
+  set fontSize(double? size) {
+    _fontSize = size;
+
+    if (_currentColor != null && _fontSize != null) {
+      decoder = decoderBuilder(_currentColor, _fontSize!);
+    }
   }
 
   @override
@@ -553,13 +588,18 @@ class NetworkPicture extends PictureProvider<NetworkPicture> {
     });
   }
 
-  Future<PictureInfo> _loadAsync(NetworkPicture key,
+  Future<PictureInfo?> _loadAsync(NetworkPicture key,
       {PictureErrorListener? onError}) async {
     assert(key == this);
+
+    if (decoder == null) {
+      return null;
+    }
+
     final Uint8List bytes = await httpGet(url, headers: headers);
 
     if (onError != null) {
-      return decoder(
+      return decoder!(
         bytes,
         colorFilter,
         key.toString(),
@@ -568,7 +608,7 @@ class NetworkPicture extends PictureProvider<NetworkPicture> {
         return Future<PictureInfo>.error(error, stack);
       });
     }
-    return decoder(bytes, colorFilter, key.toString());
+    return decoder!(bytes, colorFilter, key.toString());
   }
 
   @override
@@ -578,7 +618,9 @@ class NetworkPicture extends PictureProvider<NetworkPicture> {
     }
     return other is NetworkPicture &&
         url == other.url &&
-        colorFilter == other.colorFilter;
+        colorFilter == other.colorFilter &&
+        currentColor == other.currentColor &&
+        fontSize == other.fontSize;
   }
 
   @override
@@ -602,7 +644,7 @@ class FilePicture extends PictureProvider<FilePicture> {
   FilePicture(this.decoderBuilder, this.file, {ColorFilter? colorFilter})
       : assert(decoderBuilder != null), // ignore: unnecessary_null_comparison
         assert(file != null), // ignore: unnecessary_null_comparison
-        decoder = decoderBuilder(null),
+
         super(colorFilter);
 
   /// The file to decode into a picture.
@@ -613,12 +655,24 @@ class FilePicture extends PictureProvider<FilePicture> {
 
   /// The [PictureInfoDecoder] to use for loading this picture.
   @visibleForTesting
-  PictureInfoDecoder<Uint8List> decoder;
+  PictureInfoDecoder<Uint8List>? decoder;
 
   @override
   set currentColor(Color? color) {
     _currentColor = color;
-    decoder = decoderBuilder(_currentColor);
+
+    if (_currentColor != null && _fontSize != null) {
+      decoder = decoderBuilder(_currentColor, _fontSize!);
+    }
+  }
+
+  @override
+  set fontSize(double? size) {
+    _fontSize = size;
+
+    if (_currentColor != null && _fontSize != null) {
+      decoder = decoderBuilder(_currentColor, _fontSize!);
+    }
   }
 
   @override
@@ -639,12 +693,16 @@ class FilePicture extends PictureProvider<FilePicture> {
       {PictureErrorListener? onError}) async {
     assert(key == this);
 
+    if (decoder == null) {
+      return null;
+    }
+
     final Uint8List data = await file.readAsBytes();
     if (data.isEmpty) {
       return null;
     }
     if (onError != null) {
-      return decoder(
+      return decoder!(
         data,
         colorFilter,
         key.toString(),
@@ -653,7 +711,7 @@ class FilePicture extends PictureProvider<FilePicture> {
         return Future<PictureInfo>.error(error, stack);
       });
     }
-    return decoder(data, colorFilter, key.toString());
+    return decoder!(data, colorFilter, key.toString());
   }
 
   @override
@@ -663,7 +721,9 @@ class FilePicture extends PictureProvider<FilePicture> {
     }
     return other is FilePicture &&
         file.path == other.file.path &&
-        other.colorFilter == colorFilter;
+        other.colorFilter == colorFilter &&
+        currentColor == other.currentColor &&
+        fontSize == other.fontSize;
   }
 
   @override
@@ -692,7 +752,7 @@ class MemoryPicture extends PictureProvider<MemoryPicture> {
   /// The arguments must not be null.
   MemoryPicture(this.decoderBuilder, this.bytes, {ColorFilter? colorFilter})
       : assert(bytes != null), // ignore: unnecessary_null_comparison
-        decoder = decoderBuilder(null),
+
         super(colorFilter);
 
   /// The decoder builder to build a [decoder] when [currentColor] changes.
@@ -700,7 +760,7 @@ class MemoryPicture extends PictureProvider<MemoryPicture> {
 
   /// The [PictureInfoDecoder] to use when drawing this picture.
   @visibleForTesting
-  PictureInfoDecoder<Uint8List> decoder;
+  PictureInfoDecoder<Uint8List>? decoder;
 
   /// The bytes to decode into a picture.
   final Uint8List bytes;
@@ -708,7 +768,19 @@ class MemoryPicture extends PictureProvider<MemoryPicture> {
   @override
   set currentColor(Color? color) {
     _currentColor = color;
-    decoder = decoderBuilder(_currentColor);
+
+    if (_currentColor != null && _fontSize != null) {
+      decoder = decoderBuilder(_currentColor, _fontSize!);
+    }
+  }
+
+  @override
+  set fontSize(double? size) {
+    _fontSize = size;
+
+    if (_currentColor != null && _fontSize != null) {
+      decoder = decoderBuilder(_currentColor, _fontSize!);
+    }
   }
 
   @override
@@ -722,11 +794,16 @@ class MemoryPicture extends PictureProvider<MemoryPicture> {
     return OneFramePictureStreamCompleter(_loadAsync(key, onError: onError));
   }
 
-  Future<PictureInfo> _loadAsync(MemoryPicture key,
+  Future<PictureInfo?> _loadAsync(MemoryPicture key,
       {PictureErrorListener? onError}) async {
     assert(key == this);
+
+    if (decoder == null) {
+      return null;
+    }
+
     if (onError != null) {
-      return decoder(
+      return decoder!(
         bytes,
         colorFilter,
         key.toString(),
@@ -735,7 +812,7 @@ class MemoryPicture extends PictureProvider<MemoryPicture> {
         return Future<PictureInfo>.error(error, stack);
       });
     }
-    return decoder(bytes, colorFilter, key.toString());
+    return decoder!(bytes, colorFilter, key.toString());
   }
 
   @override
@@ -745,7 +822,9 @@ class MemoryPicture extends PictureProvider<MemoryPicture> {
     }
     return other is MemoryPicture &&
         bytes == other.bytes &&
-        colorFilter == other.colorFilter;
+        colorFilter == other.colorFilter &&
+        currentColor == other.currentColor &&
+        fontSize == other.fontSize;
   }
 
   @override
@@ -773,7 +852,7 @@ class StringPicture extends PictureProvider<StringPicture> {
   /// The arguments must not be null.
   StringPicture(this.decoderBuilder, this.string, {ColorFilter? colorFilter})
       : assert(string != null), // ignore: unnecessary_null_comparison
-        decoder = decoderBuilder(null),
+
         super(colorFilter);
 
   /// The decoder builder to build a [decoder] when [currentColor] changes.
@@ -781,7 +860,7 @@ class StringPicture extends PictureProvider<StringPicture> {
 
   /// The [PictureInfoDecoder] to use for decoding this picture.
   @visibleForTesting
-  PictureInfoDecoder<String> decoder;
+  PictureInfoDecoder<String>? decoder;
 
   /// The string to decode into a picture.
   final String string;
@@ -789,7 +868,19 @@ class StringPicture extends PictureProvider<StringPicture> {
   @override
   set currentColor(Color? color) {
     _currentColor = color;
-    decoder = decoderBuilder(_currentColor);
+
+    if (_currentColor != null && _fontSize != null) {
+      decoder = decoderBuilder(_currentColor, _fontSize!);
+    }
+  }
+
+  @override
+  set fontSize(double? size) {
+    _fontSize = size;
+
+    if (_currentColor != null && _fontSize != null) {
+      decoder = decoderBuilder(_currentColor, _fontSize!);
+    }
   }
 
   @override
@@ -803,13 +894,18 @@ class StringPicture extends PictureProvider<StringPicture> {
     return OneFramePictureStreamCompleter(_loadAsync(key, onError: onError));
   }
 
-  Future<PictureInfo> _loadAsync(
+  Future<PictureInfo?> _loadAsync(
     StringPicture key, {
     PictureErrorListener? onError,
-  }) {
+  }) async {
     assert(key == this);
+
+    if (decoder == null) {
+      return null;
+    }
+
     if (onError != null) {
-      return decoder(
+      return decoder!(
         string,
         colorFilter,
         key.toString(),
@@ -818,7 +914,7 @@ class StringPicture extends PictureProvider<StringPicture> {
         return Future<PictureInfo>.error(error, stack);
       });
     }
-    return decoder(string, colorFilter, key.toString());
+    return decoder!(string, colorFilter, key.toString());
   }
 
   @override
@@ -828,7 +924,9 @@ class StringPicture extends PictureProvider<StringPicture> {
     }
     return other is StringPicture &&
         string == other.string &&
-        colorFilter == other.colorFilter;
+        colorFilter == other.colorFilter &&
+        currentColor == other.currentColor &&
+        fontSize == other.fontSize;
   }
 
   @override
@@ -970,7 +1068,9 @@ class ExactAssetPicture extends AssetBundlePictureProvider {
     return other is ExactAssetPicture &&
         keyName == other.keyName &&
         bundle == other.bundle &&
-        colorFilter == other.colorFilter;
+        colorFilter == other.colorFilter &&
+        currentColor == other.currentColor &&
+        fontSize == other.fontSize;
   }
 
   @override
