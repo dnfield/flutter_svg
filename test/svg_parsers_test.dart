@@ -8,6 +8,12 @@ import 'package:test/test.dart';
 import 'package:vector_math/vector_math_64.dart';
 
 void main() {
+  late SvgTheme theme;
+
+  setUp(() {
+    theme = const SvgTheme(fontSize: 14.0);
+  });
+
   test('SVG Multiple transform parser tests', () {
     Matrix4 expected = Matrix4.identity();
     expected.translate(0.338957, 0.010104, 0);
@@ -113,26 +119,35 @@ void main() {
   }
 
   test('Font size parsing tests', () {
-    expect(parseFontSize(null), isNull);
-    expect(parseFontSize(''), isNull);
-    expect(parseFontSize('1'), 1);
-    expect(parseFontSize('  1 '), 1);
-    expect(parseFontSize('xx-small'), 10);
-    expect(parseFontSize('x-small'), 12);
-    expect(parseFontSize('small'), 14);
-    expect(parseFontSize('medium'), 18);
-    expect(parseFontSize('large'), 22);
-    expect(parseFontSize('x-large'), 26);
-    expect(parseFontSize('xx-large'), 32);
+    const double fontSize = 14.0;
+    expect(parseFontSize(null, fontSize: fontSize), isNull);
+    expect(parseFontSize('', fontSize: fontSize), isNull);
+    expect(parseFontSize('1', fontSize: fontSize), 1);
+    expect(parseFontSize('  1 ', fontSize: fontSize), 1);
+    expect(parseFontSize('xx-small', fontSize: fontSize), 10);
+    expect(parseFontSize('x-small', fontSize: fontSize), 12);
+    expect(parseFontSize('small', fontSize: fontSize), 14);
+    expect(parseFontSize('medium', fontSize: fontSize), 18);
+    expect(parseFontSize('large', fontSize: fontSize), 22);
+    expect(parseFontSize('x-large', fontSize: fontSize), 26);
+    expect(parseFontSize('xx-large', fontSize: fontSize), 32);
 
-    expect(parseFontSize('larger'), parseFontSize('large'));
-    expect(parseFontSize('larger', parentValue: parseFontSize('large')),
-        parseFontSize('large')! * 1.2);
-    expect(parseFontSize('smaller'), parseFontSize('small'));
-    expect(parseFontSize('smaller', parentValue: parseFontSize('large')),
-        parseFontSize('large')! / 1.2);
+    expect(parseFontSize('larger', fontSize: fontSize),
+        parseFontSize('large', fontSize: fontSize));
+    expect(
+        parseFontSize('larger',
+            fontSize: fontSize,
+            parentValue: parseFontSize('large', fontSize: fontSize)),
+        parseFontSize('large', fontSize: fontSize)! * 1.2);
+    expect(parseFontSize('smaller', fontSize: fontSize),
+        parseFontSize('small', fontSize: fontSize));
+    expect(
+        parseFontSize('smaller',
+            fontSize: fontSize,
+            parentValue: parseFontSize('large', fontSize: fontSize)),
+        parseFontSize('large', fontSize: fontSize)! / 1.2);
 
-    expect(() => parseFontSize('invalid'),
+    expect(() => parseFontSize('invalid', fontSize: fontSize),
         throwsA(const TypeMatcher<StateError>()));
   });
 
@@ -140,6 +155,7 @@ void main() {
     final SvgParser parser = SvgParser();
     final DrawableRoot root = await parser.parse(
       '<svg id="test" viewBox="0 0 10 10"><text /></svg>',
+      theme: theme,
     );
     expect(root.children.isEmpty, true);
     expect(root.id == 'test', true);
@@ -168,7 +184,7 @@ void main() {
     <path id="path4" d="M79.5 170.7 120.9 156.4 107.4 142.8" fill="url(#triangleGradient)" />
 </svg>''';
     final SvgParser parser = SvgParser();
-    final DrawableRoot root = await parser.parse(svgStr);
+    final DrawableRoot root = await parser.parse(svgStr, theme: theme);
 
     expect(root.id == 'svgRoot', true);
     expect(find<DrawableGroup>(root, 'group1') != null, true);
@@ -199,7 +215,8 @@ void main() {
 </svg>''';
 
     final SvgParser parser = SvgParser();
-    final DrawableRoot root = await parser.parse(svgStr);
+    final DrawableRoot root = await parser.parse(svgStr, theme: theme);
+
     expect(root.id!.isEmpty, true);
     expect(find<DrawableGroup>(root, 'Page-1') != null, true);
     expect(find<DrawableGroup>(root, 'iPhone-8') != null, true);
@@ -230,7 +247,7 @@ void main() {
 </svg>''';
     final SvgParser parser = SvgParser();
     expect(
-      parser.parse(svgStr, warningsAsErrors: true),
+      parser.parse(svgStr, theme: theme, warningsAsErrors: true),
       throwsA(anything),
     );
   });
@@ -257,7 +274,7 @@ void main() {
 </svg>''';
 
     final SvgParser parser = SvgParser();
-    expect(await parser.parse(svgStr), isA<DrawableRoot>());
+    expect(await parser.parse(svgStr, theme: theme), isA<DrawableRoot>());
   });
 
   test('Respects whitespace attribute', () async {
@@ -268,7 +285,7 @@ void main() {
 </svg>''';
 
     final SvgParser parser = SvgParser();
-    final DrawableRoot root = await parser.parse(svgStr);
+    final DrawableRoot root = await parser.parse(svgStr, theme: theme);
 
     expect(find<DrawableText>(root, 'preserve-space') != null, true);
     // Empty text elements get removed
@@ -290,7 +307,10 @@ void main() {
         final SvgParser parser = SvgParser();
         final DrawableRoot root = await parser.parse(
           svgStr,
-          theme: const SvgTheme(currentColor: currentColor),
+          theme: const SvgTheme(
+            currentColor: currentColor,
+            fontSize: 14.0,
+          ),
         );
 
         final DrawableShape? circle = find<DrawableShape>(root, 'circle');
@@ -318,7 +338,10 @@ void main() {
         final SvgParser parser = SvgParser();
         final DrawableRoot root = await parser.parse(
           svgStr,
-          theme: const SvgTheme(currentColor: currentColor),
+          theme: const SvgTheme(
+            currentColor: currentColor,
+            fontSize: 14.0,
+          ),
         );
 
         final DrawableShape? circle = find<DrawableShape>(root, 'circle');
@@ -344,7 +367,10 @@ void main() {
         final SvgParser parser = SvgParser();
         final DrawableRoot root = await parser.parse(
           svgStr,
-          theme: const SvgTheme(currentColor: Color(0xFFB0E3BE)),
+          theme: const SvgTheme(
+            currentColor: Color(0xFFB0E3BE),
+            fontSize: 14.0,
+          ),
         );
 
         final DrawableShape? circle = find<DrawableShape>(root, 'circle');
@@ -372,7 +398,10 @@ void main() {
         final SvgParser parser = SvgParser();
         final DrawableRoot root = await parser.parse(
           svgStr,
-          theme: const SvgTheme(currentColor: currentColor),
+          theme: const SvgTheme(
+            currentColor: currentColor,
+            fontSize: 14.0,
+          ),
         );
 
         final DrawableShape? circle = find<DrawableShape>(root, 'circle');
@@ -400,7 +429,10 @@ void main() {
         final SvgParser parser = SvgParser();
         final DrawableRoot root = await parser.parse(
           svgStr,
-          theme: const SvgTheme(currentColor: currentColor),
+          theme: const SvgTheme(
+            currentColor: currentColor,
+            fontSize: 14.0,
+          ),
         );
 
         final DrawableShape? circle = find<DrawableShape>(root, 'circle');
@@ -426,7 +458,10 @@ void main() {
         final SvgParser parser = SvgParser();
         final DrawableRoot root = await parser.parse(
           svgStr,
-          theme: const SvgTheme(currentColor: Color(0xFFB0E3BE)),
+          theme: const SvgTheme(
+            currentColor: Color(0xFFB0E3BE),
+            fontSize: 14.0,
+          ),
         );
 
         final DrawableShape? circle = find<DrawableShape>(root, 'circle');
@@ -460,7 +495,10 @@ void main() {
         final SvgParser parser = SvgParser();
         final DrawableRoot root = await parser.parse(
           svgStr,
-          theme: const SvgTheme(currentColor: currentColor),
+          theme: const SvgTheme(
+            currentColor: currentColor,
+            fontSize: 14.0,
+          ),
         );
 
         final DrawableLinearGradient? gradient =
@@ -498,7 +536,10 @@ void main() {
         final SvgParser parser = SvgParser();
         final DrawableRoot root = await parser.parse(
           svgStr,
-          theme: const SvgTheme(currentColor: currentColor),
+          theme: const SvgTheme(
+            currentColor: currentColor,
+            fontSize: 14.0,
+          ),
         );
 
         final DrawableLinearGradient? gradient =
@@ -536,7 +577,10 @@ void main() {
         final SvgParser parser = SvgParser();
         final DrawableRoot root = await parser.parse(
           svgStr,
-          theme: const SvgTheme(currentColor: Color(0xFFB0E3BE)),
+          theme: const SvgTheme(
+            currentColor: Color(0xFFB0E3BE),
+            fontSize: 14.0,
+          ),
         );
 
         final DrawableLinearGradient? gradient =

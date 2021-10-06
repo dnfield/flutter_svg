@@ -73,11 +73,14 @@ void main() {
     );
 
     expect(PictureProvider.cache.count, 0);
+
+    final PictureProvider pictureProvider = StringPicture(
+      SvgPicture.svgStringDecoderBuilder,
+      svgString,
+    )..fontSize = 14.0;
+
     await precachePicture(
-      StringPicture(
-        SvgPicture.svgStringDecoderBuilder,
-        svgString,
-      ),
+      pictureProvider,
       tester.element(find.text('test_text')),
     );
     expect(PictureProvider.cache.count, 1);
@@ -133,11 +136,15 @@ void main() {
       expect(error, isInstanceOf<XmlParserException>());
     }
 
+    final PictureProvider pictureProvider = StringPicture(
+      SvgPicture.svgStringDecoderBuilder,
+      svgString,
+    )
+      ..currentColor = const Color(0xFF05290E)
+      ..fontSize = 14.0;
+
     await precachePicture(
-      StringPicture(
-        SvgPicture.svgStringDecoderBuilder,
-        svgString,
-      ),
+      pictureProvider,
       tester.element(find.text('test_text')),
       onError: errorListener,
     );

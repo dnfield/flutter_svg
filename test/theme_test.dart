@@ -11,8 +11,23 @@ void main() {
         const Color currentColor = Color(0xFFB0E3BE);
 
         expect(
-          SvgTheme(currentColor: currentColor).currentColor,
+          SvgTheme(
+            currentColor: currentColor,
+            fontSize: 14.0,
+          ).currentColor,
           equals(currentColor),
+        );
+      });
+
+      test('sets fontSize', () {
+        const double fontSize = 14.0;
+
+        expect(
+          SvgTheme(
+            currentColor: Color(0xFFB0E3BE),
+            fontSize: fontSize,
+          ).fontSize,
+          equals(fontSize),
         );
       });
     });
@@ -21,10 +36,12 @@ void main() {
       expect(
         SvgTheme(
           currentColor: Color(0xFF6F2173),
+          fontSize: 14.0,
         ),
         equals(
           SvgTheme(
             currentColor: Color(0xFF6F2173),
+            fontSize: 14.0,
           ),
         ),
       );

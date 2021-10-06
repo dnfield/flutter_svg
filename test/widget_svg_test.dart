@@ -567,7 +567,7 @@ void main() {
       (WidgetTester tester) async {
     await svg.fromSvgString(
         '<svg viewBox="0 0 166 202"><svg viewBox="0 0 166 202"></svg></svg>',
-        const SvgTheme(),
+        const SvgTheme(fontSize: 14.0),
         'test');
     final UnsupportedError error = tester.takeException() as UnsupportedError;
     expect(error.message, 'Unsupported nested <svg> element.');

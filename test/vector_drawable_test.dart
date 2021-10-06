@@ -35,7 +35,7 @@ void main() {
 ''',
       false,
       const ColorFilter.mode(Color(0xFF00FF00), BlendMode.color),
-      const SvgTheme(),
+      const SvgTheme(fontSize: 14.0),
       'test',
     );
     final Image image = await info.picture.toImage(2, 2);

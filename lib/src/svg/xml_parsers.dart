@@ -123,9 +123,9 @@ TileMode parseTileMode(Map<String, String> attributes) {
 ///
 /// Does not currently support percentages.
 CircularIntervalList<double>? parseDashArray(
-  Map<String, String> attributes,
-  double fontSize,
-) {
+  Map<String, String> attributes, {
+  required double fontSize,
+}) {
   final String? rawDashArray = getAttribute(attributes, 'stroke-dasharray');
   if (rawDashArray == '') {
     return null;
@@ -141,9 +141,9 @@ CircularIntervalList<double>? parseDashArray(
 
 /// Parses a @stroke-dashoffset into a [DashOffset].
 DashOffset? parseDashOffset(
-  Map<String, String> attributes,
-  double fontSize,
-) {
+  Map<String, String> attributes, {
+  required double fontSize,
+}) {
   final String? rawDashOffset = getAttribute(attributes, 'stroke-dashoffset');
   if (rawDashOffset == '') {
     return null;
@@ -510,8 +510,14 @@ DrawableStyle parseStyle(
       currentColor,
       fontSize,
     ),
-    dashArray: parseDashArray(attributes, fontSize),
-    dashOffset: parseDashOffset(attributes, fontSize),
+    dashArray: parseDashArray(
+      attributes,
+      fontSize: fontSize,
+    ),
+    dashOffset: parseDashOffset(
+      attributes,
+      fontSize: fontSize,
+    ),
     fill: parseFill(
       key,
       attributes,

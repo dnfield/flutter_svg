@@ -80,35 +80,65 @@ void main() {
         parseEvents('<svg />').first as XmlStartElementEvent;
 
     expect(
-        parseViewBox(svgWithViewBoxAndWidthHeight.attributes.toAttributeMap())!
+        parseViewBox(
+          svgWithViewBoxAndWidthHeight.attributes.toAttributeMap(),
+          fontSize: 14.0,
+        )!
             .size,
         const Size(50, 50));
     expect(
-        parseViewBox(svgWithViewBox.attributes.toAttributeMap())!.viewBoxRect,
+        parseViewBox(
+          svgWithViewBox.attributes.toAttributeMap(),
+          fontSize: 14.0,
+        )!
+            .viewBoxRect,
         rect);
     expect(
-        parseViewBox(svgWithViewBox.attributes.toAttributeMap())!.viewBoxOffset,
+        parseViewBox(
+          svgWithViewBox.attributes.toAttributeMap(),
+          fontSize: 14.0,
+        )!
+            .viewBoxOffset,
         Offset.zero);
     expect(
-        parseViewBox(svgWithViewBoxAndWidthHeight.attributes.toAttributeMap())!
+        parseViewBox(
+          svgWithViewBoxAndWidthHeight.attributes.toAttributeMap(),
+          fontSize: 14.0,
+        )!
             .viewBoxRect,
         rect);
     expect(
-        parseViewBox(svgWithWidthHeight.attributes.toAttributeMap())!
+        parseViewBox(
+          svgWithWidthHeight.attributes.toAttributeMap(),
+          fontSize: 14.0,
+        )!
             .viewBoxRect,
         rect);
     expect(
-        parseViewBox(svgWithNoSizeInfo.attributes.toAttributeMap(),
-            nullOk: true),
+        parseViewBox(
+          svgWithNoSizeInfo.attributes.toAttributeMap(),
+          fontSize: 14.0,
+          nullOk: true,
+        ),
         null);
-    expect(() => parseViewBox(svgWithNoSizeInfo.attributes.toAttributeMap()),
+    expect(
+        () => parseViewBox(
+              svgWithNoSizeInfo.attributes.toAttributeMap(),
+              fontSize: 14.0,
+            ),
         throwsStateError);
     expect(
-        parseViewBox(svgWithViewBoxMinXMinY.attributes.toAttributeMap())!
+        parseViewBox(
+          svgWithViewBoxMinXMinY.attributes.toAttributeMap(),
+          fontSize: 14.0,
+        )!
             .viewBoxRect,
         rect);
     expect(
-        parseViewBox(svgWithViewBoxMinXMinY.attributes.toAttributeMap())!
+        parseViewBox(
+          svgWithViewBoxMinXMinY.attributes.toAttributeMap(),
+          fontSize: 14.0,
+        )!
             .viewBoxOffset,
         const Offset(-42.0, -56.0));
   });
@@ -148,8 +178,18 @@ void main() {
             as XmlStartElementEvent;
 
     // TODO(dnfield): DashOffset is completely opaque right now, maybe expose the raw value?
-    expect(parseDashOffset(abs.attributes.toAttributeMap()), isNotNull);
-    expect(parseDashOffset(pct.attributes.toAttributeMap()), isNotNull);
+    expect(
+        parseDashOffset(
+          abs.attributes.toAttributeMap(),
+          fontSize: 14.0,
+        ),
+        isNotNull);
+    expect(
+        parseDashOffset(
+          pct.attributes.toAttributeMap(),
+          fontSize: 14.0,
+        ),
+        isNotNull);
   });
 
   test('font-weight tests', () {
@@ -213,6 +253,7 @@ void main() {
         null,
         null,
         currentColor: currentColor,
+        fontSize: 14.0,
       );
 
       expect(svgStyle.stroke?.color, equals(currentColor));
@@ -231,6 +272,7 @@ void main() {
         null,
         null,
         currentColor: currentColor,
+        fontSize: 14.0,
       );
 
       expect(svgStyle.fill?.color, equals(currentColor));

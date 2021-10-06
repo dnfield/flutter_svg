@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_svg/parser.dart';
+import 'package:flutter_svg/src/svg/theme.dart';
 
 import 'package:flutter_test/flutter_test.dart';
 
@@ -23,7 +24,8 @@ void main() {
 ''';
 
     final SvgParser parser = SvgParser();
-    await parser.parse(svgStr, key: 'some_svg.svg');
+    await parser.parse(svgStr,
+        theme: const SvgTheme(fontSize: 14.0), key: 'some_svg.svg');
 
     expect(
       error.context.toString(),
