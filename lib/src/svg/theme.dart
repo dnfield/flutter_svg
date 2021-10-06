@@ -27,5 +27,5 @@ class SvgTheme {
   }
 
   @override
-  int get hashCode => currentColor.hashCode;
+  int get hashCode => hashValues(currentColor, fontSize);
 }
