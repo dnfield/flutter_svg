@@ -471,7 +471,7 @@ abstract class AssetBundlePictureProvider
   set currentColor(Color? color) {
     _currentColor = color;
 
-    if (_currentColor != null && _fontSize != null) {
+    if (_fontSize != null) {
       decoder = decoderBuilder(_currentColor, _fontSize!);
     }
   }
@@ -480,7 +480,7 @@ abstract class AssetBundlePictureProvider
   set fontSize(double? size) {
     _fontSize = size;
 
-    if (_currentColor != null && _fontSize != null) {
+    if (_fontSize != null) {
       decoder = decoderBuilder(_currentColor, _fontSize!);
     }
   }
@@ -559,7 +559,7 @@ class NetworkPicture extends PictureProvider<NetworkPicture> {
   set currentColor(Color? color) {
     _currentColor = color;
 
-    if (_currentColor != null && _fontSize != null) {
+    if (_fontSize != null) {
       decoder = decoderBuilder(_currentColor, _fontSize!);
     }
   }
@@ -568,7 +568,7 @@ class NetworkPicture extends PictureProvider<NetworkPicture> {
   set fontSize(double? size) {
     _fontSize = size;
 
-    if (_currentColor != null && _fontSize != null) {
+    if (_fontSize != null) {
       decoder = decoderBuilder(_currentColor, _fontSize!);
     }
   }
@@ -644,7 +644,6 @@ class FilePicture extends PictureProvider<FilePicture> {
   FilePicture(this.decoderBuilder, this.file, {ColorFilter? colorFilter})
       : assert(decoderBuilder != null), // ignore: unnecessary_null_comparison
         assert(file != null), // ignore: unnecessary_null_comparison
-
         super(colorFilter);
 
   /// The file to decode into a picture.
@@ -661,7 +660,7 @@ class FilePicture extends PictureProvider<FilePicture> {
   set currentColor(Color? color) {
     _currentColor = color;
 
-    if (_currentColor != null && _fontSize != null) {
+    if (_fontSize != null) {
       decoder = decoderBuilder(_currentColor, _fontSize!);
     }
   }
@@ -670,7 +669,7 @@ class FilePicture extends PictureProvider<FilePicture> {
   set fontSize(double? size) {
     _fontSize = size;
 
-    if (_currentColor != null && _fontSize != null) {
+    if (_fontSize != null) {
       decoder = decoderBuilder(_currentColor, _fontSize!);
     }
   }
@@ -752,7 +751,6 @@ class MemoryPicture extends PictureProvider<MemoryPicture> {
   /// The arguments must not be null.
   MemoryPicture(this.decoderBuilder, this.bytes, {ColorFilter? colorFilter})
       : assert(bytes != null), // ignore: unnecessary_null_comparison
-
         super(colorFilter);
 
   /// The decoder builder to build a [decoder] when [currentColor] changes.
@@ -769,7 +767,7 @@ class MemoryPicture extends PictureProvider<MemoryPicture> {
   set currentColor(Color? color) {
     _currentColor = color;
 
-    if (_currentColor != null && _fontSize != null) {
+    if (_fontSize != null) {
       decoder = decoderBuilder(_currentColor, _fontSize!);
     }
   }
@@ -778,7 +776,7 @@ class MemoryPicture extends PictureProvider<MemoryPicture> {
   set fontSize(double? size) {
     _fontSize = size;
 
-    if (_currentColor != null && _fontSize != null) {
+    if (_fontSize != null) {
       decoder = decoderBuilder(_currentColor, _fontSize!);
     }
   }
@@ -852,7 +850,6 @@ class StringPicture extends PictureProvider<StringPicture> {
   /// The arguments must not be null.
   StringPicture(this.decoderBuilder, this.string, {ColorFilter? colorFilter})
       : assert(string != null), // ignore: unnecessary_null_comparison
-
         super(colorFilter);
 
   /// The decoder builder to build a [decoder] when [currentColor] changes.
@@ -869,7 +866,7 @@ class StringPicture extends PictureProvider<StringPicture> {
   set currentColor(Color? color) {
     _currentColor = color;
 
-    if (_currentColor != null && _fontSize != null) {
+    if (_fontSize != null) {
       decoder = decoderBuilder(_currentColor, _fontSize!);
     }
   }
@@ -878,7 +875,7 @@ class StringPicture extends PictureProvider<StringPicture> {
   set fontSize(double? size) {
     _fontSize = size;
 
-    if (_currentColor != null && _fontSize != null) {
+    if (_fontSize != null) {
       decoder = decoderBuilder(_currentColor, _fontSize!);
     }
   }
