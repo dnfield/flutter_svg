@@ -288,8 +288,8 @@ void main() {
     });
 
     test(
-        'uses fontSize for stroke width '
-        'in em units', () {
+        'calculates em units based on the font size '
+        'for stroke width', () {
       final XmlStartElementEvent svg =
           parseEvents('<circle stroke="green" stroke-width="2em" />').first
               as XmlStartElementEvent;
@@ -312,8 +312,8 @@ void main() {
     });
 
     test(
-        'uses fontSize for dash array '
-        'in em units', () {
+        'calculates em units based on the font size '
+        'for dash array', () {
       final XmlStartElementEvent svg = parseEvents(
         '<line x2="10" y2="10" stroke="black" stroke-dasharray="0.2em 0.5em 10" />',
       ).first as XmlStartElementEvent;
@@ -344,8 +344,8 @@ void main() {
     });
 
     test(
-        'uses fontSize for dash offset '
-        'in em units', () {
+        'calculates em units based on the font size '
+        'for dash offset', () {
       final XmlStartElementEvent svg = parseEvents(
         '<line x2="5" y2="30" stroke="black" stroke-dasharray="3 1" stroke-dashoffset="0.15em" />',
       ).first as XmlStartElementEvent;
