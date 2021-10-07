@@ -177,19 +177,21 @@ void main() {
         parseEvents('<stroke stroke-dashoffset="20%" />').first
             as XmlStartElementEvent;
 
-    // TODO(dnfield): DashOffset is completely opaque right now, maybe expose the raw value?
     expect(
-        parseDashOffset(
-          abs.attributes.toAttributeMap(),
-          fontSize: 14.0,
-        ),
-        isNotNull);
+      parseDashOffset(
+        abs.attributes.toAttributeMap(),
+        fontSize: 14.0,
+      ),
+      equals(const DashOffset.absolute(20.0)),
+    );
+
     expect(
-        parseDashOffset(
-          pct.attributes.toAttributeMap(),
-          fontSize: 14.0,
-        ),
-        isNotNull);
+      parseDashOffset(
+        pct.attributes.toAttributeMap(),
+        fontSize: 14.0,
+      ),
+      equals(DashOffset.percentage(0.2)),
+    );
   });
 
   test('font-weight tests', () {
