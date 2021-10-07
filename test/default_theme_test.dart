@@ -2,6 +2,7 @@
 
 import 'dart:ui';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_svg/src/svg/default_theme.dart';
 import 'package:flutter_svg/src/svg/theme.dart';
@@ -59,7 +60,7 @@ void main() {
     });
 
     testWidgets(
-        'currentColor widget property takes precedence over '
+        'currentColor from the widget\'s theme takes precedence over '
         'the theme from DefaultSvgTheme', (WidgetTester tester) async {
       const SvgTheme svgTheme = SvgTheme(
         currentColor: Color(0xFF733821),
@@ -91,7 +92,7 @@ void main() {
     });
 
     testWidgets(
-        'fontSize widget property takes precedence over '
+        'fontSize from the widget\'s theme takes precedence over '
         'the theme from DefaultSvgTheme', (WidgetTester tester) async {
       const SvgTheme svgTheme = SvgTheme(
         fontSize: 14.0,
@@ -100,7 +101,7 @@ void main() {
       final SvgPicture svgPictureWidget = SvgPicture.string(
         '''
 <svg viewBox="0 0 10 10">
-  <rect x="0" y="0" width="10" height="10" fill="currentColor" />
+  <rect x="0" y="0" width="10em" height="10em" />
 </svg>''',
         theme: SvgTheme(
           fontSize: 12.0,
@@ -117,6 +118,53 @@ void main() {
       expect(
         svgPicture.pictureProvider.fontSize,
         equals(12.0),
+      );
+    });
+
+    testWidgets(
+        'fontSize defaults to the font size from DefaultTextStyle '
+        'if no widget\'s theme or DefaultSvgTheme is provided',
+        (WidgetTester tester) async {
+      final SvgPicture svgPictureWidget = SvgPicture.string(
+        '''
+<svg viewBox="0 0 10 10">
+  <rect x="0" y="0" width="10em" height="10em" />
+</svg>''',
+      );
+
+      await tester.pumpWidget(
+        DefaultTextStyle(
+          style: TextStyle(fontSize: 26.0),
+          child: svgPictureWidget,
+        ),
+      );
+
+      final SvgPicture svgPicture = tester.firstWidget(find.byType(SvgPicture));
+      expect(svgPicture, isNotNull);
+      expect(
+        svgPicture.pictureProvider.fontSize,
+        equals(26.0),
+      );
+    });
+
+    testWidgets(
+        'fontSize defaults to 14.0 '
+        'if no widget\'s theme, DefaultSvgTheme or DefaultTextStyle is provided',
+        (WidgetTester tester) async {
+      final SvgPicture svgPictureWidget = SvgPicture.string(
+        '''
+<svg viewBox="0 0 10 10">
+  <rect x="0" y="0" width="10em" height="10em" />
+</svg>''',
+      );
+
+      await tester.pumpWidget(svgPictureWidget);
+
+      final SvgPicture svgPicture = tester.firstWidget(find.byType(SvgPicture));
+      expect(svgPicture, isNotNull);
+      expect(
+        svgPicture.pictureProvider.fontSize,
+        equals(14.0),
       );
     });
   });
