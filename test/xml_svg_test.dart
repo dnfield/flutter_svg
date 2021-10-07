@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_svg/src/svg/xml_parsers.dart';
 import 'package:flutter_svg/src/utilities/xml.dart';
+import 'package:path_drawing/path_drawing.dart';
 import 'package:test/test.dart';
 import 'package:xml/xml_events.dart';
 
@@ -258,7 +259,10 @@ void main() {
         fontSize: 14.0,
       );
 
-      expect(svgStyle.stroke?.color, equals(currentColor));
+      expect(
+        svgStyle.stroke?.color,
+        equals(currentColor),
+      );
     });
 
     test('uses currentColor for fill color', () {
@@ -277,7 +281,90 @@ void main() {
         fontSize: 14.0,
       );
 
-      expect(svgStyle.fill?.color, equals(currentColor));
+      expect(
+        svgStyle.fill?.color,
+        equals(currentColor),
+      );
+    });
+
+    test(
+        'uses fontSize for stroke width '
+        'in em units', () {
+      final XmlStartElementEvent svg =
+          parseEvents('<circle stroke="green" stroke-width="2em" />').first
+              as XmlStartElementEvent;
+
+      const double fontSize = 26.0;
+
+      final DrawableStyle svgStyle = parseStyle(
+        'test',
+        svg.attributes.toAttributeMap(),
+        DrawableDefinitionServer(),
+        null,
+        null,
+        fontSize: fontSize,
+      );
+
+      expect(
+        svgStyle.stroke?.strokeWidth,
+        equals(fontSize * 2),
+      );
+    });
+
+    test(
+        'uses fontSize for dash array '
+        'in em units', () {
+      final XmlStartElementEvent svg = parseEvents(
+        '<line x2="10" y2="10" stroke="black" stroke-dasharray="0.2em 0.5em 10" />',
+      ).first as XmlStartElementEvent;
+
+      const double fontSize = 26.0;
+
+      final DrawableStyle svgStyle = parseStyle(
+        'test',
+        svg.attributes.toAttributeMap(),
+        DrawableDefinitionServer(),
+        null,
+        null,
+        fontSize: fontSize,
+      );
+
+      expect(
+        <double>[
+          svgStyle.dashArray!.next,
+          svgStyle.dashArray!.next,
+          svgStyle.dashArray!.next,
+        ],
+        equals(<double>[
+          fontSize * 0.2,
+          fontSize * 0.5,
+          10,
+        ]),
+      );
+    });
+
+    test(
+        'uses fontSize for dash offset '
+        'in em units', () {
+      final XmlStartElementEvent svg = parseEvents(
+        '<line x2="5" y2="30" stroke="black" stroke-dasharray="3 1" stroke-dashoffset="0.15em" />',
+      ).first as XmlStartElementEvent;
+
+      const double fontSize = 26.0;
+
+      final DrawableStyle svgStyle = parseStyle(
+        'test',
+        svg.attributes.toAttributeMap(),
+        DrawableDefinitionServer(),
+        null,
+        null,
+        fontSize: fontSize,
+      );
+
+      expect(
+        svgStyle.dashOffset,
+        equals(const DashOffset.absolute(fontSize * 0.15)),
+      );
     });
   });
 }
