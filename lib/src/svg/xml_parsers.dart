@@ -19,7 +19,9 @@ double _parseRawWidthHeight(
   }
   assert(() {
     final RegExp notDigits = RegExp(r'[^\d\.]');
-    if (!raw!.endsWith('px') && raw.contains(notDigits)) {
+    if (!raw!.endsWith('px') &&
+        !raw.endsWith('em') &&
+        raw.contains(notDigits)) {
       print(
           'Warning: Flutter SVG only supports the following formats for `width` and `height` on the SVG root:\n'
           '  width="100%"\n'
