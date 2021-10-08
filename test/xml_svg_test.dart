@@ -300,87 +300,165 @@ void main() {
       );
     });
 
-    test(
-        'calculates em units based on the font size '
-        'for stroke width', () {
-      final XmlStartElementEvent svg =
-          parseEvents('<circle stroke="green" stroke-width="2em" />').first
-              as XmlStartElementEvent;
+    group('calculates em units based on the font size for', () {
+      test('stroke width', () {
+        final XmlStartElementEvent svg =
+            parseEvents('<circle stroke="green" stroke-width="2em" />').first
+                as XmlStartElementEvent;
 
-      const double fontSize = 26.0;
+        const double fontSize = 26.0;
 
-      final DrawableStyle svgStyle = parseStyle(
-        'test',
-        svg.attributes.toAttributeMap(),
-        DrawableDefinitionServer(),
-        null,
-        null,
-        fontSize: fontSize,
-        xHeight: 7.0,
-      );
+        final DrawableStyle svgStyle = parseStyle(
+          'test',
+          svg.attributes.toAttributeMap(),
+          DrawableDefinitionServer(),
+          null,
+          null,
+          fontSize: fontSize,
+          xHeight: 7.0,
+        );
 
-      expect(
-        svgStyle.stroke?.strokeWidth,
-        equals(fontSize * 2),
-      );
+        expect(
+          svgStyle.stroke?.strokeWidth,
+          equals(fontSize * 2),
+        );
+      });
+
+      test('dash array', () {
+        final XmlStartElementEvent svg = parseEvents(
+          '<line x2="10" y2="10" stroke="black" stroke-dasharray="0.2em 0.5em 10" />',
+        ).first as XmlStartElementEvent;
+
+        const double fontSize = 26.0;
+
+        final DrawableStyle svgStyle = parseStyle(
+          'test',
+          svg.attributes.toAttributeMap(),
+          DrawableDefinitionServer(),
+          null,
+          null,
+          fontSize: fontSize,
+          xHeight: 7.0,
+        );
+
+        expect(
+          <double>[
+            svgStyle.dashArray!.next,
+            svgStyle.dashArray!.next,
+            svgStyle.dashArray!.next,
+          ],
+          equals(<double>[
+            fontSize * 0.2,
+            fontSize * 0.5,
+            10,
+          ]),
+        );
+      });
+
+      test('dash offset', () {
+        final XmlStartElementEvent svg = parseEvents(
+          '<line x2="5" y2="30" stroke="black" stroke-dasharray="3 1" stroke-dashoffset="0.15em" />',
+        ).first as XmlStartElementEvent;
+
+        const double fontSize = 26.0;
+
+        final DrawableStyle svgStyle = parseStyle(
+          'test',
+          svg.attributes.toAttributeMap(),
+          DrawableDefinitionServer(),
+          null,
+          null,
+          fontSize: fontSize,
+          xHeight: 7.0,
+        );
+
+        expect(
+          svgStyle.dashOffset,
+          equals(const DashOffset.absolute(fontSize * 0.15)),
+        );
+      });
     });
 
-    test(
-        'calculates em units based on the font size '
-        'for dash array', () {
-      final XmlStartElementEvent svg = parseEvents(
-        '<line x2="10" y2="10" stroke="black" stroke-dasharray="0.2em 0.5em 10" />',
-      ).first as XmlStartElementEvent;
+    group('calculates ex units based on the x-height for', () {
+      test('stroke width', () {
+        final XmlStartElementEvent svg =
+            parseEvents('<circle stroke="green" stroke-width="2ex" />').first
+                as XmlStartElementEvent;
 
-      const double fontSize = 26.0;
+        const double fontSize = 26.0;
+        const double xHeight = 11.0;
 
-      final DrawableStyle svgStyle = parseStyle(
-        'test',
-        svg.attributes.toAttributeMap(),
-        DrawableDefinitionServer(),
-        null,
-        null,
-        fontSize: fontSize,
-        xHeight: 7.0,
-      );
+        final DrawableStyle svgStyle = parseStyle(
+          'test',
+          svg.attributes.toAttributeMap(),
+          DrawableDefinitionServer(),
+          null,
+          null,
+          fontSize: fontSize,
+          xHeight: xHeight,
+        );
 
-      expect(
-        <double>[
-          svgStyle.dashArray!.next,
-          svgStyle.dashArray!.next,
-          svgStyle.dashArray!.next,
-        ],
-        equals(<double>[
-          fontSize * 0.2,
-          fontSize * 0.5,
-          10,
-        ]),
-      );
-    });
+        expect(
+          svgStyle.stroke?.strokeWidth,
+          equals(xHeight * 2),
+        );
+      });
 
-    test(
-        'calculates em units based on the font size '
-        'for dash offset', () {
-      final XmlStartElementEvent svg = parseEvents(
-        '<line x2="5" y2="30" stroke="black" stroke-dasharray="3 1" stroke-dashoffset="0.15em" />',
-      ).first as XmlStartElementEvent;
+      test('dash array', () {
+        final XmlStartElementEvent svg = parseEvents(
+          '<line x2="10" y2="10" stroke="black" stroke-dasharray="0.2ex 0.5ex 10" />',
+        ).first as XmlStartElementEvent;
 
-      const double fontSize = 26.0;
+        const double fontSize = 26.0;
+        const double xHeight = 11.0;
 
-      final DrawableStyle svgStyle = parseStyle(
-        'test',
-        svg.attributes.toAttributeMap(),
-        DrawableDefinitionServer(),
-        null,
-        null,
-        fontSize: fontSize,
-        xHeight: 7.0,
-      );
+        final DrawableStyle svgStyle = parseStyle(
+          'test',
+          svg.attributes.toAttributeMap(),
+          DrawableDefinitionServer(),
+          null,
+          null,
+          fontSize: fontSize,
+          xHeight: xHeight,
+        );
 
-      expect(
-        svgStyle.dashOffset,
-        equals(const DashOffset.absolute(fontSize * 0.15)),
-      );
+        expect(
+          <double>[
+            svgStyle.dashArray!.next,
+            svgStyle.dashArray!.next,
+            svgStyle.dashArray!.next,
+          ],
+          equals(<double>[
+            xHeight * 0.2,
+            xHeight * 0.5,
+            10,
+          ]),
+        );
+      });
+
+      test('dash offset', () {
+        final XmlStartElementEvent svg = parseEvents(
+          '<line x2="5" y2="30" stroke="black" stroke-dasharray="3 1" stroke-dashoffset="0.15ex" />',
+        ).first as XmlStartElementEvent;
+
+        const double fontSize = 26.0;
+        const double xHeight = 11.0;
+
+        final DrawableStyle svgStyle = parseStyle(
+          'test',
+          svg.attributes.toAttributeMap(),
+          DrawableDefinitionServer(),
+          null,
+          null,
+          fontSize: fontSize,
+          xHeight: xHeight,
+        );
+
+        expect(
+          svgStyle.dashOffset,
+          equals(const DashOffset.absolute(xHeight * 0.15)),
+        );
+      });
     });
   });
 }
