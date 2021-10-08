@@ -178,6 +178,7 @@ DrawablePaint? parseStroke(
   Rect? bounds,
   DrawableDefinitionServer definitions,
   DrawablePaint? parentStroke,
+  Color? currentColor,
 ) {
   final String rawStroke = getAttribute(attributes, 'stroke')!;
   final String? rawStrokeOpacity = getAttribute(
@@ -217,7 +218,11 @@ DrawablePaint? parseStroke(
     PaintingStyle.stroke,
     color: rawStroke == ''
         ? (parentStroke?.color ?? colorBlack).withOpacity(opacity)
-        : parseColor(rawStroke)!.withOpacity(opacity),
+        : (parseColor(rawStroke) ??
+                currentColor ??
+                parentStroke?.color ??
+                colorBlack)
+            .withOpacity(opacity),
     strokeCap: rawStrokeCap == 'null'
         ? parentStroke?.strokeCap ?? StrokeCap.butt
         : StrokeCap.values.firstWhere(
@@ -248,6 +253,7 @@ DrawablePaint? parseFill(
   DrawableDefinitionServer definitions,
   DrawablePaint? parentFill,
   Color? defaultFillColor,
+  Color? currentColor,
 ) {
   final String rawFill = getAttribute(el, 'fill')!;
   final String? rawFillOpacity = getAttribute(el, 'fill-opacity', def: '1.0');
@@ -267,6 +273,7 @@ DrawablePaint? parseFill(
       opacity: opacity,
     );
   }
+
   if (rawFill == '' && parentFill == DrawablePaint.empty) {
     return null;
   }
@@ -282,6 +289,7 @@ DrawablePaint? parseFill(
       opacity,
       rawOpacity != '' || rawFillOpacity != '',
       defaultFillColor,
+      currentColor,
     ),
   );
 }
@@ -292,9 +300,13 @@ Color? _determineFillColor(
   double opacity,
   bool explicitOpacity,
   Color? defaultFillColor,
+  Color? currentColor,
 ) {
-  final Color? color =
-      parseColor(rawFill) ?? parentFillColor ?? defaultFillColor;
+  final Color? color = parseColor(rawFill) ??
+      currentColor ??
+      parentFillColor ??
+      defaultFillColor;
+
   if (explicitOpacity && color != null) {
     return color.withOpacity(opacity);
   }
@@ -463,6 +475,7 @@ DrawableStyle parseStyle(
   Rect? bounds,
   DrawableStyle? parentStyle, {
   Color? defaultFillColor,
+  Color? currentColor,
 }) {
   return DrawableStyle.mergeAndBlend(
     parentStyle,
@@ -472,6 +485,7 @@ DrawableStyle parseStyle(
       bounds,
       definitions,
       parentStyle?.stroke,
+      currentColor,
     ),
     dashArray: parseDashArray(attributes),
     dashOffset: parseDashOffset(attributes),
@@ -482,6 +496,7 @@ DrawableStyle parseStyle(
       definitions,
       parentStyle?.fill,
       defaultFillColor,
+      currentColor,
     ),
     pathFillType: parseFillRule(
       attributes,
