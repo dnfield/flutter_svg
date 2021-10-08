@@ -12,6 +12,7 @@ void main() {
       const SvgTheme svgTheme = SvgTheme(
         currentColor: Color(0xFF733821),
         fontSize: 14.0,
+        xHeight: 6.0,
       );
 
       final SvgPicture svgPictureWidget = SvgPicture.string('''
@@ -34,6 +35,7 @@ void main() {
       const SvgTheme anotherSvgTheme = SvgTheme(
         currentColor: Color(0xFF05290E),
         fontSize: 12.0,
+        xHeight: 7.0,
       );
 
       await tester.pumpWidget(DefaultSvgTheme(
