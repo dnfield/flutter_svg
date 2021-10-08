@@ -55,7 +55,7 @@ void main() {
       });
 
       test(
-          'sets xHeight as fontSize / 2 '
+          'sets xHeight as fontSize divided by 2 '
           'by default', () {
         const double fontSize = 16.0;
 

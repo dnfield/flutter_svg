@@ -114,34 +114,89 @@ void main() {
 
   test('Font size parsing tests', () {
     const double fontSize = 14.0;
-    expect(parseFontSize(null, fontSize: fontSize), isNull);
-    expect(parseFontSize('', fontSize: fontSize), isNull);
-    expect(parseFontSize('1', fontSize: fontSize), 1);
-    expect(parseFontSize('  1 ', fontSize: fontSize), 1);
-    expect(parseFontSize('xx-small', fontSize: fontSize), 10);
-    expect(parseFontSize('x-small', fontSize: fontSize), 12);
-    expect(parseFontSize('small', fontSize: fontSize), 14);
-    expect(parseFontSize('medium', fontSize: fontSize), 18);
-    expect(parseFontSize('large', fontSize: fontSize), 22);
-    expect(parseFontSize('x-large', fontSize: fontSize), 26);
-    expect(parseFontSize('xx-large', fontSize: fontSize), 32);
+    const double xHeight = 7.0;
 
-    expect(parseFontSize('larger', fontSize: fontSize),
-        parseFontSize('large', fontSize: fontSize));
     expect(
-        parseFontSize('larger',
-            fontSize: fontSize,
-            parentValue: parseFontSize('large', fontSize: fontSize)),
-        parseFontSize('large', fontSize: fontSize)! * 1.2);
-    expect(parseFontSize('smaller', fontSize: fontSize),
-        parseFontSize('small', fontSize: fontSize));
+      parseFontSize(null, fontSize: fontSize, xHeight: xHeight),
+      isNull,
+    );
     expect(
-        parseFontSize('smaller',
-            fontSize: fontSize,
-            parentValue: parseFontSize('large', fontSize: fontSize)),
-        parseFontSize('large', fontSize: fontSize)! / 1.2);
+      parseFontSize('', fontSize: fontSize, xHeight: xHeight),
+      isNull,
+    );
+    expect(
+      parseFontSize('1', fontSize: fontSize, xHeight: xHeight),
+      equals(1),
+    );
+    expect(
+      parseFontSize('  1 ', fontSize: fontSize, xHeight: xHeight),
+      equals(1),
+    );
+    expect(
+      parseFontSize('xx-small', fontSize: fontSize, xHeight: xHeight),
+      equals(10),
+    );
+    expect(
+      parseFontSize('x-small', fontSize: fontSize, xHeight: xHeight),
+      equals(12),
+    );
+    expect(
+      parseFontSize('small', fontSize: fontSize, xHeight: xHeight),
+      equals(14),
+    );
+    expect(
+      parseFontSize('medium', fontSize: fontSize, xHeight: xHeight),
+      equals(18),
+    );
+    expect(
+      parseFontSize('large', fontSize: fontSize, xHeight: xHeight),
+      equals(22),
+    );
+    expect(
+      parseFontSize('x-large', fontSize: fontSize, xHeight: xHeight),
+      equals(26),
+    );
+    expect(
+      parseFontSize('xx-large', fontSize: fontSize, xHeight: xHeight),
+      equals(32),
+    );
 
-    expect(() => parseFontSize('invalid', fontSize: fontSize),
+    expect(
+      parseFontSize('larger', fontSize: fontSize, xHeight: xHeight),
+      equals(parseFontSize('large', fontSize: fontSize, xHeight: xHeight)),
+    );
+    expect(
+      parseFontSize(
+        'larger',
+        fontSize: fontSize,
+        xHeight: xHeight,
+        parentValue:
+            parseFontSize('large', fontSize: fontSize, xHeight: xHeight),
+      ),
+      equals(
+        parseFontSize('large', fontSize: fontSize, xHeight: xHeight)! * 1.2,
+      ),
+    );
+    expect(
+      parseFontSize('smaller', fontSize: fontSize, xHeight: xHeight),
+      equals(
+        parseFontSize('small', fontSize: fontSize, xHeight: xHeight),
+      ),
+    );
+    expect(
+      parseFontSize(
+        'smaller',
+        fontSize: fontSize,
+        xHeight: xHeight,
+        parentValue:
+            parseFontSize('large', fontSize: fontSize, xHeight: xHeight),
+      ),
+      equals(
+        parseFontSize('large', fontSize: fontSize, xHeight: xHeight)! / 1.2,
+      ),
+    );
+
+    expect(() => parseFontSize('invalid', fontSize: fontSize, xHeight: xHeight),
         throwsA(const TypeMatcher<StateError>()));
   });
 

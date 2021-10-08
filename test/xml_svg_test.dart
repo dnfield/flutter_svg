@@ -84,6 +84,7 @@ void main() {
         parseViewBox(
           svgWithViewBoxAndWidthHeight.attributes.toAttributeMap(),
           fontSize: 14.0,
+          xHeight: 7.0,
         )!
             .size,
         const Size(50, 50));
@@ -91,6 +92,7 @@ void main() {
         parseViewBox(
           svgWithViewBox.attributes.toAttributeMap(),
           fontSize: 14.0,
+          xHeight: 7.0,
         )!
             .viewBoxRect,
         rect);
@@ -98,6 +100,7 @@ void main() {
         parseViewBox(
           svgWithViewBox.attributes.toAttributeMap(),
           fontSize: 14.0,
+          xHeight: 7.0,
         )!
             .viewBoxOffset,
         Offset.zero);
@@ -105,6 +108,7 @@ void main() {
         parseViewBox(
           svgWithViewBoxAndWidthHeight.attributes.toAttributeMap(),
           fontSize: 14.0,
+          xHeight: 7.0,
         )!
             .viewBoxRect,
         rect);
@@ -112,6 +116,7 @@ void main() {
         parseViewBox(
           svgWithWidthHeight.attributes.toAttributeMap(),
           fontSize: 14.0,
+          xHeight: 7.0,
         )!
             .viewBoxRect,
         rect);
@@ -119,6 +124,7 @@ void main() {
         parseViewBox(
           svgWithNoSizeInfo.attributes.toAttributeMap(),
           fontSize: 14.0,
+          xHeight: 7.0,
           nullOk: true,
         ),
         null);
@@ -126,12 +132,14 @@ void main() {
         () => parseViewBox(
               svgWithNoSizeInfo.attributes.toAttributeMap(),
               fontSize: 14.0,
+              xHeight: 7.0,
             ),
         throwsStateError);
     expect(
         parseViewBox(
           svgWithViewBoxMinXMinY.attributes.toAttributeMap(),
           fontSize: 14.0,
+          xHeight: 7.0,
         )!
             .viewBoxRect,
         rect);
@@ -139,6 +147,7 @@ void main() {
         parseViewBox(
           svgWithViewBoxMinXMinY.attributes.toAttributeMap(),
           fontSize: 14.0,
+          xHeight: 7.0,
         )!
             .viewBoxOffset,
         const Offset(-42.0, -56.0));
@@ -182,6 +191,7 @@ void main() {
       parseDashOffset(
         abs.attributes.toAttributeMap(),
         fontSize: 14.0,
+        xHeight: 7.0,
       ),
       equals(const DashOffset.absolute(20.0)),
     );
@@ -190,6 +200,7 @@ void main() {
       parseDashOffset(
         pct.attributes.toAttributeMap(),
         fontSize: 14.0,
+        xHeight: 7.0,
       ),
       equals(DashOffset.percentage(0.2)),
     );
@@ -257,6 +268,7 @@ void main() {
         null,
         currentColor: currentColor,
         fontSize: 14.0,
+        xHeight: 7.0,
       );
 
       expect(
@@ -279,6 +291,7 @@ void main() {
         null,
         currentColor: currentColor,
         fontSize: 14.0,
+        xHeight: 7.0,
       );
 
       expect(
@@ -303,6 +316,7 @@ void main() {
         null,
         null,
         fontSize: fontSize,
+        xHeight: 7.0,
       );
 
       expect(
@@ -327,6 +341,7 @@ void main() {
         null,
         null,
         fontSize: fontSize,
+        xHeight: 7.0,
       );
 
       expect(
@@ -359,6 +374,7 @@ void main() {
         null,
         null,
         fontSize: fontSize,
+        xHeight: 7.0,
       );
 
       expect(
