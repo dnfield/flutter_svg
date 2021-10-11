@@ -38,7 +38,9 @@ class PictureInfo {
 
   /// The raw picture.
   ///
-  /// This is the object to pass to the [Canvas.drawPicture] when painting.
+  /// This picture's lifecycle will be managed by the provider. It will be
+  /// reused as long as the picture does not change, and disposed when the
+  /// provider loses all of its listeners or it is unset.
   Picture get picture => layerHandle.layer!.picture!;
 
   /// The viewport enclosing the coordinates used in the picture.
