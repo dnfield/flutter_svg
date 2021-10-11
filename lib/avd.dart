@@ -36,7 +36,9 @@ class Avd {
         clipToViewBox: allowDrawingOutsideOfViewBox == true ? false : true,
         colorFilter: colorFilter);
     final LayerHandle<PictureLayer> handle = LayerHandle<PictureLayer>();
-    handle.layer = PictureLayer(avdRoot.viewport.viewBoxRect)..picture = pic;
+    handle.layer = PictureLayer(avdRoot.viewport.viewBoxRect)
+      ..picture = pic
+      ..isComplexHint = true;
     return PictureInfo(
       layerHandle: handle,
       viewport: avdRoot.viewport.viewBoxRect,
@@ -57,7 +59,9 @@ class Avd {
       colorFilter: colorFilter,
     );
     final LayerHandle<PictureLayer> handle = LayerHandle<PictureLayer>();
-    handle.layer = PictureLayer(avdRoot.viewport.viewBoxRect)..picture = pic;
+    handle.layer = PictureLayer(avdRoot.viewport.viewBoxRect)
+      ..picture = pic
+      ..isComplexHint = true;
     return PictureInfo(
       layerHandle: handle,
       viewport: avdRoot.viewport.viewBoxRect,

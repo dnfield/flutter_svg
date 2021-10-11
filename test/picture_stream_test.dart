@@ -27,7 +27,8 @@ void main() {
     expect(info1, equals(info2));
   });
 
-  test('Completer disposes layer when removed from cache and no listeners', () async {
+  test('Completer disposes layer when removed from cache and no listeners',
+      () async {
     final LayerHandle<PictureLayer> layer = LayerHandle<PictureLayer>();
     layer.layer = PictureLayer(Rect.zero);
     final PictureInfo info = PictureInfo(
@@ -50,7 +51,9 @@ void main() {
     expect(layer.layer, null);
   });
 
-  test('Completer disposes layer when removed from cache and no listeners after having a listener', () async {
+  test(
+      'Completer disposes layer when removed from cache and no listeners after having a listener',
+      () async {
     final LayerHandle<PictureLayer> layer = LayerHandle<PictureLayer>();
     layer.layer = PictureLayer(Rect.zero);
     final PictureInfo info = PictureInfo(
@@ -77,7 +80,8 @@ void main() {
     expect(layer.layer, isNull);
   });
 
-  test('Completer disposes layer when last listener drops and not in cache', () async {
+  test('Completer disposes layer when last listener drops and not in cache',
+      () async {
     final LayerHandle<PictureLayer> layer = LayerHandle<PictureLayer>();
     layer.layer = PictureLayer(Rect.zero);
     final PictureInfo info = PictureInfo(

@@ -57,7 +57,9 @@ class Svg {
       colorFilter: colorFilter,
     );
     final LayerHandle<PictureLayer> handle = LayerHandle<PictureLayer>();
-    handle.layer = PictureLayer(svgRoot.viewport.viewBoxRect)..picture = pic;
+    handle.layer = PictureLayer(svgRoot.viewport.viewBoxRect)
+      ..picture = pic
+      ..isComplexHint = true;
     return PictureInfo(
       layerHandle: handle,
       viewport: svgRoot.viewport.viewBoxRect,
@@ -89,7 +91,9 @@ class Svg {
       size: svgRoot.viewport.viewBox,
     );
     final LayerHandle<PictureLayer> handle = LayerHandle<PictureLayer>();
-    handle.layer = PictureLayer(svgRoot.viewport.viewBoxRect)..picture = pic;
+    handle.layer = PictureLayer(svgRoot.viewport.viewBoxRect)
+      ..picture = pic
+      ..isComplexHint = true;
     return PictureInfo(
       layerHandle: handle,
       viewport: svgRoot.viewport.viewBoxRect,

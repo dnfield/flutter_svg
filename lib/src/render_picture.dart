@@ -126,6 +126,13 @@ class RenderPicture extends RenderBox {
       return;
     }
     _picture = val;
+    assert(() {
+      if (_picture != null && _picture!.layerHandle.layer != null) {
+        assert(_picture!.layerHandle.layer!.isComplexHint = true);
+        assert(_picture!.layerHandle.layer!.willChangeHint = false);
+      }
+      return true;
+    }());
     markNeedsPaint();
   }
 

@@ -201,8 +201,8 @@ abstract class PictureStreamCompleter with Diagnosticable {
   final List<_PictureListenerPair> _listeners = <_PictureListenerPair>[];
   PictureInfo? _current;
 
-
   bool _cached = false;
+
   /// Whether or not this completer is in the [PictureCache].
   bool get cached => _cached;
   set cached(bool value) {
