@@ -128,8 +128,8 @@ class RenderPicture extends RenderBox {
     _picture = val;
     assert(() {
       if (_picture != null && _picture!.layerHandle.layer != null) {
-        assert(_picture!.layerHandle.layer!.isComplexHint = true);
-        assert(_picture!.layerHandle.layer!.willChangeHint = false);
+        assert(_picture!.layerHandle.layer!.isComplexHint == true);
+        assert(_picture!.layerHandle.layer!.willChangeHint == false);
       }
       return true;
     }());
