@@ -213,6 +213,16 @@ void main() {
       parseFontSize('  2em ', fontSize: fontSize, xHeight: xHeight),
       equals(2 * fontSize),
     );
+
+    expect(
+      parseFontSize('4ex', fontSize: fontSize, xHeight: xHeight),
+      equals(4 * xHeight),
+    );
+
+    expect(
+      parseFontSize('  2ex ', fontSize: fontSize, xHeight: xHeight),
+      equals(2 * xHeight),
+    );
   });
 
   test('Check no child with id for svg', () async {
