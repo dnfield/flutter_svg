@@ -717,6 +717,27 @@ void main() {
     await tester.pumpAndSettle();
     expect(renderObject.clipBehavior, equals(Clip.antiAlias));
   });
+
+  testWidgets('SvgPicture - two of the same', (WidgetTester tester) async {
+    // Regression test to make sure the same SVG can render twice in the same
+    // view. If layers are incorrectly reused, this will fail.
+    await tester.pumpWidget(RepaintBoundary(
+        child: Directionality(
+      textDirection: TextDirection.ltr,
+      child: Row(
+        children: <Widget>[
+          SvgPicture.string(simpleSvg),
+          SvgPicture.string(simpleSvg),
+        ],
+      ),
+    )));
+    await tester.pumpAndSettle();
+
+    await expectLater(
+      find.byType(RepaintBoundary),
+      matchesGoldenFile('golden_widget/two_of_same.png'),
+    );
+  });
 }
 
 class FakeAssetBundle extends Fake implements AssetBundle {
@@ -788,29 +809,37 @@ class FakeHttpClientResponse extends Fake implements HttpClientResponse {
   }
 }
 
-const String svgStr =
-    '''<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 166 202">
-    <defs>
-        <linearGradient id="triangleGradient">
-            <stop offset="20%" stop-color="#000000" stop-opacity=".55" />
-            <stop offset="85%" stop-color="#616161" stop-opacity=".01" />
-        </linearGradient>
-        <linearGradient id="rectangleGradient" x1="0%" x2="0%" y1="0%" y2="100%">
-            <stop offset="20%" stop-color="#000000" stop-opacity=".15" />
-            <stop offset="85%" stop-color="#616161" stop-opacity=".01" />
-        </linearGradient>
-    </defs>
-    <path fill="#42A5F5" fill-opacity=".8" d="M37.7 128.9 9.8 101 100.4 10.4 156.2 10.4"/>
-    <path fill="#42A5F5" fill-opacity=".8" d="M156.2 94 100.4 94 79.5 114.9 107.4 142.8"/>
-    <path fill="#0D47A1" d="M79.5 170.7 100.4 191.6 156.2 191.6 156.2 191.6 107.4 142.8"/>
-    <g transform="matrix(0.7071, -0.7071, 0.7071, 0.7071, -77.667, 98.057)">
-        <rect width="39.4" height="39.4" x="59.8" y="123.1" fill="#42A5F5" />
-        <rect width="39.4" height="5.5" x="59.8" y="162.5" fill="url(#rectangleGradient)" />
-    </g>
-    <path d="M79.5 170.7 120.9 156.4 107.4 142.8" fill="url(#triangleGradient)" />
-</svg>''';
+const String simpleSvg = '''
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 20 20">
+  <rect x="5" y="5" width="10" height="10"/>
+</svg>
+''';
 
-const String stickFigureSvgStr = '''<?xml version="1.0" encoding="UTF-8"?>
+const String svgStr = '''
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 166 202">
+  <defs>
+      <linearGradient id="triangleGradient">
+          <stop offset="20%" stop-color="#000000" stop-opacity=".55" />
+          <stop offset="85%" stop-color="#616161" stop-opacity=".01" />
+      </linearGradient>
+      <linearGradient id="rectangleGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+          <stop offset="20%" stop-color="#000000" stop-opacity=".15" />
+          <stop offset="85%" stop-color="#616161" stop-opacity=".01" />
+      </linearGradient>
+  </defs>
+  <path fill="#42A5F5" fill-opacity=".8" d="M37.7 128.9 9.8 101 100.4 10.4 156.2 10.4"/>
+  <path fill="#42A5F5" fill-opacity=".8" d="M156.2 94 100.4 94 79.5 114.9 107.4 142.8"/>
+  <path fill="#0D47A1" d="M79.5 170.7 100.4 191.6 156.2 191.6 156.2 191.6 107.4 142.8"/>
+  <g transform="matrix(0.7071, -0.7071, 0.7071, 0.7071, -77.667, 98.057)">
+      <rect width="39.4" height="39.4" x="59.8" y="123.1" fill="#42A5F5" />
+      <rect width="39.4" height="5.5" x="59.8" y="162.5" fill="url(#rectangleGradient)" />
+  </g>
+  <path d="M79.5 170.7 120.9 156.4 107.4 142.8" fill="url(#triangleGradient)" />
+</svg>
+''';
+
+const String stickFigureSvgStr = '''
+<?xml version="1.0" encoding="UTF-8"?>
 <svg width="27px" height="90px" viewBox="5 10 18 70" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
     <!-- Generator: Sketch 53 (72520) - https://sketchapp.com -->
     <title>svg/stick_figure</title>
@@ -827,6 +856,7 @@ const String stickFigureSvgStr = '''<?xml version="1.0" encoding="UTF-8"?>
             </g>
         </g>
     </g>
-</svg>''';
+</svg>
+''';
 
 final Uint8List svgBytes = utf8.encode(svgStr) as Uint8List;
