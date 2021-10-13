@@ -151,6 +151,20 @@ void main() {
         throwsA(const TypeMatcher<StateError>()));
   });
 
+  test('relative font size tests', () {
+    const double fontSize = 26.0;
+
+    expect(
+      parseFontSize('4em', fontSize: fontSize),
+      equals(4 * fontSize),
+    );
+
+    expect(
+      parseFontSize('  2em ', fontSize: fontSize),
+      equals(2 * fontSize),
+    );
+  });
+
   test('Check no child with id for svg', () async {
     final SvgParser parser = SvgParser();
     final DrawableRoot root = await parser.parse(
