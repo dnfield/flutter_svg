@@ -202,14 +202,15 @@ void main() {
 
   test('relative font size tests', () {
     const double fontSize = 26.0;
+    const double xHeight = 14.0;
 
     expect(
-      parseFontSize('4em', fontSize: fontSize),
+      parseFontSize('4em', fontSize: fontSize, xHeight: xHeight),
       equals(4 * fontSize),
     );
 
     expect(
-      parseFontSize('  2em ', fontSize: fontSize),
+      parseFontSize('  2em ', fontSize: fontSize, xHeight: xHeight),
       equals(2 * fontSize),
     );
   });
