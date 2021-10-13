@@ -24,8 +24,11 @@ void main() {
 ''';
 
     final SvgParser parser = SvgParser();
-    await parser.parse(svgStr,
-        theme: const SvgTheme(fontSize: 14.0), key: 'some_svg.svg');
+    await parser.parse(
+      svgStr,
+      key: 'some_svg.svg',
+      theme: const SvgTheme.empty(),
+    );
 
     expect(
       error.context.toString(),

@@ -32,6 +32,15 @@ void main() {
       });
     });
 
+    test('empty sets fontSize to 14', () {
+      expect(
+        SvgTheme.empty(),
+        equals(
+          SvgTheme(fontSize: 14.0),
+        ),
+      );
+    });
+
     test('supports value equality', () {
       expect(
         SvgTheme(

@@ -146,7 +146,7 @@ void main() {
     });
 
     testWidgets(
-        'fontSize defaults to 14.0 '
+        'fontSize defaults to 14 '
         'if no widget\'s theme, DefaultSvgTheme or DefaultTextStyle is provided',
         (WidgetTester tester) async {
       final SvgPicture svgPictureWidget = SvgPicture.string(

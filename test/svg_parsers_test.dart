@@ -11,7 +11,7 @@ void main() {
   late SvgTheme theme;
 
   setUp(() {
-    theme = const SvgTheme(fontSize: 14.0);
+    theme = const SvgTheme.empty();
   });
 
   test('SVG Multiple transform parser tests', () {

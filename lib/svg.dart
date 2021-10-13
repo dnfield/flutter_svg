@@ -787,7 +787,7 @@ class _SvgPictureState extends State<SvgPicture> {
   /// Updates the `fontSize` of the picture provider based on
   /// either the widget's [SvgTheme], an inherited [DefaultSvgTheme]
   /// or an inherited [DefaultTextStyle]. If the property does not exist,
-  /// then the font size defaults to 14.0.
+  /// then the font size defaults to 14.
   void _updatePictureProvider() {
     final SvgTheme? defaultSvgTheme = DefaultSvgTheme.of(context)?.theme;
     final TextStyle defaultTextStyle = DefaultTextStyle.of(context).style;
