@@ -10,6 +10,24 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:flutter_test/flutter_test.dart';
 
+class _TolerantComparator extends LocalFileComparator {
+  _TolerantComparator(Uri testFile) : super(testFile);
+
+  @override
+  Future<bool> compare(Uint8List imageBytes, Uri golden) async {
+    final ComparisonResult result = await GoldenFileComparator.compareLists(
+      imageBytes,
+      await getGoldenBytes(golden),
+    );
+
+    if (result.diffPercent >= .06) {
+      final String error = await generateFailureOutput(result, golden, basedir);
+      throw FlutterError(error);
+    }
+    return true;
+  }
+}
+
 Future<void> _checkWidgetAndGolden(Key key, String filename) async {
   final Finder widgetFinder = find.byKey(key);
   expect(widgetFinder, findsOneWidget);
@@ -20,6 +38,14 @@ void main() {
   late FakeHttpClientResponse fakeResponse;
   late FakeHttpClientRequest fakeRequest;
   late FakeHttpClient fakeHttpClient;
+
+  setUpAll(() {
+    final LocalFileComparator oldComparator = goldenFileComparator as LocalFileComparator;
+    final _TolerantComparator newComparator = _TolerantComparator(Uri.parse(oldComparator.basedir.toString() + 'test'));
+    expect(oldComparator.basedir, newComparator.basedir);
+    goldenFileComparator = newComparator;
+  });
+
   setUp(() {
     PictureProvider.cache.clear();
     svg.cacheColorFilterOverride = null;
