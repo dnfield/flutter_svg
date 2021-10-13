@@ -19,10 +19,16 @@ class _TolerantComparator extends LocalFileComparator {
       imageBytes,
       await getGoldenBytes(golden),
     );
-
-    if (result.diffPercent >= .06) {
+    if (!result.passed) {
       final String error = await generateFailureOutput(result, golden, basedir);
-      throw FlutterError(error);
+      if (result.diffPercent >= .06) {
+        throw FlutterError(error);
+      } else {
+        print(
+            'Warning - golden differed less than .06% (${result.diffPercent}%), '
+            'ignoring failure but producing output');
+        print(error);
+      }
     }
     return true;
   }
@@ -40,8 +46,10 @@ void main() {
   late FakeHttpClient fakeHttpClient;
 
   setUpAll(() {
-    final LocalFileComparator oldComparator = goldenFileComparator as LocalFileComparator;
-    final _TolerantComparator newComparator = _TolerantComparator(Uri.parse(oldComparator.basedir.toString() + 'test'));
+    final LocalFileComparator oldComparator =
+        goldenFileComparator as LocalFileComparator;
+    final _TolerantComparator newComparator = _TolerantComparator(
+        Uri.parse(oldComparator.basedir.toString() + 'test'));
     expect(oldComparator.basedir, newComparator.basedir);
     goldenFileComparator = newComparator;
   });
@@ -584,7 +592,7 @@ void main() {
 
     await tester.pumpAndSettle();
     await _checkWidgetAndGolden(key, 'text_color_filter.png');
-  }, skip: !isLinux);
+  });
 
   testWidgets('Nested SVG elements report a FlutterError',
       (WidgetTester tester) async {
