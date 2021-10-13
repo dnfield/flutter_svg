@@ -9,7 +9,6 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
 
-import 'package:flutter_svg/src/svg/theme.dart';
 import 'package:flutter_svg/src/vector_drawable.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:path/path.dart' as path;
@@ -22,7 +21,6 @@ Future<Image> getSvgImage(String svgData) async {
 
   final DrawableRoot svgRoot = await svg.fromSvgString(
     svgData,
-    const SvgTheme(fontSize: 14.0),
     'GenGoldenTest',
   );
 

@@ -27,11 +27,11 @@ void main() {
 
   late int previousMaximumSize;
   setUp(() {
-    PictureProvider.cache.clear();
     previousMaximumSize = PictureProvider.cache.maximumSize;
   });
 
   tearDown(() {
+    PictureProvider.cache.clear();
     PictureProvider.cache.maximumSize = previousMaximumSize;
   });
 
@@ -154,7 +154,37 @@ void main() {
     expect(gotError, isTrue);
   });
 
-  test('Cache Tests', () {
+  test('Cache Tests with size > 1', () {
+    final PictureCache cache = PictureCache();
+    expect(cache.maximumSize, equals(1000));
+
+    final MockPictureStreamCompleter completer1 = MockPictureStreamCompleter();
+    final MockPictureStreamCompleter completer2 = MockPictureStreamCompleter();
+    expect(completer1.cached, false);
+    expect(completer2.cached, false);
+    expect(cache.putIfAbsent(1, () => completer1), completer1);
+    expect(completer1.cached, true);
+    expect(completer2.cached, false);
+
+    expect(cache.putIfAbsent(1, () => completer1), completer1);
+    expect(completer1.cached, true);
+    expect(completer2.cached, false);
+
+    expect(cache.putIfAbsent(2, () => completer2), completer2);
+    expect(completer1.cached, true);
+    expect(completer2.cached, true);
+
+    cache.maximumSize = 1;
+
+    expect(completer1.cached, false);
+    expect(completer2.cached, true);
+
+    cache.clear();
+    expect(completer1.cached, false);
+    expect(completer2.cached, false);
+  });
+
+  test('Cache Tests with size = 1', () {
     final PictureCache cache = PictureCache();
     expect(cache.maximumSize, equals(1000));
     cache.maximumSize = 1;
@@ -164,10 +194,22 @@ void main() {
 
     final MockPictureStreamCompleter completer1 = MockPictureStreamCompleter();
     final MockPictureStreamCompleter completer2 = MockPictureStreamCompleter();
+    expect(completer1.cached, false);
+    expect(completer2.cached, false);
     expect(cache.putIfAbsent(1, () => completer1), completer1);
+    expect(completer1.cached, true);
+    expect(completer2.cached, false);
+
     expect(cache.putIfAbsent(1, () => completer1), completer1);
+    expect(completer1.cached, true);
+    expect(completer2.cached, false);
+
     expect(cache.putIfAbsent(2, () => completer2), completer2);
+    expect(completer1.cached, false);
+    expect(completer2.cached, true);
 
     cache.clear();
+    expect(completer1.cached, false);
+    expect(completer2.cached, false);
   });
 }
