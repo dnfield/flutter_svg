@@ -2,15 +2,14 @@ import 'dart:ui';
 
 /// A theme used when decoding an SVG picture.
 class SvgTheme {
-  /// Instantiates an SVG theme with the [currentColor].
+  /// Instantiates an SVG theme with the [currentColor]
+  /// and [fontSize].
+  ///
+  /// Defaults the [fontSize] to 14.
   const SvgTheme({
     this.currentColor,
-    required this.fontSize,
+    this.fontSize = 14,
   });
-
-  /// Instantiates an empty SVG theme with the [fontSize] set to 14.
-  /// See: https://api.flutter.dev/flutter/painting/TextStyle/fontSize.html
-  const SvgTheme.empty() : this(fontSize: 14.0);
 
   /// The default color applied to SVG elements that inherit the color property.
   /// See: https://developer.mozilla.org/en-US/docs/Web/CSS/color_value#currentcolor_keyword

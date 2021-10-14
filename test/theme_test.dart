@@ -30,15 +30,17 @@ void main() {
           equals(fontSize),
         );
       });
-    });
 
-    test('empty sets fontSize to 14', () {
-      expect(
-        SvgTheme.empty(),
-        equals(
-          SvgTheme(fontSize: 14.0),
-        ),
-      );
+      test(
+          'sets fontSize to 14 '
+          'by default', () {
+        expect(
+          SvgTheme(),
+          equals(
+            SvgTheme(fontSize: 14.0),
+          ),
+        );
+      });
     });
 
     test('supports value equality', () {

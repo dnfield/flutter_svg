@@ -52,7 +52,7 @@ class Svg {
     bool allowDrawingOutsideOfViewBox,
     ColorFilter? colorFilter,
     String key, {
-    SvgTheme theme = const SvgTheme.empty(),
+    SvgTheme theme = const SvgTheme(),
   }) async {
     final DrawableRoot svgRoot = await fromSvgBytes(raw, key, theme: theme);
     final Picture pic = svgRoot.toPicture(
@@ -84,7 +84,7 @@ class Svg {
     bool allowDrawingOutsideOfViewBox,
     ColorFilter? colorFilter,
     String key, {
-    SvgTheme theme = const SvgTheme.empty(),
+    SvgTheme theme = const SvgTheme(),
   }) async {
     final DrawableRoot svgRoot = await fromSvgString(raw, key, theme: theme);
     final Picture pic = svgRoot.toPicture(
@@ -106,7 +106,7 @@ class Svg {
   Future<DrawableRoot> fromSvgBytes(
     Uint8List raw,
     String key, {
-    SvgTheme theme = const SvgTheme.empty(),
+    SvgTheme theme = const SvgTheme(),
   }) async {
     // TODO(dnfield): do utf decoding in another thread?
     // Might just have to live with potentially slow(ish) decoding, this is causing errors.
@@ -131,7 +131,7 @@ class Svg {
   Future<DrawableRoot> fromSvgString(
     String rawSvg,
     String key, {
-    SvgTheme theme = const SvgTheme.empty(),
+    SvgTheme theme = const SvgTheme(),
   }) async {
     final SvgParser parser = SvgParser();
     return await parser.parse(rawSvg, theme: theme, key: key);

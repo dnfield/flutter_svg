@@ -8,12 +8,6 @@ import 'package:test/test.dart';
 import 'package:vector_math/vector_math_64.dart';
 
 void main() {
-  late SvgTheme theme;
-
-  setUp(() {
-    theme = const SvgTheme.empty();
-  });
-
   test('SVG Multiple transform parser tests', () {
     Matrix4 expected = Matrix4.identity();
     expected.translate(0.338957, 0.010104, 0);
@@ -169,7 +163,6 @@ void main() {
     final SvgParser parser = SvgParser();
     final DrawableRoot root = await parser.parse(
       '<svg id="test" viewBox="0 0 10 10"><text /></svg>',
-      theme: theme,
     );
     expect(root.children.isEmpty, true);
     expect(root.id == 'test', true);
@@ -198,7 +191,7 @@ void main() {
     <path id="path4" d="M79.5 170.7 120.9 156.4 107.4 142.8" fill="url(#triangleGradient)" />
 </svg>''';
     final SvgParser parser = SvgParser();
-    final DrawableRoot root = await parser.parse(svgStr, theme: theme);
+    final DrawableRoot root = await parser.parse(svgStr);
 
     expect(root.id == 'svgRoot', true);
     expect(find<DrawableGroup>(root, 'group1') != null, true);
@@ -229,7 +222,7 @@ void main() {
 </svg>''';
 
     final SvgParser parser = SvgParser();
-    final DrawableRoot root = await parser.parse(svgStr, theme: theme);
+    final DrawableRoot root = await parser.parse(svgStr);
 
     expect(root.id!.isEmpty, true);
     expect(find<DrawableGroup>(root, 'Page-1') != null, true);
@@ -261,7 +254,7 @@ void main() {
 </svg>''';
     final SvgParser parser = SvgParser();
     expect(
-      parser.parse(svgStr, theme: theme, warningsAsErrors: true),
+      parser.parse(svgStr, warningsAsErrors: true),
       throwsA(anything),
     );
   });
@@ -288,7 +281,7 @@ void main() {
 </svg>''';
 
     final SvgParser parser = SvgParser();
-    expect(await parser.parse(svgStr, theme: theme), isA<DrawableRoot>());
+    expect(await parser.parse(svgStr), isA<DrawableRoot>());
   });
 
   test('Respects whitespace attribute', () async {
@@ -299,7 +292,7 @@ void main() {
 </svg>''';
 
     final SvgParser parser = SvgParser();
-    final DrawableRoot root = await parser.parse(svgStr, theme: theme);
+    final DrawableRoot root = await parser.parse(svgStr);
 
     expect(find<DrawableText>(root, 'preserve-space') != null, true);
     // Empty text elements get removed
