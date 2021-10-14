@@ -58,7 +58,7 @@ DrawableViewport? parseViewBox(
     throw StateError('SVG did not specify dimensions\n\n'
         'The SVG library looks for a `viewBox` or `width` and `height` attribute '
         'to determine the viewport boundary of the SVG.  Note that these attributes, '
-        'as with all SVG attribu tes, are case sensitive.\n'
+        'as with all SVG attributes, are case sensitive.\n'
         'During processing, the following attributes were found:\n'
         '  $svg');
   }
