@@ -601,64 +601,49 @@ class SvgPicture extends StatefulWidget {
 
   /// A [PictureInfoDecoderBuilder] for [Uint8List]s that will clip to the viewBox.
   static final PictureInfoDecoderBuilder<Uint8List> svgByteDecoderBuilder =
-      (Color? currentColor, double fontSize) =>
+      (SvgTheme theme) =>
           (Uint8List bytes, ColorFilter? colorFilter, String key) =>
               svg.svgPictureDecoder(
                 bytes,
                 false,
                 colorFilter,
                 key,
-                theme: SvgTheme(
-                  currentColor: currentColor,
-                  fontSize: fontSize,
-                ),
+                theme: theme,
               );
 
   /// A [PictureInfoDecoderBuilder] for strings that will clip to the viewBox.
   static final PictureInfoDecoderBuilder<String> svgStringDecoderBuilder =
-      (Color? currentColor, double fontSize) =>
-          (String data, ColorFilter? colorFilter, String key) =>
-              svg.svgPictureStringDecoder(
-                data,
-                false,
-                colorFilter,
-                key,
-                theme: SvgTheme(
-                  currentColor: currentColor,
-                  fontSize: fontSize,
-                ),
-              );
+      (SvgTheme theme) => (String data, ColorFilter? colorFilter, String key) =>
+          svg.svgPictureStringDecoder(
+            data,
+            false,
+            colorFilter,
+            key,
+            theme: theme,
+          );
 
   /// A [PictureInfoDecoderBuilder] for [Uint8List]s that will not clip to the viewBox.
   static final PictureInfoDecoderBuilder<Uint8List>
-      svgByteDecoderOutsideViewBoxBuilder =
-      (Color? currentColor, double fontSize) =>
+      svgByteDecoderOutsideViewBoxBuilder = (SvgTheme theme) =>
           (Uint8List bytes, ColorFilter? colorFilter, String key) =>
               svg.svgPictureDecoder(
                 bytes,
                 true,
                 colorFilter,
                 key,
-                theme: SvgTheme(
-                  currentColor: currentColor,
-                  fontSize: fontSize,
-                ),
+                theme: theme,
               );
 
   /// A [PictureInfoDecoderBuilder] for [String]s that will not clip to the viewBox.
   static final PictureInfoDecoderBuilder<String>
-      svgStringDecoderOutsideViewBoxBuilder =
-      (Color? currentColor, double fontSize) =>
+      svgStringDecoderOutsideViewBoxBuilder = (SvgTheme theme) =>
           (String data, ColorFilter? colorFilter, String key) =>
               svg.svgPictureStringDecoder(
                 data,
                 true,
                 colorFilter,
                 key,
-                theme: SvgTheme(
-                  currentColor: currentColor,
-                  fontSize: fontSize,
-                ),
+                theme: theme,
               );
 
   /// If specified, the width to use for the SVG.  If unspecified, the SVG
@@ -802,8 +787,10 @@ class _SvgPictureState extends State<SvgPicture> {
         // See: https://api.flutter.dev/flutter/painting/TextStyle/fontSize.html
         14.0;
 
-    widget.pictureProvider.currentColor = currentColor;
-    widget.pictureProvider.fontSize = fontSize;
+    widget.pictureProvider.theme = SvgTheme(
+      currentColor: currentColor,
+      fontSize: fontSize,
+    );
   }
 
   void _resolveImage() {

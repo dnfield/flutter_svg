@@ -15,6 +15,7 @@ import 'package:flutter/widgets.dart'
 
 import 'picture_cache.dart';
 import 'picture_stream.dart';
+import 'svg/theme.dart';
 import 'utilities/http.dart';
 
 /// The signature of a function that can decode raw SVG data into a [Picture].
@@ -28,10 +29,9 @@ typedef PictureInfoDecoder<T> = Future<PictureInfo> Function(
 );
 
 /// The signature of a builder that returns a [PictureInfoDecoder]
-/// based on the [currentColor] and [fontSize].
+/// based on the provided [theme].
 typedef PictureInfoDecoderBuilder<T> = PictureInfoDecoder<T> Function(
-  Color? currentColor,
-  double fontSize,
+  SvgTheme theme,
 );
 
 /// Creates an [PictureConfiguration] based on the given [BuildContext] (and
@@ -323,21 +323,13 @@ abstract class PictureProvider<T> {
   /// The color filter to apply to the picture, if any.
   final ColorFilter? colorFilter;
 
-  /// The default color applied to SVG elements that inherit the color property.
+  /// The default theme used when parsing SVG elements.
   @visibleForTesting
-  Color? get currentColor => _currentColor;
-  Color? _currentColor;
+  SvgTheme? get theme => _theme;
+  SvgTheme? _theme;
 
-  /// Sets the [_currentColor] to [color].
-  set currentColor(Color? color);
-
-  /// The font size used when calculating em units of SVG elements.
-  @visibleForTesting
-  double? get fontSize => _fontSize;
-  double? _fontSize;
-
-  /// Sets the [_fontSize] to [size].
-  set fontSize(double? size);
+  /// Sets the [_theme] to [theme].
+  set theme(SvgTheme? theme);
 
   /// Resolves this Picture provider using the given `configuration`, returning
   /// an [PictureStream].
@@ -468,20 +460,10 @@ abstract class AssetBundlePictureProvider
   PictureInfoDecoder<String>? decoder;
 
   @override
-  set currentColor(Color? color) {
-    _currentColor = color;
-
-    if (_fontSize != null) {
-      decoder = decoderBuilder(_currentColor, _fontSize!);
-    }
-  }
-
-  @override
-  set fontSize(double? size) {
-    _fontSize = size;
-
-    if (_fontSize != null) {
-      decoder = decoderBuilder(_currentColor, _fontSize!);
+  set theme(SvgTheme? theme) {
+    _theme = theme;
+    if (_theme != null) {
+      decoder = decoderBuilder(_theme!);
     }
   }
 
@@ -556,20 +538,10 @@ class NetworkPicture extends PictureProvider<NetworkPicture> {
   final Map<String, String>? headers;
 
   @override
-  set currentColor(Color? color) {
-    _currentColor = color;
-
-    if (_fontSize != null) {
-      decoder = decoderBuilder(_currentColor, _fontSize!);
-    }
-  }
-
-  @override
-  set fontSize(double? size) {
-    _fontSize = size;
-
-    if (_fontSize != null) {
-      decoder = decoderBuilder(_currentColor, _fontSize!);
+  set theme(SvgTheme? theme) {
+    _theme = theme;
+    if (_theme != null) {
+      decoder = decoderBuilder(_theme!);
     }
   }
 
@@ -619,8 +591,7 @@ class NetworkPicture extends PictureProvider<NetworkPicture> {
     return other is NetworkPicture &&
         url == other.url &&
         colorFilter == other.colorFilter &&
-        currentColor == other.currentColor &&
-        fontSize == other.fontSize;
+        theme == other.theme;
   }
 
   @override
@@ -657,20 +628,10 @@ class FilePicture extends PictureProvider<FilePicture> {
   PictureInfoDecoder<Uint8List>? decoder;
 
   @override
-  set currentColor(Color? color) {
-    _currentColor = color;
-
-    if (_fontSize != null) {
-      decoder = decoderBuilder(_currentColor, _fontSize!);
-    }
-  }
-
-  @override
-  set fontSize(double? size) {
-    _fontSize = size;
-
-    if (_fontSize != null) {
-      decoder = decoderBuilder(_currentColor, _fontSize!);
+  set theme(SvgTheme? theme) {
+    _theme = theme;
+    if (_theme != null) {
+      decoder = decoderBuilder(_theme!);
     }
   }
 
@@ -720,9 +681,8 @@ class FilePicture extends PictureProvider<FilePicture> {
     }
     return other is FilePicture &&
         file.path == other.file.path &&
-        other.colorFilter == colorFilter &&
-        currentColor == other.currentColor &&
-        fontSize == other.fontSize;
+        colorFilter == other.colorFilter &&
+        theme == other.theme;
   }
 
   @override
@@ -764,20 +724,10 @@ class MemoryPicture extends PictureProvider<MemoryPicture> {
   final Uint8List bytes;
 
   @override
-  set currentColor(Color? color) {
-    _currentColor = color;
-
-    if (_fontSize != null) {
-      decoder = decoderBuilder(_currentColor, _fontSize!);
-    }
-  }
-
-  @override
-  set fontSize(double? size) {
-    _fontSize = size;
-
-    if (_fontSize != null) {
-      decoder = decoderBuilder(_currentColor, _fontSize!);
+  set theme(SvgTheme? theme) {
+    _theme = theme;
+    if (_theme != null) {
+      decoder = decoderBuilder(_theme!);
     }
   }
 
@@ -821,8 +771,7 @@ class MemoryPicture extends PictureProvider<MemoryPicture> {
     return other is MemoryPicture &&
         bytes == other.bytes &&
         colorFilter == other.colorFilter &&
-        currentColor == other.currentColor &&
-        fontSize == other.fontSize;
+        theme == other.theme;
   }
 
   @override
@@ -863,20 +812,10 @@ class StringPicture extends PictureProvider<StringPicture> {
   final String string;
 
   @override
-  set currentColor(Color? color) {
-    _currentColor = color;
-
-    if (_fontSize != null) {
-      decoder = decoderBuilder(_currentColor, _fontSize!);
-    }
-  }
-
-  @override
-  set fontSize(double? size) {
-    _fontSize = size;
-
-    if (_fontSize != null) {
-      decoder = decoderBuilder(_currentColor, _fontSize!);
+  set theme(SvgTheme? theme) {
+    _theme = theme;
+    if (_theme != null) {
+      decoder = decoderBuilder(_theme!);
     }
   }
 
@@ -922,8 +861,7 @@ class StringPicture extends PictureProvider<StringPicture> {
     return other is StringPicture &&
         string == other.string &&
         colorFilter == other.colorFilter &&
-        currentColor == other.currentColor &&
-        fontSize == other.fontSize;
+        theme == other.theme;
   }
 
   @override
@@ -1066,8 +1004,7 @@ class ExactAssetPicture extends AssetBundlePictureProvider {
         keyName == other.keyName &&
         bundle == other.bundle &&
         colorFilter == other.colorFilter &&
-        currentColor == other.currentColor &&
-        fontSize == other.fontSize;
+        theme == other.theme;
   }
 
   @override
