@@ -27,12 +27,8 @@ void main() {
       SvgPicture svgPicture = tester.firstWidget(find.byType(SvgPicture));
       expect(svgPicture, isNotNull);
       expect(
-        svgPicture.pictureProvider.currentColor,
-        equals(svgTheme.currentColor),
-      );
-      expect(
-        svgPicture.pictureProvider.fontSize,
-        equals(svgTheme.fontSize),
+        svgPicture.pictureProvider.theme,
+        equals(svgTheme),
       );
 
       const SvgTheme anotherSvgTheme = SvgTheme(
@@ -48,12 +44,8 @@ void main() {
       svgPicture = tester.firstWidget(find.byType(SvgPicture));
       expect(svgPicture, isNotNull);
       expect(
-        svgPicture.pictureProvider.currentColor,
-        equals(anotherSvgTheme.currentColor),
-      );
-      expect(
-        svgPicture.pictureProvider.fontSize,
-        equals(anotherSvgTheme.fontSize),
+        svgPicture.pictureProvider.theme,
+        equals(anotherSvgTheme),
       );
     });
 
@@ -84,7 +76,7 @@ void main() {
       final SvgPicture svgPicture = tester.firstWidget(find.byType(SvgPicture));
       expect(svgPicture, isNotNull);
       expect(
-        svgPicture.pictureProvider.currentColor,
+        svgPicture.pictureProvider.theme?.currentColor,
         equals(Color(0xFF05290E)),
       );
     });
@@ -114,7 +106,7 @@ void main() {
       final SvgPicture svgPicture = tester.firstWidget(find.byType(SvgPicture));
       expect(svgPicture, isNotNull);
       expect(
-        svgPicture.pictureProvider.fontSize,
+        svgPicture.pictureProvider.theme?.fontSize,
         equals(12.0),
       );
     });
@@ -140,7 +132,7 @@ void main() {
       final SvgPicture svgPicture = tester.firstWidget(find.byType(SvgPicture));
       expect(svgPicture, isNotNull);
       expect(
-        svgPicture.pictureProvider.fontSize,
+        svgPicture.pictureProvider.theme?.fontSize,
         equals(26.0),
       );
     });
@@ -161,7 +153,7 @@ void main() {
       final SvgPicture svgPicture = tester.firstWidget(find.byType(SvgPicture));
       expect(svgPicture, isNotNull);
       expect(
-        svgPicture.pictureProvider.fontSize,
+        svgPicture.pictureProvider.theme?.fontSize,
         equals(14.0),
       );
     });

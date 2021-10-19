@@ -1,8 +1,11 @@
+// ignore_for_file: prefer_const_constructors
+
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_svg/src/svg/theme.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
 
@@ -12,12 +15,10 @@ class MockFile extends Mock implements File {}
 
 void main() {
   group('PictureProvider', () {
-    Color? currentColor;
-    double? currentFontSize;
+    SvgTheme? currentTheme;
 
-    PictureInfoDecoder<T> decoderBuilder<T>(Color? color, double fontSize) {
-      currentColor = color;
-      currentFontSize = fontSize;
+    PictureInfoDecoder<T> decoderBuilder<T>(SvgTheme theme) {
+      currentTheme = theme;
       return (T bytes, ColorFilter? colorFilter, String key) async =>
           MockPictureInfo();
     }
@@ -28,76 +29,94 @@ void main() {
       test('NetworkPicture', () async {
         const Color color = Color(0xFFB0E3BE);
         final NetworkPicture networkPicture =
-            NetworkPicture(decoderBuilder, 'url')..fontSize = 14.0;
+            NetworkPicture(decoderBuilder, 'url')
+              ..theme = SvgTheme(fontSize: 14.0);
 
         final PictureInfoDecoder<Uint8List>? decoder = networkPicture.decoder;
 
-        // Update the currentColor of PictureProvider.
-        networkPicture.currentColor = color;
+        // Update the theme of PictureProvider to include currentColor.
+        networkPicture.theme = SvgTheme(
+          currentColor: color,
+          fontSize: 14.0,
+        );
 
         expect(networkPicture.decoder, isNotNull);
         expect(networkPicture.decoder, isNot(equals(decoder)));
-        expect(currentColor, equals(color));
+        expect(currentTheme?.currentColor, equals(color));
       });
 
       test('FilePicture', () async {
         const Color color = Color(0xFFB0E3BE);
         final FilePicture filePicture = FilePicture(decoderBuilder, MockFile())
-          ..fontSize = 14.0;
+          ..theme = SvgTheme(fontSize: 14.0);
 
         final PictureInfoDecoder<Uint8List>? decoder = filePicture.decoder;
 
-        // Update the currentColor of PictureProvider.
-        filePicture.currentColor = color;
+        // Update the theme of PictureProvider to include currentColor.
+        filePicture.theme = SvgTheme(
+          currentColor: color,
+          fontSize: 14.0,
+        );
 
         expect(filePicture.decoder, isNotNull);
         expect(filePicture.decoder, isNot(equals(decoder)));
-        expect(currentColor, equals(color));
+        expect(currentTheme?.currentColor, equals(color));
       });
 
       test('MemoryPicture', () async {
         const Color color = Color(0xFFB0E3BE);
         final MemoryPicture memoryPicture =
-            MemoryPicture(decoderBuilder, Uint8List(0))..fontSize = 14.0;
+            MemoryPicture(decoderBuilder, Uint8List(0))
+              ..theme = SvgTheme(fontSize: 14.0);
 
         final PictureInfoDecoder<Uint8List>? decoder = memoryPicture.decoder;
 
-        // Update the currentColor of PictureProvider.
-        memoryPicture.currentColor = color;
+        // Update the theme of PictureProvider to include currentColor.
+        memoryPicture.theme = SvgTheme(
+          currentColor: color,
+          fontSize: 14.0,
+        );
 
         expect(memoryPicture.decoder, isNotNull);
         expect(memoryPicture.decoder, isNot(equals(decoder)));
-        expect(currentColor, equals(color));
+        expect(currentTheme?.currentColor, equals(color));
       });
 
       test('StringPicture', () async {
         const Color color = Color(0xFFB0E3BE);
         final StringPicture stringPicture = StringPicture(decoderBuilder, '')
-          ..fontSize = 14.0;
+          ..theme = SvgTheme(fontSize: 14.0);
 
         final PictureInfoDecoder<String>? decoder = stringPicture.decoder;
 
-        // Update the currentColor of PictureProvider.
-        stringPicture.currentColor = color;
+        // Update the theme of PictureProvider to include currentColor.
+        stringPicture.theme = SvgTheme(
+          currentColor: color,
+          fontSize: 14.0,
+        );
 
         expect(stringPicture.decoder, isNotNull);
         expect(stringPicture.decoder, isNot(equals(decoder)));
-        expect(currentColor, equals(color));
+        expect(currentTheme?.currentColor, equals(color));
       });
 
       test('ExactAssetPicture', () async {
         const Color color = Color(0xFFB0E3BE);
         final ExactAssetPicture exactAssetPicture =
-            ExactAssetPicture(decoderBuilder, '')..fontSize = 14.0;
+            ExactAssetPicture(decoderBuilder, '')
+              ..theme = SvgTheme(fontSize: 14.0);
 
         final PictureInfoDecoder<String>? decoder = exactAssetPicture.decoder;
 
-        // Update the currentColor of PictureProvider.
-        exactAssetPicture.currentColor = color;
+        // Update the theme of PictureProvider to include currentColor.
+        exactAssetPicture.theme = SvgTheme(
+          currentColor: color,
+          fontSize: 14.0,
+        );
 
         expect(exactAssetPicture.decoder, isNotNull);
         expect(exactAssetPicture.decoder, isNot(equals(decoder)));
-        expect(currentColor, equals(color));
+        expect(currentTheme?.currentColor, equals(color));
       });
     });
 
@@ -111,12 +130,14 @@ void main() {
 
         final PictureInfoDecoder<Uint8List>? decoder = networkPicture.decoder;
 
-        // Update the fontSize of PictureProvider.
-        networkPicture.fontSize = fontSize;
+        // Update the theme of PictureProvider to include fontSize.
+        networkPicture.theme = SvgTheme(
+          fontSize: fontSize,
+        );
 
         expect(networkPicture.decoder, isNotNull);
         expect(networkPicture.decoder, isNot(equals(decoder)));
-        expect(currentFontSize, equals(fontSize));
+        expect(currentTheme?.fontSize, equals(fontSize));
       });
 
       test('FilePicture', () async {
@@ -125,12 +146,14 @@ void main() {
 
         final PictureInfoDecoder<Uint8List>? decoder = filePicture.decoder;
 
-        // Update the fontSize of PictureProvider.
-        filePicture.fontSize = fontSize;
+        // Update the theme of PictureProvider to include fontSize.
+        filePicture.theme = SvgTheme(
+          fontSize: fontSize,
+        );
 
         expect(filePicture.decoder, isNotNull);
         expect(filePicture.decoder, isNot(equals(decoder)));
-        expect(currentFontSize, equals(fontSize));
+        expect(currentTheme?.fontSize, equals(fontSize));
       });
 
       test('MemoryPicture', () async {
@@ -140,12 +163,14 @@ void main() {
 
         final PictureInfoDecoder<Uint8List>? decoder = memoryPicture.decoder;
 
-        // Update the fontSize of PictureProvider.
-        memoryPicture.fontSize = fontSize;
+        // Update the theme of PictureProvider to include fontSize.
+        memoryPicture.theme = SvgTheme(
+          fontSize: fontSize,
+        );
 
         expect(memoryPicture.decoder, isNotNull);
         expect(memoryPicture.decoder, isNot(equals(decoder)));
-        expect(currentFontSize, equals(fontSize));
+        expect(currentTheme?.fontSize, equals(fontSize));
       });
 
       test('StringPicture', () async {
@@ -154,12 +179,14 @@ void main() {
 
         final PictureInfoDecoder<String>? decoder = stringPicture.decoder;
 
-        // Update the fontSize of PictureProvider.
-        stringPicture.fontSize = fontSize;
+        // Update the theme of PictureProvider to include fontSize.
+        stringPicture.theme = SvgTheme(
+          fontSize: fontSize,
+        );
 
         expect(stringPicture.decoder, isNotNull);
         expect(stringPicture.decoder, isNot(equals(decoder)));
-        expect(currentFontSize, equals(fontSize));
+        expect(currentTheme?.fontSize, equals(fontSize));
       });
 
       test('ExactAssetPicture', () async {
@@ -169,12 +196,14 @@ void main() {
 
         final PictureInfoDecoder<String>? decoder = exactAssetPicture.decoder;
 
-        // Update the fontSize of PictureProvider.
-        exactAssetPicture.fontSize = fontSize;
+        // Update the theme of PictureProvider to include fontSize.
+        exactAssetPicture.theme = SvgTheme(
+          fontSize: fontSize,
+        );
 
         expect(exactAssetPicture.decoder, isNotNull);
         expect(exactAssetPicture.decoder, isNot(equals(decoder)));
-        expect(currentFontSize, equals(fontSize));
+        expect(currentTheme?.fontSize, equals(fontSize));
       });
     });
   });

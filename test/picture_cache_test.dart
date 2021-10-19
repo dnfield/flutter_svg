@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_svg/src/picture_cache.dart';
+import 'package:flutter_svg/src/svg/theme.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:xml/xml.dart';
 
@@ -77,7 +78,9 @@ void main() {
     final PictureProvider pictureProvider = StringPicture(
       SvgPicture.svgStringDecoderBuilder,
       svgString,
-    )..fontSize = 14.0;
+    )..theme = const SvgTheme(
+        fontSize: 14.0,
+      );
 
     await precachePicture(
       pictureProvider,
@@ -139,9 +142,10 @@ void main() {
     final PictureProvider pictureProvider = StringPicture(
       SvgPicture.svgStringDecoderBuilder,
       svgString,
-    )
-      ..currentColor = const Color(0xFF05290E)
-      ..fontSize = 14.0;
+    )..theme = const SvgTheme(
+        currentColor: Color(0xFF05290E),
+        fontSize: 14.0,
+      );
 
     await precachePicture(
       pictureProvider,
