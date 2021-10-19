@@ -14,6 +14,7 @@ import 'src/picture_provider.dart';
 import 'src/picture_stream.dart';
 import 'src/render_picture.dart';
 import 'src/svg/theme.dart';
+import 'src/unbounded_color_filtered.dart';
 import 'src/vector_drawable.dart';
 
 /// Instance for [Svg]'s utility methods, which can produce a [DrawableRoot]
@@ -242,6 +243,7 @@ class SvgPicture extends StatefulWidget {
     this.clipBehavior = Clip.hardEdge,
     this.cacheColorFilter = false,
     this.theme,
+    this.useLegacyPaint = true,
   }) : super(key: key);
 
   /// Instantiates a widget that renders an SVG picture from an [AssetBundle].
@@ -343,6 +345,7 @@ class SvgPicture extends StatefulWidget {
     this.clipBehavior = Clip.hardEdge,
     this.cacheColorFilter = false,
     this.theme,
+    this.useLegacyPaint = true,
   })  : pictureProvider = ExactAssetPicture(
           allowDrawingOutsideViewBox == true
               ? svgStringDecoderOutsideViewBoxBuilder
@@ -407,6 +410,7 @@ class SvgPicture extends StatefulWidget {
     this.clipBehavior = Clip.hardEdge,
     this.cacheColorFilter = false,
     this.theme,
+    this.useLegacyPaint = true,
   })  : pictureProvider = NetworkPicture(
           allowDrawingOutsideViewBox == true
               ? svgByteDecoderOutsideViewBoxBuilder
@@ -467,6 +471,7 @@ class SvgPicture extends StatefulWidget {
     this.clipBehavior = Clip.hardEdge,
     this.cacheColorFilter = false,
     this.theme,
+    this.useLegacyPaint = true,
   })  : pictureProvider = FilePicture(
           allowDrawingOutsideViewBox == true
               ? svgByteDecoderOutsideViewBoxBuilder
@@ -523,6 +528,7 @@ class SvgPicture extends StatefulWidget {
     this.clipBehavior = Clip.hardEdge,
     this.cacheColorFilter = false,
     this.theme,
+    this.useLegacyPaint = true,
   })  : pictureProvider = MemoryPicture(
           allowDrawingOutsideViewBox == true
               ? svgByteDecoderOutsideViewBoxBuilder
@@ -579,6 +585,7 @@ class SvgPicture extends StatefulWidget {
     this.clipBehavior = Clip.hardEdge,
     this.cacheColorFilter = false,
     this.theme,
+    this.useLegacyPaint = true,
   })  : pictureProvider = StringPicture(
           allowDrawingOutsideViewBox == true
               ? svgStringDecoderOutsideViewBoxBuilder
@@ -590,6 +597,14 @@ class SvgPicture extends StatefulWidget {
         ),
         colorFilter = _getColorFilter(color, colorBlendMode),
         super(key: key);
+
+  /// Whether to use a less efficient, but completely visually compatible,
+  /// method of painting the picture.
+  ///
+  /// This flag is intended to assist clients with migration to the layer based
+  /// painting method. Once all known clients have been migrated, it will be
+  /// deprecated and become a no-op.
+  final bool useLegacyPaint;
 
   /// The default placeholder for a SVG that may take time to parse or
   /// retrieve, e.g. from a network location.
@@ -876,6 +891,7 @@ class _SvgPictureState extends State<SvgPicture> {
               _picture,
               matchTextDirection: widget.matchTextDirection,
               allowDrawingOutsideViewBox: widget.allowDrawingOutsideViewBox,
+              useLegacyPaint: widget.useLegacyPaint,
             ),
           ),
         ),
@@ -883,10 +899,15 @@ class _SvgPictureState extends State<SvgPicture> {
 
       if (widget.pictureProvider.colorFilter == null &&
           widget.colorFilter != null) {
-        child = ColorFiltered(
-          colorFilter: widget.colorFilter!,
-          child: child,
-        );
+        child = widget.useLegacyPaint
+            ? UnboundedColorFiltered(
+                colorFilter: widget.colorFilter,
+                child: child,
+              )
+            : ColorFiltered(
+                colorFilter: widget.colorFilter!,
+                child: child,
+              );
       }
     } else {
       child = widget.placeholderBuilder == null
