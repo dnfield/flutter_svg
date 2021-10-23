@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io' show File;
 import 'dart:typed_data';
 import 'dart:ui' show Picture;
 
@@ -8,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/src/svg/default_theme.dart';
+import 'package:universal_file/universal_file.dart' show File;
 
 import 'parser.dart';
 import 'src/picture_provider.dart';

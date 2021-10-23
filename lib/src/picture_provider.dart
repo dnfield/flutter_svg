@@ -3,7 +3,6 @@
 // found in the LICENSE file.
 
 import 'dart:async';
-import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui'
     show BlendMode, Color, ColorFilter, Locale, Rect, TextDirection, hashValues;
@@ -12,6 +11,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart'
     show BuildContext, DefaultAssetBundle, Directionality, Localizations;
+import 'package:universal_file/universal_file.dart' show File;
 
 import 'picture_cache.dart';
 import 'picture_stream.dart';
