@@ -485,7 +485,7 @@ abstract class AssetBundlePictureProvider
   ///
   /// This function is used by [load].
   @protected
-  Future<PictureInfo?> _loadAsync(
+  Future<PictureInfo> _loadAsync(
       AssetBundlePictureKey key, PictureErrorListener? onError) async {
     final String data = await key.bundle.loadString(key.name);
 
@@ -559,7 +559,7 @@ class NetworkPicture extends PictureProvider<NetworkPicture> {
     });
   }
 
-  Future<PictureInfo?> _loadAsync(NetworkPicture key,
+  Future<PictureInfo> _loadAsync(NetworkPicture key,
       {PictureErrorListener? onError}) async {
     assert(key == this);
 
@@ -735,7 +735,7 @@ class MemoryPicture extends PictureProvider<MemoryPicture> {
     return OneFramePictureStreamCompleter(_loadAsync(key, onError: onError));
   }
 
-  Future<PictureInfo?> _loadAsync(MemoryPicture key,
+  Future<PictureInfo> _loadAsync(MemoryPicture key,
       {PictureErrorListener? onError}) async {
     assert(key == this);
 
@@ -820,7 +820,7 @@ class StringPicture extends PictureProvider<StringPicture> {
     return OneFramePictureStreamCompleter(_loadAsync(key, onError: onError));
   }
 
-  Future<PictureInfo?> _loadAsync(
+  Future<PictureInfo> _loadAsync(
     StringPicture key, {
     PictureErrorListener? onError,
   }) async {
