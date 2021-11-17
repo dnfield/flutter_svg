@@ -338,9 +338,13 @@ abstract class PictureProvider<T, U> {
 
   /// Sets the [_theme] to [theme].
   set theme(SvgTheme? theme) {
-    if (_theme == theme || theme == null) {
+    // Fallback to the default theme if null is given.
+    theme = theme ?? const SvgTheme();
+
+    if (_theme == theme) {
       return;
     }
+
     decoder = decoderBuilder(theme);
     _theme = theme;
     if (_lastKey != null) {
