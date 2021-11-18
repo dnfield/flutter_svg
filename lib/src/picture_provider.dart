@@ -307,7 +307,8 @@ abstract class PictureProvider<T, U> {
   /// Abstract const constructor. This constructor enables subclasses to provide
   /// const constructors so that they can be used in const expressions.
   PictureProvider(this.colorFilter, {required this.decoderBuilder})
-      : decoder = decoderBuilder(const SvgTheme());
+      : _theme = const SvgTheme(),
+        decoder = decoderBuilder(const SvgTheme());
 
   /// The decoder builder to build a [decoder] when [theme] changes.
   final PictureInfoDecoderBuilder<U> decoderBuilder;
@@ -333,18 +334,19 @@ abstract class PictureProvider<T, U> {
 
   /// The default theme used when parsing SVG elements.
   @visibleForTesting
-  SvgTheme? get theme => _theme;
-  SvgTheme? _theme;
+  SvgTheme get theme => _theme;
+  SvgTheme _theme;
 
   /// Sets the [_theme] to [theme].
-  set theme(SvgTheme? theme) {
-    // Fallback to the default theme if null is given.
-    theme = theme ?? const SvgTheme();
-
+  ///
+  /// A theme is used when parsing SVG elements. Changing the theme
+  /// rebuilds a [decoder] using [decoderBuilder] and the new theme.
+  /// This will make the decoded SVG picture use properties from
+  /// the new theme.
+  set theme(SvgTheme theme) {
     if (_theme == theme) {
       return;
     }
-
     decoder = decoderBuilder(theme);
     _theme = theme;
     if (_lastKey != null) {
@@ -440,7 +442,7 @@ class PictureKey<T> {
   final ColorFilter? colorFilter;
 
   /// The theme used when this key was created.
-  final SvgTheme? theme;
+  final SvgTheme theme;
 
   @override
   bool operator ==(dynamic other) {
@@ -473,7 +475,7 @@ class AssetBundlePictureKey extends PictureKey<String> {
     required this.bundle,
     required String name,
     ColorFilter? colorFilter,
-    required SvgTheme? theme,
+    required SvgTheme theme,
   })  : assert(bundle != null), // ignore: unnecessary_null_comparison
         assert(name != null), // ignore: unnecessary_null_comparison
         super(name, colorFilter: colorFilter, theme: theme);

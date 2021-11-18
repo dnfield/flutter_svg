@@ -76,7 +76,7 @@ void main() {
       final SvgPicture svgPicture = tester.firstWidget(find.byType(SvgPicture));
       expect(svgPicture, isNotNull);
       expect(
-        svgPicture.pictureProvider.theme?.currentColor,
+        svgPicture.pictureProvider.theme.currentColor,
         equals(Color(0xFF05290E)),
       );
     });
@@ -106,7 +106,7 @@ void main() {
       final SvgPicture svgPicture = tester.firstWidget(find.byType(SvgPicture));
       expect(svgPicture, isNotNull);
       expect(
-        svgPicture.pictureProvider.theme?.fontSize,
+        svgPicture.pictureProvider.theme.fontSize,
         equals(12.0),
       );
     });
@@ -132,7 +132,7 @@ void main() {
       final SvgPicture svgPicture = tester.firstWidget(find.byType(SvgPicture));
       expect(svgPicture, isNotNull);
       expect(
-        svgPicture.pictureProvider.theme?.fontSize,
+        svgPicture.pictureProvider.theme.fontSize,
         equals(26.0),
       );
     });
@@ -153,7 +153,7 @@ void main() {
       final SvgPicture svgPicture = tester.firstWidget(find.byType(SvgPicture));
       expect(svgPicture, isNotNull);
       expect(
-        svgPicture.pictureProvider.theme?.fontSize,
+        svgPicture.pictureProvider.theme.fontSize,
         equals(14.0),
       );
     });
