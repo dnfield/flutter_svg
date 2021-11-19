@@ -187,7 +187,7 @@ void main() {
       final SvgPicture svgPicture = tester.firstWidget(find.byType(SvgPicture));
       expect(svgPicture, isNotNull);
       expect(
-        svgPicture.pictureProvider.theme?.xHeight,
+        svgPicture.pictureProvider.theme.xHeight,
         equals(7.0),
       );
     });
@@ -208,7 +208,7 @@ void main() {
       final SvgPicture svgPicture = tester.firstWidget(find.byType(SvgPicture));
       expect(svgPicture, isNotNull);
       expect(
-        svgPicture.pictureProvider.theme?.xHeight,
+        svgPicture.pictureProvider.theme.xHeight,
         equals(7.0),
       );
     });
