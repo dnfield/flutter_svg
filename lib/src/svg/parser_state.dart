@@ -580,28 +580,39 @@ class _Elements {
         fontSize: fontSize,
       )!,
     );
-    final Image image = await resolveImage(href);
-    final DrawableParent parent = parserState._parentDrawables.last.drawable!;
-    final DrawableStyle? parentStyle = parent.style;
-    final DrawableRasterImage drawable = DrawableRasterImage(
-      parserState.attribute('id', def: ''),
-      image,
-      offset,
-      parseStyle(
-        parserState._key,
-        parserState.attributes,
-        parserState._definitions,
-        parserState.rootBounds,
-        parentStyle,
-        currentColor: parent.color,
-        fontSize: parserState.fontSize,
-      ),
-      size: size,
-      transform: parseTransform(parserState.attribute('transform'))?.storage,
-    );
-    final bool isIri = parserState.checkForIri(drawable);
-    if (!parserState._inDefs || !isIri) {
-      parserState.currentGroup!.children!.add(drawable);
+
+    if(href.startsWith('http')&& href.endsWith('.svg')){
+      final drawable = await resolveSvg(
+          href,
+          parserState.theme,
+          parserState._key,
+          parserState._warningsAsErrors);
+      parserState.currentGroup!.children!.addAll(drawable.children);
+
+    }else {
+      final Image image = await resolveImage(href);
+      final DrawableParent parent = parserState._parentDrawables.last.drawable!;
+      final DrawableStyle? parentStyle = parent.style;
+      final DrawableRasterImage drawable = DrawableRasterImage(
+        parserState.attribute('id', def: ''),
+        image,
+        offset,
+        parseStyle(
+          parserState._key,
+          parserState.attributes,
+          parserState._definitions,
+          parserState.rootBounds,
+          parentStyle,
+          currentColor: parent.color,
+          fontSize: parserState.fontSize,
+        ),
+        size: size,
+        transform: parseTransform(parserState.attribute('transform'))?.storage,
+      );
+      final bool isIri = parserState.checkForIri(drawable);
+      if (!parserState._inDefs || !isIri) {
+        parserState.currentGroup!.children!.add(drawable);
+      }
     }
   }
 

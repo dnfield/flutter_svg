@@ -3,7 +3,10 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui';
 
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_svg/src/svg/parser_state.dart';
 import 'package:vector_math/vector_math_64.dart';
+import 'package:xml/xml_events.dart' as xml show parseEvents;
 
 import '../utilities/http.dart';
 import '../utilities/numbers.dart';
@@ -229,6 +232,13 @@ Future<Image> resolveImage(String href) async {
   }
 
   throw UnsupportedError('Could not resolve image href: $href');
+}
+
+Future<DrawableRoot> resolveSvg(String href, SvgTheme theme,String? key, bool warningsAsErrors)async{
+  final Uint8List bytes = await httpGet(href);
+  final SvgParserState state =
+  SvgParserState(xml.parseEvents(utf8.decode(bytes)), theme, key, warningsAsErrors);
+  return state.parse();
 }
 
 const ParagraphConstraints _infiniteParagraphConstraints = ParagraphConstraints(
