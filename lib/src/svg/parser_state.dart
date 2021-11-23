@@ -582,7 +582,7 @@ class _Elements {
     );
 
     if(href.startsWith('http')&& href.endsWith('.svg')){
-      final drawable = await resolveSvg(
+      final DrawableRoot drawable = await resolveSvg(
           href,
           parserState.theme,
           parserState._key,
