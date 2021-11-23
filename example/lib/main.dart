@@ -6,6 +6,7 @@ const List<String> _assetNames = <String>[
   // 'assets/notfound.svg', // uncomment to test an asset that doesn't exist.
   'assets/flutter_logo.svg',
   'assets/dart.svg',
+  'assets/simple/svg_xlink_svg.svg',
   'assets/simple/clip_path_3.svg',
   'assets/simple/clip_path_2.svg',
   'assets/simple/clip_path.svg',

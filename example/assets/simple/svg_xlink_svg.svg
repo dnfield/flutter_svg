@@ -1,0 +1,15 @@
+<!-- Learn about this code on MDN: https://developer.mozilla.org/en-US/docs/Web/SVG/Element/clipPath -->
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <defs>
+        <clipPath id="myClip">
+            <circle cx="30" cy="30" r="20"/>
+            <circle cx="70" cy="70" r="20"/>
+        </clipPath>
+    </defs>
+
+    <g>
+        <rect x="0" y="0" width="120" height="120" fill="#f0f"/>
+        <image xlink:href="https://upload.wikimedia.org/wikipedia/commons/b/b4/Chess_ndd45.svg"/>
+    </g>
+</svg>
+
