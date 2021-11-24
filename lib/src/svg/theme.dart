@@ -30,8 +30,8 @@ class SvgTheme {
 
   @override
   bool operator ==(dynamic other) {
-    if (identical(this, other)) {
-      return true;
+    if (other.runtimeType != runtimeType) {
+      return false;
     }
 
     return other is SvgTheme &&
