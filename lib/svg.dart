@@ -16,6 +16,13 @@ import 'src/svg/theme.dart';
 import 'src/utilities/file.dart';
 import 'src/vector_drawable.dart';
 
+/// Builder function to create an error widget.
+typedef LoadingErrorWidgetBuilder = Widget Function(
+    BuildContext context,
+    dynamic error,
+    StackTrace? stackTrace,
+    );
+
 /// Instance for [Svg]'s utility methods, which can produce a [DrawableRoot]
 /// or [PictureInfo] from [String] or [Uint8List].
 final Svg svg = Svg._();
@@ -236,6 +243,7 @@ class SvgPicture extends StatefulWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
+    this.errorBuilder,
     this.colorFilter,
     this.semanticsLabel,
     this.excludeFromSemantics = false,
@@ -336,6 +344,7 @@ class SvgPicture extends StatefulWidget {
     this.alignment = Alignment.center,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
+    this.errorBuilder,
     Color? color,
     BlendMode colorBlendMode = BlendMode.srcIn,
     this.semanticsLabel,
@@ -400,6 +409,7 @@ class SvgPicture extends StatefulWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
+    this.errorBuilder,
     Color? color,
     BlendMode colorBlendMode = BlendMode.srcIn,
     this.semanticsLabel,
@@ -460,6 +470,7 @@ class SvgPicture extends StatefulWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
+    this.errorBuilder,
     Color? color,
     BlendMode colorBlendMode = BlendMode.srcIn,
     this.semanticsLabel,
@@ -516,6 +527,7 @@ class SvgPicture extends StatefulWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
+    this.errorBuilder,
     Color? color,
     BlendMode colorBlendMode = BlendMode.srcIn,
     this.semanticsLabel,
@@ -572,6 +584,7 @@ class SvgPicture extends StatefulWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
+    this.errorBuilder,
     Color? color,
     BlendMode colorBlendMode = BlendMode.srcIn,
     this.semanticsLabel,
@@ -688,6 +701,9 @@ class SvgPicture extends StatefulWidget {
   /// The placeholder to use while fetching, decoding, and parsing the SVG data.
   final WidgetBuilder? placeholderBuilder;
 
+  /// The error widgeet to use while fetching, decoding, or parsing fails.
+  final LoadingErrorWidgetBuilder? errorBuilder;
+
   /// If true, will horizontally flip the picture in [TextDirection.rtl] contexts.
   final bool matchTextDirection;
 
@@ -739,6 +755,8 @@ class SvgPicture extends StatefulWidget {
 
 class _SvgPictureState extends State<SvgPicture> {
   PictureInfo? _picture;
+  Object? _exception;
+  StackTrace? _stackTrace;
   PictureStream? _pictureStream;
   bool _isListeningToStream = false;
 
@@ -802,7 +820,16 @@ class _SvgPictureState extends State<SvgPicture> {
 
   void _handleImageChanged(PictureInfo? imageInfo, bool synchronousCall) {
     setState(() {
+      _exception = null;
+      _stackTrace = null;
       _picture = imageInfo;
+    });
+  }
+
+  void _handleImageError(Object exception, StackTrace stackTrace) {
+    setState(() {
+      _exception = exception;
+      _stackTrace = stackTrace;
     });
   }
 
@@ -819,7 +846,10 @@ class _SvgPictureState extends State<SvgPicture> {
 
     _pictureStream = newStream;
     if (_isListeningToStream) {
-      _pictureStream!.addListener(_handleImageChanged);
+      _pictureStream!.addListener(
+        _handleImageChanged,
+        onError: _handleImageError,
+      );
     }
   }
 
@@ -827,7 +857,10 @@ class _SvgPictureState extends State<SvgPicture> {
     if (_isListeningToStream) {
       return;
     }
-    _pictureStream!.addListener(_handleImageChanged);
+    _pictureStream!.addListener(
+      _handleImageChanged,
+      onError: _handleImageError,
+    );
     _isListeningToStream = true;
   }
 
@@ -889,9 +922,13 @@ class _SvgPictureState extends State<SvgPicture> {
         );
       }
     } else {
-      child = widget.placeholderBuilder == null
-          ? _getDefaultPlaceholder(context, widget.width, widget.height)
-          : widget.placeholderBuilder!(context);
+      if(_exception != null && widget.errorBuilder != null) {
+        child = widget.errorBuilder!(context, _exception, _stackTrace);
+      } else {
+        child = widget.placeholderBuilder == null
+            ? _getDefaultPlaceholder(context, widget.width, widget.height)
+            : widget.placeholderBuilder!(context);
+      }
     }
     if (!widget.excludeFromSemantics) {
       child = Semantics(
