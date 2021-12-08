@@ -314,7 +314,6 @@ abstract class PictureProvider<T, U> {
   final PictureInfoDecoderBuilder<U> decoderBuilder;
 
   /// The [PictureInfoDecoder] to use for loading this picture.
-  @visibleForTesting
   PictureInfoDecoder<U> decoder;
 
   /// The [PictureCache] for [Picture] objects created by [PictureProvider]
@@ -333,7 +332,6 @@ abstract class PictureProvider<T, U> {
   final ColorFilter? colorFilter;
 
   /// The default theme used when parsing SVG elements.
-  @visibleForTesting
   SvgTheme get theme => _theme;
   SvgTheme _theme;
 
