@@ -20,7 +20,7 @@ import 'src/vector_drawable.dart';
 typedef LoadingErrorWidgetBuilder = Widget Function(
     BuildContext context,
     Object error,
-    StackTrace? stackTrace,
+    StackTrace stackTrace,
     );
 
 /// Instance for [Svg]'s utility methods, which can produce a [DrawableRoot]
@@ -929,7 +929,7 @@ class _SvgPictureState extends State<SvgPicture> {
       }
     } else {
       if(_exception != null && widget.errorBuilder != null) {
-        child = widget.errorBuilder!(context, _exception, _stackTrace);
+        child = widget.errorBuilder!(context, _exception!, _stackTrace!);
       } else {
         child = widget.placeholderBuilder == null
             ? _getDefaultPlaceholder(context, widget.width, widget.height)
