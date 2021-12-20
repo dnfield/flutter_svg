@@ -19,7 +19,7 @@ import 'src/vector_drawable.dart';
 /// Builder function to create an error widget.
 typedef LoadingErrorWidgetBuilder = Widget Function(
     BuildContext context,
-    dynamic error,
+    Object error,
     StackTrace? stackTrace,
     );
 
@@ -701,7 +701,7 @@ class SvgPicture extends StatefulWidget {
   /// The placeholder to use while fetching, decoding, and parsing the SVG data.
   final WidgetBuilder? placeholderBuilder;
 
-  /// The error widgeet to use while fetching, decoding, or parsing fails.
+  /// A builder to call if fetching, decoding, or parsing fails.
   final LoadingErrorWidgetBuilder? errorBuilder;
 
   /// If true, will horizontally flip the picture in [TextDirection.rtl] contexts.
