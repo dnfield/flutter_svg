@@ -13,14 +13,12 @@ import '../utilities/xml.dart';
 import '../vector_drawable.dart';
 import 'colors.dart';
 import 'parsers.dart';
-import 'xml_parsers.dart';
 
 final Set<String> _unhandledElements = <String>{'title', 'desc'};
 
 typedef _ParseFunc = Future<void>? Function(
     SvgParserState parserState, bool warningsAsErrors);
-typedef _PathFunc = Path? Function(
-    Map<String, String> attributes, double fontSize, double xHeight);
+typedef _PathFunc = Path? Function(SvgParserState parserState);
 
 final RegExp _trimPattern = RegExp(r'[\r|\n|\t]');
 
@@ -51,32 +49,18 @@ const Map<String, _PathFunc> _svgPathFuncs = <String, _PathFunc>{
 Offset _parseCurrentOffset(SvgParserState parserState, Offset? lastOffset) {
   final String? x = parserState.attribute('x', def: null);
   final String? y = parserState.attribute('y', def: null);
-  final double fontSize = parserState.fontSize;
-  final double xHeight = parserState.xHeight;
 
   return Offset(
     x != null
-        ? parseDoubleWithUnits(
-            x,
-            fontSize: fontSize,
-            xHeight: xHeight,
-          )!
-        : parseDoubleWithUnits(
+        ? parserState.parseDoubleWithUnits(x)!
+        : parserState.parseDoubleWithUnits(
               parserState.attribute('dx', def: '0'),
-              fontSize: fontSize,
-              xHeight: xHeight,
             )! +
             (lastOffset?.dx ?? 0),
     y != null
-        ? parseDoubleWithUnits(
-            y,
-            fontSize: fontSize,
-            xHeight: xHeight,
-          )!
-        : parseDoubleWithUnits(
+        ? parserState.parseDoubleWithUnits(y)!
+        : parserState.parseDoubleWithUnits(
               parserState.attribute('dy', def: '0'),
-              fontSize: fontSize,
-              xHeight: xHeight,
             )! +
             (lastOffset?.dy ?? 0),
   );
@@ -100,11 +84,7 @@ class _TextInfo {
 // ignore: avoid_classes_with_only_static_members
 class _Elements {
   static Future<void>? svg(SvgParserState parserState, bool warningsAsErrors) {
-    final DrawableViewport? viewBox = parseViewBox(
-      parserState.attributes,
-      fontSize: parserState.fontSize,
-      xHeight: parserState.xHeight,
-    );
+    final DrawableViewport? viewBox = parserState.parseViewBox();
 
     final String? id = parserState.attribute('id', def: '');
 
@@ -139,16 +119,7 @@ class _Elements {
           DrawableGroup(
             id,
             <Drawable>[],
-            parseStyle(
-              parserState._key,
-              parserState.attributes,
-              parserState._definitions,
-              viewBox!.viewBoxRect,
-              null,
-              currentColor: color,
-              fontSize: parserState.fontSize,
-              xHeight: parserState.xHeight,
-            ),
+            parserState.parseStyle(viewBox!.viewBoxRect, null, currentColor: color),
             color: color,
           ),
         ),
@@ -160,16 +131,7 @@ class _Elements {
       viewBox!,
       <Drawable>[],
       parserState._definitions,
-      parseStyle(
-        parserState._key,
-        parserState.attributes,
-        parserState._definitions,
-        viewBox.viewBoxRect,
-        null,
-        currentColor: color,
-        fontSize: parserState.fontSize,
-        xHeight: parserState.xHeight,
-      ),
+      parserState.parseStyle(viewBox.viewBoxRect, null, currentColor: color),
       color: color,
     );
     parserState.addGroup(parserState._currentStartElement!, parserState._root);
@@ -187,16 +149,7 @@ class _Elements {
     final DrawableGroup group = DrawableGroup(
       parserState.attribute('id', def: ''),
       <Drawable>[],
-      parseStyle(
-        parserState._key,
-        parserState.attributes,
-        parserState._definitions,
-        parserState.rootBounds,
-        parent.style,
-        currentColor: color,
-        fontSize: parserState.fontSize,
-        xHeight: parserState.xHeight,
-      ),
+      parserState.parseStyle(parserState.rootBounds, parent.style, currentColor: color),
       transform: parseTransform(parserState.attribute('transform'))?.storage,
       color: color,
     );
@@ -214,15 +167,10 @@ class _Elements {
     final DrawableGroup group = DrawableGroup(
       parserState.attribute('id', def: ''),
       <Drawable>[],
-      parseStyle(
-        parserState._key,
-        parserState.attributes,
-        parserState._definitions,
-        null,
+      parserState.parseStyle(
+        parserState.rootBounds,
         parent.style,
         currentColor: color,
-        fontSize: parserState.fontSize,
-        xHeight: parserState.xHeight,
       ),
       transform: parseTransform(parserState.attribute('transform'))?.storage,
       color: color,
@@ -238,30 +186,21 @@ class _Elements {
       return null;
     }
 
-    final DrawableStyle style = parseStyle(
-      parserState._key,
-      parserState.attributes,
-      parserState._definitions,
+    final DrawableStyle style = parserState.parseStyle(
       parserState.rootBounds,
       parent!.style,
       currentColor: parent.color,
-      fontSize: parserState.fontSize,
-      xHeight: parserState.xHeight,
     );
 
     final Matrix4 transform =
         parseTransform(parserState.attribute('transform')) ??
             Matrix4.identity();
     transform.translate(
-      parseDoubleWithUnits(
+      parserState.parseDoubleWithUnits(
         parserState.attribute('x', def: '0'),
-        fontSize: parserState.fontSize,
-        xHeight: parserState.xHeight,
       ),
-      parseDoubleWithUnits(
+      parserState.parseDoubleWithUnits(
         parserState.attribute('y', def: '0'),
-        fontSize: parserState.fontSize,
-        xHeight: parserState.xHeight,
       )!,
     );
 
@@ -291,11 +230,11 @@ class _Elements {
         continue;
       }
       if (event is XmlStartElementEvent) {
-        final String? rawOpacity = getAttribute(
+        final String rawOpacity = getAttribute(
           parserState.attributes,
           'stop-opacity',
           def: '1',
-        );
+        )!;
         final Color stopColor =
             parseColor(getAttribute(parserState.attributes, 'stop-color')) ??
                 parent.color ??
@@ -317,8 +256,6 @@ class _Elements {
     SvgParserState parserState,
     bool warningsAsErrors,
   ) {
-    final double fontSize = parserState.fontSize;
-    final double xHeight = parserState.xHeight;
     final String? gradientUnits = getAttribute(
       parserState.attributes,
       'gradientUnits',
@@ -331,8 +268,8 @@ class _Elements {
     final String? rawR = parserState.attribute('r', def: '50%');
     final String? rawFx = parserState.attribute('fx', def: rawCx);
     final String? rawFy = parserState.attribute('fy', def: rawCy);
-    final TileMode spreadMethod = parseTileMode(parserState.attributes);
-    final String id = buildUrlIri(parserState.attributes);
+    final TileMode spreadMethod = parserState.parseTileMode();
+    final String id = parserState.buildUrlIri();
     final Matrix4? originalTransform = parseTransform(
       parserState.attribute('gradientTransform', def: null),
     );
@@ -369,24 +306,24 @@ class _Elements {
       cx = isPercentage(rawCx!)
           ? parsePercentage(rawCx) * parserState.rootBounds.width +
               parserState.rootBounds.left
-          : parseDoubleWithUnits(rawCx, fontSize: fontSize, xHeight: xHeight)!;
+          : parserState.parseDoubleWithUnits(rawCx)!;
       cy = isPercentage(rawCy!)
           ? parsePercentage(rawCy) * parserState.rootBounds.height +
               parserState.rootBounds.top
-          : parseDoubleWithUnits(rawCy, fontSize: fontSize, xHeight: xHeight)!;
+          : parserState.parseDoubleWithUnits(rawCy)!;
       r = isPercentage(rawR!)
           ? parsePercentage(rawR) *
               ((parserState.rootBounds.height + parserState.rootBounds.width) /
                   2)
-          : parseDoubleWithUnits(rawR, fontSize: fontSize, xHeight: xHeight)!;
+          : parserState.parseDoubleWithUnits(rawR)!;
       fx = isPercentage(rawFx!)
           ? parsePercentage(rawFx) * parserState.rootBounds.width +
               parserState.rootBounds.left
-          : parseDoubleWithUnits(rawFx, fontSize: fontSize, xHeight: xHeight)!;
+          : parserState.parseDoubleWithUnits(rawFx)!;
       fy = isPercentage(rawFy!)
           ? parsePercentage(rawFy) * parserState.rootBounds.height +
               parserState.rootBounds.top
-          : parseDoubleWithUnits(rawFy, fontSize: fontSize, xHeight: xHeight)!;
+          : parserState.parseDoubleWithUnits(rawFy)!;
     }
 
     parserState._definitions.addGradient(
@@ -409,25 +346,21 @@ class _Elements {
   }
 
   static Future<void>? linearGradient(
-      SvgParserState parserState, bool warningsAsErrors) {
-    final double fontSize = parserState.fontSize;
-    final double xHeight = parserState.xHeight;
-    final String? gradientUnits = getAttribute(
-      parserState.attributes,
-      'gradientUnits',
-      def: null,
-    );
+    SvgParserState parserState,
+    bool warningsAsErrors,
+  ) {
+    final String? gradientUnits = parserState.attribute('gradientUnits');
     bool isObjectBoundingBox = gradientUnits != 'userSpaceOnUse';
 
-    final String? x1 = parserState.attribute('x1', def: '0%');
-    final String? x2 = parserState.attribute('x2', def: '100%');
-    final String? y1 = parserState.attribute('y1', def: '0%');
-    final String? y2 = parserState.attribute('y2', def: '0%');
-    final String id = buildUrlIri(parserState.attributes);
+    final String x1 = parserState.attribute('x1', def: '0%')!;
+    final String x2 = parserState.attribute('x2', def: '100%')!;
+    final String y1 = parserState.attribute('y1', def: '0%')!;
+    final String y2 = parserState.attribute('y2', def: '0%')!;
+    final String id = parserState.buildUrlIri();
     final Matrix4? originalTransform = parseTransform(
-      parserState.attribute('gradientTransform', def: null),
+      parserState.attribute('gradientTransform'),
     );
-    final TileMode spreadMethod = parseTileMode(parserState.attributes);
+    final TileMode spreadMethod = parserState.parseTileMode();
 
     final List<Color> colors = <Color>[];
     final List<double> offsets = <double>[];
@@ -452,34 +385,34 @@ class _Elements {
     Offset fromOffset, toOffset;
     if (isObjectBoundingBox) {
       fromOffset = Offset(
-        parseDecimalOrPercentage(x1!),
-        parseDecimalOrPercentage(y1!),
+        parseDecimalOrPercentage(x1),
+        parseDecimalOrPercentage(y1),
       );
       toOffset = Offset(
-        parseDecimalOrPercentage(x2!),
-        parseDecimalOrPercentage(y2!),
+        parseDecimalOrPercentage(x2),
+        parseDecimalOrPercentage(y2),
       );
     } else {
       fromOffset = Offset(
-        isPercentage(x1!)
+        isPercentage(x1)
             ? parsePercentage(x1) * parserState.rootBounds.width +
                 parserState.rootBounds.left
-            : parseDoubleWithUnits(x1, fontSize: fontSize, xHeight: xHeight)!,
-        isPercentage(y1!)
+            : parserState.parseDoubleWithUnits(x1)!,
+        isPercentage(y1)
             ? parsePercentage(y1) * parserState.rootBounds.height +
                 parserState.rootBounds.top
-            : parseDoubleWithUnits(y1, fontSize: fontSize, xHeight: xHeight)!,
+            : parserState.parseDoubleWithUnits(y1)!,
       );
 
       toOffset = Offset(
-        isPercentage(x2!)
+        isPercentage(x2)
             ? parsePercentage(x2) * parserState.rootBounds.width +
                 parserState.rootBounds.left
-            : parseDoubleWithUnits(x2, fontSize: fontSize, xHeight: xHeight)!,
-        isPercentage(y2!)
+            : parserState.parseDoubleWithUnits(x2)!,
+        isPercentage(y2)
             ? parsePercentage(y2) * parserState.rootBounds.height +
                 parserState.rootBounds.top
-            : parseDoubleWithUnits(y2, fontSize: fontSize, xHeight: xHeight)!,
+            : parserState.parseDoubleWithUnits(y2)!,
       );
     }
 
@@ -503,7 +436,7 @@ class _Elements {
 
   static Future<void>? clipPath(
       SvgParserState parserState, bool warningsAsErrors) {
-    final String id = buildUrlIri(parserState.attributes);
+    final String id = parserState.buildUrlIri();
 
     final List<Path> paths = <Path>[];
     Path? currentPath;
@@ -515,16 +448,10 @@ class _Elements {
         final _PathFunc? pathFn = _svgPathFuncs[event.name];
 
         if (pathFn != null) {
-          final Path nextPath = applyTransformIfNeeded(
-            pathFn(
-              parserState.attributes,
-              parserState.fontSize,
-              parserState.xHeight,
-            ),
-            parserState.attributes,
+          final Path nextPath = parserState.applyTransformIfNeeded(
+            pathFn(parserState),
           )!;
-          nextPath.fillType =
-              parseFillRule(parserState.attributes, 'clip-rule')!;
+          nextPath.fillType = parserState.parseFillRule('clip-rule')!;
           if (currentPath != null &&
               nextPath.fillType != currentPath.fillType) {
             currentPath = nextPath;
@@ -576,34 +503,24 @@ class _Elements {
 
   static Future<void> image(
       SvgParserState parserState, bool warningsAsErrors) async {
-    final double fontSize = parserState.fontSize;
-    final double xHeight = parserState.xHeight;
     final String? href = getHrefAttribute(parserState.attributes);
     if (href == null) {
       return;
     }
     final Offset offset = Offset(
-      parseDoubleWithUnits(
+      parserState.parseDoubleWithUnits(
         parserState.attribute('x', def: '0'),
-        fontSize: fontSize,
-        xHeight: xHeight,
       )!,
-      parseDoubleWithUnits(
+      parserState.parseDoubleWithUnits(
         parserState.attribute('y', def: '0'),
-        fontSize: fontSize,
-        xHeight: xHeight,
       )!,
     );
     final Size size = Size(
-      parseDoubleWithUnits(
+      parserState.parseDoubleWithUnits(
         parserState.attribute('width', def: '0'),
-        fontSize: fontSize,
-        xHeight: xHeight,
       )!,
-      parseDoubleWithUnits(
+      parserState.parseDoubleWithUnits(
         parserState.attribute('height', def: '0'),
-        fontSize: fontSize,
-        xHeight: xHeight,
       )!,
     );
     final Image image = await resolveImage(href);
@@ -613,16 +530,8 @@ class _Elements {
       parserState.attribute('id', def: ''),
       image,
       offset,
-      parseStyle(
-        parserState._key,
-        parserState.attributes,
-        parserState._definitions,
-        parserState.rootBounds,
-        parentStyle,
-        currentColor: parent.color,
-        fontSize: parserState.fontSize,
-        xHeight: parserState.xHeight,
-      ),
+      parserState.parseStyle(parserState.rootBounds, parentStyle,
+          currentColor: parent.color),
       size: size,
       transform: parseTransform(parserState.attribute('transform'))?.storage,
     );
@@ -632,7 +541,9 @@ class _Elements {
   }
 
   static Future<void> text(
-      SvgParserState parserState, bool warningsAsErrors) async {
+    SvgParserState parserState,
+    bool warningsAsErrors,
+  ) async {
     assert(parserState != null); // ignore: unnecessary_null_comparison
     assert(parserState.currentGroup != null);
     if (parserState._currentStartElement!.isSelfClosing) {
@@ -700,14 +611,9 @@ class _Elements {
           lastTextInfo?.style ?? parserState.currentGroup!.style;
 
       textInfos.add(_TextInfo(
-        parseStyle(
-          parserState._key,
-          parserState.attributes,
-          parserState._definitions,
+        parserState.parseStyle(
           parserState.rootBounds,
           parentStyle,
-          fontSize: parserState.fontSize,
-          xHeight: parserState.xHeight,
         ),
         currentOffset,
         transform,
@@ -742,75 +648,47 @@ class _Elements {
 
 // ignore: avoid_classes_with_only_static_members
 class _Paths {
-  static Path circle(
-    Map<String, String> attributes,
-    double fontSize,
-    double xHeight,
-  ) {
-    final double cx = parseDoubleWithUnits(
-      getAttribute(attributes, 'cx', def: '0'),
-      fontSize: fontSize,
-      xHeight: xHeight,
+  static Path circle(SvgParserState parserState) {
+    final double cx = parserState.parseDoubleWithUnits(
+      parserState.attribute('cx', def: '0'),
     )!;
-    final double cy = parseDoubleWithUnits(
-      getAttribute(attributes, 'cy', def: '0'),
-      fontSize: fontSize,
-      xHeight: xHeight,
+    final double cy = parserState.parseDoubleWithUnits(
+      parserState.attribute('cy', def: '0'),
     )!;
-    final double r = parseDoubleWithUnits(
-      getAttribute(attributes, 'r', def: '0'),
-      fontSize: fontSize,
-      xHeight: xHeight,
+    final double r = parserState.parseDoubleWithUnits(
+      parserState.attribute('r', def: '0'),
     )!;
     final Rect oval = Rect.fromCircle(center: Offset(cx, cy), radius: r);
     return Path()..addOval(oval);
   }
 
-  static Path path(
-      Map<String, String> attributes, double fontSize, double xHeight) {
-    final String d = getAttribute(attributes, 'd')!;
+  static Path path(SvgParserState parserState) {
+    final String d = parserState.attribute('d', def: '')!;
     return parseSvgPathData(d);
   }
 
-  static Path rect(
-      Map<String, String> attributes, double fontSize, double xHeight) {
-    final double x = parseDoubleWithUnits(
-      getAttribute(attributes, 'x', def: '0'),
-      fontSize: fontSize,
-      xHeight: xHeight,
+  static Path rect(SvgParserState parserState) {
+    final double x = parserState.parseDoubleWithUnits(
+      parserState.attribute('x', def: '0'),
     )!;
-    final double y = parseDoubleWithUnits(
-      getAttribute(attributes, 'y', def: '0'),
-      fontSize: fontSize,
-      xHeight: xHeight,
+    final double y = parserState.parseDoubleWithUnits(
+      parserState.attribute('y', def: '0'),
     )!;
-    final double w = parseDoubleWithUnits(
-      getAttribute(attributes, 'width', def: '0'),
-      fontSize: fontSize,
-      xHeight: xHeight,
+    final double w = parserState.parseDoubleWithUnits(
+      parserState.attribute('width', def: '0'),
     )!;
-    final double h = parseDoubleWithUnits(
-      getAttribute(attributes, 'height', def: '0'),
-      fontSize: fontSize,
-      xHeight: xHeight,
+    final double h = parserState.parseDoubleWithUnits(
+      parserState.attribute('height', def: '0'),
     )!;
     final Rect rect = Rect.fromLTWH(x, y, w, h);
-    String? rxRaw = getAttribute(attributes, 'rx', def: null);
-    String? ryRaw = getAttribute(attributes, 'ry', def: null);
+    String? rxRaw = parserState.attribute('rx');
+    String? ryRaw = parserState.attribute('ry');
     rxRaw ??= ryRaw;
     ryRaw ??= rxRaw;
 
     if (rxRaw != null && rxRaw != '') {
-      final double rx = parseDoubleWithUnits(
-        rxRaw,
-        fontSize: fontSize,
-        xHeight: xHeight,
-      )!;
-      final double ry = parseDoubleWithUnits(
-        ryRaw,
-        fontSize: fontSize,
-        xHeight: xHeight,
-      )!;
+      final double rx = parserState.parseDoubleWithUnits(rxRaw)!;
+      final double ry = parserState.parseDoubleWithUnits(ryRaw)!;
 
       return Path()..addRRect(RRect.fromRectXY(rect, rx, ry));
     }
@@ -818,18 +696,16 @@ class _Paths {
     return Path()..addRect(rect);
   }
 
-  static Path? polygon(
-      Map<String, String> attributes, double fontSize, double xHeight) {
-    return parsePathFromPoints(attributes, true);
+  static Path? polygon(SvgParserState parserState) {
+    return parsePathFromPoints(parserState, true);
   }
 
-  static Path? polyline(
-      Map<String, String> attributes, double fontSize, double xHeight) {
-    return parsePathFromPoints(attributes, false);
+  static Path? polyline(SvgParserState parserState) {
+    return parsePathFromPoints(parserState, false);
   }
 
-  static Path? parsePathFromPoints(Map<String, String> attributes, bool close) {
-    final String? points = getAttribute(attributes, 'points');
+  static Path? parsePathFromPoints(SvgParserState parserState, bool close) {
+    final String points = parserState.attribute('points', def: '')!;
     if (points == '') {
       return null;
     }
@@ -838,54 +714,36 @@ class _Paths {
     return parseSvgPathData(path);
   }
 
-  static Path ellipse(
-      Map<String, String> attributes, double fontSize, double xHeight) {
-    final double cx = parseDoubleWithUnits(
-      getAttribute(attributes, 'cx', def: '0'),
-      fontSize: fontSize,
-      xHeight: xHeight,
+  static Path ellipse(SvgParserState parserState) {
+    final double cx = parserState.parseDoubleWithUnits(
+      parserState.attribute('cx', def: '0'),
     )!;
-    final double cy = parseDoubleWithUnits(
-      getAttribute(attributes, 'cy', def: '0'),
-      fontSize: fontSize,
-      xHeight: xHeight,
+    final double cy = parserState.parseDoubleWithUnits(
+      parserState.attribute('cy', def: '0'),
     )!;
-    final double rx = parseDoubleWithUnits(
-      getAttribute(attributes, 'rx', def: '0'),
-      fontSize: fontSize,
-      xHeight: xHeight,
+    final double rx = parserState.parseDoubleWithUnits(
+      parserState.attribute('rx', def: '0'),
     )!;
-    final double ry = parseDoubleWithUnits(
-      getAttribute(attributes, 'ry', def: '0'),
-      fontSize: fontSize,
-      xHeight: xHeight,
+    final double ry = parserState.parseDoubleWithUnits(
+      parserState.attribute('ry', def: '0'),
     )!;
 
     final Rect r = Rect.fromLTWH(cx - rx, cy - ry, rx * 2, ry * 2);
     return Path()..addOval(r);
   }
 
-  static Path line(
-      Map<String, String> attributes, double fontSize, double xHeight) {
-    final double x1 = parseDoubleWithUnits(
-      getAttribute(attributes, 'x1', def: '0'),
-      fontSize: fontSize,
-      xHeight: xHeight,
+  static Path line(SvgParserState parserState) {
+    final double x1 = parserState.parseDoubleWithUnits(
+      parserState.attribute('x1', def: '0'),
     )!;
-    final double x2 = parseDoubleWithUnits(
-      getAttribute(attributes, 'x2', def: '0'),
-      fontSize: fontSize,
-      xHeight: xHeight,
+    final double x2 = parserState.parseDoubleWithUnits(
+      parserState.attribute('x2', def: '0'),
     )!;
-    final double y1 = parseDoubleWithUnits(
-      getAttribute(attributes, 'y1', def: '0'),
-      fontSize: fontSize,
-      xHeight: xHeight,
+    final double y1 = parserState.parseDoubleWithUnits(
+      parserState.attribute('y1', def: '0'),
     )!;
-    final double y2 = parseDoubleWithUnits(
-      getAttribute(attributes, 'y2', def: '0'),
-      fontSize: fontSize,
-      xHeight: xHeight,
+    final double y2 = parserState.parseDoubleWithUnits(
+      parserState.attribute('y2', def: '0'),
     )!;
 
     return Path()
@@ -915,6 +773,11 @@ class SvgParserState {
   // ignore: unnecessary_null_comparison
   : assert(events != null),
         _eventIterator = events.iterator;
+
+  bool _usesFontSize = false;
+
+  /// Whether the SVG has any `em`, `ex`, or `rem` units.
+  bool get usesFontSize => _usesFontSize;
 
   /// The theme used when parsing SVG elements.
   final SvgTheme theme;
@@ -1041,7 +904,7 @@ class SvgParserState {
 
   /// Whether this [DrawableStyleable] belongs in the [DrawableDefinitions] or not.
   bool checkForIri(DrawableStyleable? drawable) {
-    final String iri = buildUrlIri(attributes);
+    final String iri = buildUrlIri();
     if (iri != emptyUrlIri) {
       _definitions.addDrawable(iri, drawable!);
       return true;
@@ -1064,20 +927,15 @@ class SvgParserState {
 
     final DrawableParent parent = _parentDrawables.last.drawable!;
     final DrawableStyle? parentStyle = parent.style;
-    final Path path = pathFunc(attributes, fontSize, xHeight)!;
+    final Path path = pathFunc(this)!;
     final DrawableStyleable drawable = DrawableShape(
       getAttribute(attributes, 'id', def: ''),
       path,
       parseStyle(
-        _key,
-        attributes,
-        _definitions,
         path.getBounds(),
         parentStyle,
         defaultFillColor: colorBlack,
         currentColor: parent.color,
-        fontSize: fontSize,
-        xHeight: xHeight,
       ),
       transform: parseTransform(getAttribute(attributes, 'transform'))?.storage,
     );
@@ -1145,6 +1003,606 @@ class SvgParserState {
     } else if (_unhandledElements.add(event.name)) {
       print(errorMessage);
     }
+  }
+
+  /// Parses a `rawDouble` `String` to a `double`
+  /// taking into account absolute and relative units
+  /// (`px`, `em` or `ex`).
+  ///
+  /// Passing an `em` value will calculate the result
+  /// relative to the provided [fontSize]:
+  /// 1 em = 1 * `fontSize`.
+  ///
+  /// Passing an `ex` value will calculate the result
+  /// relative to the provided [xHeight]:
+  /// 1 ex = 1 * `xHeight`.
+  ///
+  /// The `rawDouble` might include a unit which is
+  /// stripped off when parsed to a `double`.
+  ///
+  /// Passing `null` will return `null`.
+  double? parseDoubleWithUnits(
+    String? rawDouble, {
+    bool tryParse = false,
+  }) {
+    double unit = 1.0;
+
+    // 1 rem unit is equal to the root font size.
+    // 1 em unit is equal to the current font size.
+    // 1 ex unit is equal to the current x-height.
+    if (rawDouble?.contains('rem') ?? false) {
+      _usesFontSize = true;
+      unit = fontSize;
+    } else if (rawDouble?.contains('em') ?? false) {
+      _usesFontSize = true;
+      unit = fontSize;
+    } else if (rawDouble?.contains('ex') ?? false) {
+      _usesFontSize = true;
+      unit = xHeight;
+    }
+
+    final double? value = parseDouble(
+      rawDouble,
+      tryParse: tryParse,
+    );
+
+    return value != null ? value * unit : null;
+  }
+
+  static final Map<String, double> _kTextSizeMap = <String, double>{
+    'xx-small': 10,
+    'x-small': 12,
+    'small': 14,
+    'medium': 18,
+    'large': 22,
+    'x-large': 26,
+    'xx-large': 32,
+  };
+
+  /// Parses a `font-size` attribute.
+  double? parseFontSize(
+    String? raw, {
+    double? parentValue,
+  }) {
+    if (raw == null || raw == '') {
+      return null;
+    }
+
+    double? ret = parseDoubleWithUnits(
+      raw,
+      tryParse: true,
+    );
+    if (ret != null) {
+      return ret;
+    }
+
+    raw = raw.toLowerCase().trim();
+    ret = _kTextSizeMap[raw];
+    if (ret != null) {
+      return ret;
+    }
+
+    if (raw == 'larger') {
+      if (parentValue == null) {
+        return _kTextSizeMap['large'];
+      }
+      return parentValue * 1.2;
+    }
+
+    if (raw == 'smaller') {
+      if (parentValue == null) {
+        return _kTextSizeMap['small'];
+      }
+      return parentValue / 1.2;
+    }
+
+    throw StateError('Could not parse font-size: $raw');
+  }
+
+  double _parseRawWidthHeight(String raw) {
+    if (raw == '100%' || raw == '') {
+      return double.infinity;
+    }
+    assert(() {
+      final RegExp notDigits = RegExp(r'[^\d\.]');
+      if (!raw.endsWith('px') &&
+          !raw.endsWith('em') &&
+          !raw.endsWith('ex') &&
+          raw.contains(notDigits)) {
+        print(
+            'Warning: Flutter SVG only supports the following formats for `width` and `height` on the SVG root:\n'
+            '  width="100%"\n'
+            '  width="100em"\n'
+            '  width="100ex"\n'
+            '  width="100px"\n'
+            '  width="100" (where the number will be treated as pixels).\n'
+            'The supplied value ($raw) will be discarded and treated as if it had not been specified.');
+      }
+      return true;
+    }());
+    return parseDoubleWithUnits(raw, tryParse: true) ?? double.infinity;
+  }
+
+  /// Parses an SVG @viewBox attribute (e.g. 0 0 100 100) to a [Rect].
+  ///
+  /// The [nullOk] parameter controls whether this function should throw if there is no
+  /// viewBox or width/height parameters.
+  ///
+  /// The [respectWidthHeight] parameter specifies whether `width` and `height` attributes
+  /// on the root SVG element should be treated in accordance with the specification.
+  DrawableViewport? parseViewBox({bool nullOk = false}) {
+    final String viewBox = getAttribute(attributes, 'viewBox')!;
+    final String rawWidth = getAttribute(attributes, 'width')!;
+    final String rawHeight = getAttribute(attributes, 'height')!;
+
+    if (viewBox == '' && rawWidth == '' && rawHeight == '') {
+      if (nullOk) {
+        return null;
+      }
+      throw StateError('SVG did not specify dimensions\n\n'
+          'The SVG library looks for a `viewBox` or `width` and `height` attribute '
+          'to determine the viewport boundary of the SVG.  Note that these attributes, '
+          'as with all SVG attributes, are case sensitive.\n'
+          'During processing, the following attributes were found:\n'
+          '  $attributes');
+    }
+
+    final double width = _parseRawWidthHeight(rawWidth);
+
+    final double height = _parseRawWidthHeight(rawHeight);
+
+    if (viewBox == '') {
+      return DrawableViewport(
+        Size(width, height),
+        Size(width, height),
+      );
+    }
+
+    final List<String> parts = viewBox.split(RegExp(r'[ ,]+'));
+    if (parts.length < 4) {
+      throw StateError('viewBox element must be 4 elements long');
+    }
+
+    return DrawableViewport(
+      Size(width, height),
+      Size(
+        parseDouble(parts[2])!,
+        parseDouble(parts[3])!,
+      ),
+      viewBoxOffset: Offset(
+        -parseDouble(parts[0])!,
+        -parseDouble(parts[1])!,
+      ),
+    );
+  }
+
+  /// Builds an IRI in the form of `'url(#id)'`.
+  String buildUrlIri() => 'url(#${getAttribute(attributes, 'id')})';
+
+  /// An empty IRI.
+  static const String emptyUrlIri = DrawableDefinitionServer.emptyUrlIri;
+
+  /// Parses an @stroke-dasharray attribute into a [CircularIntervalList].
+  ///
+  /// Does not currently support percentages.
+  CircularIntervalList<double>? parseDashArray() {
+    final String? rawDashArray = getAttribute(attributes, 'stroke-dasharray');
+    if (rawDashArray == '') {
+      return null;
+    } else if (rawDashArray == 'none') {
+      return DrawableStyle.emptyDashArray;
+    }
+
+    final List<String> parts = rawDashArray!.split(RegExp(r'[ ,]+'));
+    final List<double> doubles = <double>[];
+    bool atLeastOneNonZeroDash = false;
+    for (final String part in parts) {
+      final double dashOffset = parseDoubleWithUnits(part)!;
+      if (dashOffset != 0) {
+        atLeastOneNonZeroDash = true;
+      }
+      doubles.add(dashOffset);
+    }
+    if (doubles.isEmpty || !atLeastOneNonZeroDash) {
+      return null;
+    }
+    return CircularIntervalList<double>(doubles);
+  }
+
+  /// Parses a @stroke-dashoffset into a [DashOffset].
+  DashOffset? parseDashOffset() {
+    final String? rawDashOffset = getAttribute(attributes, 'stroke-dashoffset');
+    if (rawDashOffset == '') {
+      return null;
+    }
+
+    if (rawDashOffset!.endsWith('%')) {
+      return DashOffset.percentage(parsePercentage(rawDashOffset));
+    } else {
+      return DashOffset.absolute(parseDoubleWithUnits(rawDashOffset)!);
+    }
+  }
+
+  /// Parses a `spreadMethod` attribute into a [TileMode].
+  TileMode parseTileMode() {
+    final String? spreadMethod = attribute('spreadMethod', def: 'pad');
+    switch (spreadMethod) {
+      case 'pad':
+        return TileMode.clamp;
+      case 'repeat':
+        return TileMode.repeated;
+      case 'reflect':
+        return TileMode.mirror;
+      default:
+        return TileMode.clamp;
+    }
+  }
+
+  /// Parses an @opacity value into a [double], clamped between 0..1.
+  double? parseOpacity() {
+    final String? rawOpacity = getAttribute(attributes, 'opacity', def: null);
+    if (rawOpacity != null) {
+      return parseDouble(rawOpacity)!.clamp(0.0, 1.0).toDouble();
+    }
+    return null;
+  }
+
+  DrawablePaint _getDefinitionPaint(
+    String? key,
+    PaintingStyle paintingStyle,
+    String iri,
+    DrawableDefinitionServer definitions,
+    Rect bounds, {
+    double? opacity,
+  }) {
+    final Shader? shader = definitions.getShader(iri, bounds);
+    if (shader == null) {
+      reportMissingDef(key, iri, '_getDefinitionPaint');
+    }
+
+    return DrawablePaint(
+      paintingStyle,
+      shader: shader,
+      color: opacity != null ? Color.fromRGBO(255, 255, 255, opacity) : null,
+    );
+  }
+
+  /// Parses a @stroke attribute into a [Paint].
+  DrawablePaint? parseStroke(
+    Rect bounds,
+    DrawablePaint? parentStroke,
+    Color? currentColor,
+  ) {
+    final String rawStroke = getAttribute(attributes, 'stroke')!;
+    final String? rawStrokeOpacity = getAttribute(
+      attributes,
+      'stroke-opacity',
+      def: '1.0',
+    );
+    final String? rawOpacity = getAttribute(attributes, 'opacity');
+    double opacity = parseDouble(rawStrokeOpacity)!.clamp(0.0, 1.0).toDouble();
+    if (rawOpacity != '') {
+      opacity *= parseDouble(rawOpacity)!.clamp(0.0, 1.0);
+    }
+
+    if (rawStroke.startsWith('url')) {
+      return _getDefinitionPaint(
+        _key,
+        PaintingStyle.stroke,
+        rawStroke,
+        _definitions,
+        bounds,
+        opacity: opacity,
+      );
+    }
+    if (rawStroke == '' && DrawablePaint.isEmpty(parentStroke)) {
+      return null;
+    }
+    if (rawStroke == 'none') {
+      return DrawablePaint.empty;
+    }
+
+    final String? rawStrokeCap = getAttribute(attributes, 'stroke-linecap');
+    final String? rawLineJoin = getAttribute(attributes, 'stroke-linejoin');
+    final String? rawMiterLimit = getAttribute(attributes, 'stroke-miterlimit');
+    final String? rawStrokeWidth = getAttribute(attributes, 'stroke-width');
+
+    final DrawablePaint paint = DrawablePaint(
+      PaintingStyle.stroke,
+      color: rawStroke == ''
+          ? (parentStroke?.color ?? colorBlack).withOpacity(opacity)
+          : (parseColor(rawStroke) ??
+                  currentColor ??
+                  parentStroke?.color ??
+                  colorBlack)
+              .withOpacity(opacity),
+      strokeCap: rawStrokeCap == 'null'
+          ? parentStroke?.strokeCap ?? StrokeCap.butt
+          : StrokeCap.values.firstWhere(
+              (StrokeCap sc) => sc.toString() == 'StrokeCap.$rawStrokeCap',
+              orElse: () => StrokeCap.butt,
+            ),
+      strokeJoin: rawLineJoin == ''
+          ? parentStroke?.strokeJoin ?? StrokeJoin.miter
+          : StrokeJoin.values.firstWhere(
+              (StrokeJoin sj) => sj.toString() == 'StrokeJoin.$rawLineJoin',
+              orElse: () => StrokeJoin.miter,
+            ),
+      strokeMiterLimit: rawMiterLimit == ''
+          ? parentStroke?.strokeMiterLimit ?? 4.0
+          : parseDouble(rawMiterLimit),
+      strokeWidth: rawStrokeWidth == ''
+          ? parentStroke?.strokeWidth ?? 1.0
+          : parseDoubleWithUnits(rawStrokeWidth),
+    );
+    return paint;
+  }
+
+  /// Parses a `fill` attribute.
+  DrawablePaint? parseFill(
+    Rect bounds,
+    DrawablePaint? parentFill,
+    Color? defaultFillColor,
+    Color? currentColor,
+  ) {
+    final String rawFill = attribute('fill', def: '')!;
+    final String? rawFillOpacity = attribute('fill-opacity', def: '1.0');
+    final String? rawOpacity = attribute('opacity', def: '');
+    double opacity = parseDouble(rawFillOpacity)!.clamp(0.0, 1.0).toDouble();
+    if (rawOpacity != '') {
+      opacity *= parseDouble(rawOpacity)!.clamp(0.0, 1.0);
+    }
+
+    if (rawFill.startsWith('url')) {
+      return _getDefinitionPaint(
+        _key,
+        PaintingStyle.fill,
+        rawFill,
+        _definitions,
+        bounds,
+        opacity: opacity,
+      );
+    }
+
+    final Color? fillColor = _determineFillColor(
+      parentFill?.color,
+      rawFill,
+      opacity,
+      rawOpacity != '' || rawFillOpacity != '',
+      defaultFillColor,
+      currentColor,
+    );
+
+    if (rawFill == '' &&
+        (fillColor == null || parentFill == DrawablePaint.empty)) {
+      return null;
+    }
+    if (rawFill == 'none') {
+      return DrawablePaint.empty;
+    }
+
+    return DrawablePaint(
+      PaintingStyle.fill,
+      color: fillColor,
+    );
+  }
+
+  Color? _determineFillColor(
+    Color? parentFillColor,
+    String rawFill,
+    double opacity,
+    bool explicitOpacity,
+    Color? defaultFillColor,
+    Color? currentColor,
+  ) {
+    final Color? color = parseColor(rawFill) ??
+        currentColor ??
+        parentFillColor ??
+        defaultFillColor;
+
+    if (explicitOpacity && color != null) {
+      return color.withOpacity(opacity);
+    }
+
+    return color;
+  }
+
+  /// Parses a `fill-rule` attribute into a [PathFillType].
+  PathFillType? parseFillRule([
+    String attr = 'fill-rule',
+    String? def = 'nonzero',
+  ]) {
+    final String? rawFillRule = getAttribute(attributes, attr, def: def);
+    return parseRawFillRule(rawFillRule);
+  }
+
+  /// Applies a transform to a path if the [attributes] contain a `transform`.
+  Path? applyTransformIfNeeded(Path? path) {
+    final Matrix4? transform =
+        parseTransform(getAttribute(attributes, 'transform', def: null));
+
+    if (transform != null) {
+      return path!.transform(transform.storage);
+    } else {
+      return path;
+    }
+  }
+
+  /// Parses a `clipPath` element into a list of [Path]s.
+  List<Path>? parseClipPath() {
+    final String? rawClipAttribute = getAttribute(attributes, 'clip-path');
+    if (rawClipAttribute != '') {
+      return _definitions.getClipPath(rawClipAttribute!);
+    }
+
+    return null;
+  }
+
+  static const Map<String, BlendMode> _blendModes = <String, BlendMode>{
+    'multiply': BlendMode.multiply,
+    'screen': BlendMode.screen,
+    'overlay': BlendMode.overlay,
+    'darken': BlendMode.darken,
+    'lighten': BlendMode.lighten,
+    'color-dodge': BlendMode.colorDodge,
+    'color-burn': BlendMode.colorBurn,
+    'hard-light': BlendMode.hardLight,
+    'soft-light': BlendMode.softLight,
+    'difference': BlendMode.difference,
+    'exclusion': BlendMode.exclusion,
+    'hue': BlendMode.hue,
+    'saturation': BlendMode.saturation,
+    'color': BlendMode.color,
+    'luminosity': BlendMode.luminosity,
+  };
+
+  /// Lookup the mask if the attribute is present.
+  DrawableStyleable? parseMask() {
+    final String? rawMaskAttribute = getAttribute(attributes, 'mask');
+    if (rawMaskAttribute != '') {
+      return _definitions.getDrawable(rawMaskAttribute!);
+    }
+
+    return null;
+  }
+
+  /// Parses a `font-weight` attribute value into a [FontWeight].
+  FontWeight? parseFontWeight(String? fontWeight) {
+    if (fontWeight == null) {
+      return null;
+    }
+    switch (fontWeight) {
+      case '100':
+        return FontWeight.w100;
+      case '200':
+        return FontWeight.w200;
+      case '300':
+        return FontWeight.w300;
+      case 'normal':
+      case '400':
+        return FontWeight.w400;
+      case '500':
+        return FontWeight.w500;
+      case '600':
+        return FontWeight.w600;
+      case 'bold':
+      case '700':
+        return FontWeight.w700;
+      case '800':
+        return FontWeight.w800;
+      case '900':
+        return FontWeight.w900;
+    }
+    throw UnsupportedError('Attribute value for font-weight="$fontWeight"'
+        ' is not supported');
+  }
+
+  /// Parses a `font-style` attribute value into a [FontStyle].
+  FontStyle? parseFontStyle(String? fontStyle) {
+    if (fontStyle == null) {
+      return null;
+    }
+    switch (fontStyle) {
+      case 'normal':
+        return FontStyle.normal;
+      case 'italic':
+      case 'oblique':
+        return FontStyle.italic;
+    }
+    throw UnsupportedError('Attribute value for font-style="$fontStyle"'
+        ' is not supported');
+  }
+
+  /// Parses a `text-decoration` attribute value into a [TextDecoration].
+  TextDecoration? parseTextDecoration(String? textDecoration) {
+    if (textDecoration == null) {
+      return null;
+    }
+    switch (textDecoration) {
+      case 'none':
+        return TextDecoration.none;
+      case 'underline':
+        return TextDecoration.underline;
+      case 'overline':
+        return TextDecoration.overline;
+      case 'line-through':
+        return TextDecoration.lineThrough;
+    }
+    throw UnsupportedError(
+        'Attribute value for text-decoration="$textDecoration"'
+        ' is not supported');
+  }
+
+  /// Parses a `text-decoration-style` attribute value into a [TextDecorationStyle].
+  TextDecorationStyle? parseTextDecorationStyle(String? textDecorationStyle) {
+    if (textDecorationStyle == null) {
+      return null;
+    }
+    switch (textDecorationStyle) {
+      case 'solid':
+        return TextDecorationStyle.solid;
+      case 'dashed':
+        return TextDecorationStyle.dashed;
+      case 'dotted':
+        return TextDecorationStyle.dotted;
+      case 'double':
+        return TextDecorationStyle.double;
+      case 'wavy':
+        return TextDecorationStyle.wavy;
+    }
+    throw UnsupportedError(
+        'Attribute value for text-decoration-style="$textDecorationStyle"'
+        ' is not supported');
+  }
+
+  /// Parses style attributes or @style attribute.
+  ///
+  /// Remember that @style attribute takes precedence.
+  DrawableStyle parseStyle(
+    Rect bounds,
+    DrawableStyle? parentStyle, {
+    Color? defaultFillColor,
+    Color? currentColor,
+  }) {
+    return DrawableStyle.mergeAndBlend(
+      parentStyle,
+      stroke: parseStroke(bounds, parentStyle?.stroke, currentColor),
+      dashArray: parseDashArray(),
+      dashOffset: parseDashOffset(),
+      fill:
+          parseFill(bounds, parentStyle?.fill, defaultFillColor, currentColor),
+      pathFillType: parseFillRule(
+        'fill-rule',
+        parentStyle != null ? null : 'nonzero',
+      ),
+      groupOpacity: parseOpacity(),
+      mask: parseMask(),
+      clipPath: parseClipPath(),
+      textStyle: DrawableTextStyle(
+        fontFamily: getAttribute(attributes, 'font-family'),
+        fontSize: parseFontSize(getAttribute(attributes, 'font-size'),
+            parentValue: parentStyle?.textStyle?.fontSize),
+        fontWeight: parseFontWeight(
+          getAttribute(attributes, 'font-weight', def: null),
+        ),
+        fontStyle: parseFontStyle(
+          getAttribute(attributes, 'font-style', def: null),
+        ),
+        anchor: parseTextAnchor(
+          getAttribute(attributes, 'text-anchor', def: 'inherit'),
+        ),
+        decoration: parseTextDecoration(
+          getAttribute(attributes, 'text-decoration', def: null),
+        ),
+        decorationColor: parseColor(
+          getAttribute(attributes, 'text-decoration-color', def: null),
+        ),
+        decorationStyle: parseTextDecorationStyle(
+          getAttribute(attributes, 'text-decoration-style', def: null),
+        ),
+      ),
+      blendMode: _blendModes[getAttribute(attributes, 'mix-blend-mode')!],
+    );
   }
 }
 

@@ -8,7 +8,6 @@ import 'package:vector_math/vector_math_64.dart';
 
 import 'render_picture.dart' as render_picture;
 import 'svg/parsers.dart' show affineMatrix;
-import 'svg/xml_parsers.dart';
 
 /// Paint used in masks.
 final Paint _grayscaleDstInPaint = Paint()
@@ -568,6 +567,9 @@ class DrawableDefinitionServer {
   final Map<String, List<Path>> _clipPaths = <String, List<Path>>{};
   final Map<String, DrawableStyleable> _drawables =
       <String, DrawableStyleable>{};
+
+  /// An empty IRI for SVGs.
+  static const String emptyUrlIri = 'url(#)';
 
   /// Attempt to lookup a [Drawable] by [id].
   DrawableStyleable? getDrawable(String id, {bool nullOk = false}) {
