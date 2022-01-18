@@ -841,6 +841,22 @@ class DrawableViewport {
       'viewBoxOffset: $viewBoxOffset}';
 }
 
+/// Tests whether a [DrawableRoot] should be cache invalidated given old and new
+/// external parameter changes.
+///
+/// For example, an SVG needs to be invalidated if it actually uses `em` units
+/// and the font size changes, but not if it only uses `px` units.
+class CacheCompatibilityTester {
+  /// Creates a tester that always returns true.
+  const CacheCompatibilityTester();
+
+  /// Determine whether a cached [DrawableRoot] should be invalidated given
+  /// old and new data.
+  ///
+  /// By default, the data is always treated as compatible.
+  bool isCompatible(Object oldData, Object newData) => true;
+}
+
 /// The root element of a drawable.
 class DrawableRoot implements DrawableParent {
   /// Creates a new [DrawableRoot].
@@ -852,10 +868,18 @@ class DrawableRoot implements DrawableParent {
     this.style, {
     this.transform,
     this.color,
+    this.compatibilityTester = const CacheCompatibilityTester(),
   });
 
   /// The expected coordinates used by child paths for drawing.
   final DrawableViewport viewport;
+
+  /// Used to test whether ambient parameter changes should invalidate a cached
+  /// version of this drawable.
+  ///
+  /// For example, if the drawable was constructed using an ambient font size
+  /// or color, the tester will return false when the font size or color change.
+  final CacheCompatibilityTester compatibilityTester;
 
   @override
   final String? id;

@@ -256,6 +256,7 @@ void main() {
       final TestSvgParserState parserState = TestSvgParserState();
       parserState.attributes = svg.attributes.toAttributeMap();
       final DrawableStyle svgStyle = parserState.parseStyle(
+        Rect.zero,
         null,
         currentColor: currentColor,
       );
@@ -275,6 +276,7 @@ void main() {
       final TestSvgParserState parserState = TestSvgParserState();
       parserState.attributes = svg.attributes.toAttributeMap();
       final DrawableStyle svgStyle = parserState.parseStyle(
+        Rect.zero,
         null,
         currentColor: currentColor,
       );
@@ -297,7 +299,7 @@ void main() {
           fontSize: fontSize,
         );
         parserState.attributes = svg.attributes.toAttributeMap();
-        final DrawableStyle svgStyle = parserState.parseStyle(null);
+        final DrawableStyle svgStyle = parserState.parseStyle(Rect.zero, null);
 
         expect(
           svgStyle.stroke?.strokeWidth,
@@ -316,7 +318,7 @@ void main() {
           fontSize: fontSize,
         );
         parserState.attributes = svg.attributes.toAttributeMap();
-        final DrawableStyle svgStyle = parserState.parseStyle(null);
+        final DrawableStyle svgStyle = parserState.parseStyle(Rect.zero, null);
 
         expect(
           <double>[
@@ -343,7 +345,7 @@ void main() {
           fontSize: fontSize,
         );
         parserState.attributes = svg.attributes.toAttributeMap();
-        final DrawableStyle svgStyle = parserState.parseStyle(null);
+        final DrawableStyle svgStyle = parserState.parseStyle(Rect.zero, null);
 
         expect(
           svgStyle.dashOffset,
@@ -366,7 +368,7 @@ void main() {
           xHeight: xHeight,
         );
         parserState.attributes = svg.attributes.toAttributeMap();
-        final DrawableStyle svgStyle = parserState.parseStyle(null);
+        final DrawableStyle svgStyle = parserState.parseStyle(Rect.zero, null);
 
         expect(
           svgStyle.stroke?.strokeWidth,
@@ -387,7 +389,7 @@ void main() {
           xHeight: xHeight,
         );
         parserState.attributes = svg.attributes.toAttributeMap();
-        final DrawableStyle svgStyle = parserState.parseStyle(null);
+        final DrawableStyle svgStyle = parserState.parseStyle(Rect.zero, null);
 
         expect(
           <double>[
@@ -416,7 +418,7 @@ void main() {
           xHeight: xHeight,
         );
         parserState.attributes = svg.attributes.toAttributeMap();
-        final DrawableStyle svgStyle = parserState.parseStyle(null);
+        final DrawableStyle svgStyle = parserState.parseStyle(Rect.zero, null);
 
         expect(
           svgStyle.dashOffset,

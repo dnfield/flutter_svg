@@ -1046,4 +1046,70 @@ BAAO9TXL0Y4OHwAAAABJRU5ErkJggg==" x="1ex" y="0.5ex" width="2ex" height="1.5ex" /
       expect(image.size, equals(expectedSize));
     });
   });
+
+  test('Tracks current color', () async {
+    const String svgStr = '''<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" >
+   <circle id="circle" r="25" cx="70" cy="70" fill="currentColor" />
+</svg>''';
+
+    const Color currentColor = Color(0xFFB0E3BE);
+
+    const SvgTheme oldTheme = SvgTheme(
+      currentColor: currentColor,
+      fontSize: 14.0,
+    );
+
+    final SvgTheme newTheme = SvgTheme(
+      currentColor: currentColor.withAlpha(50),
+      fontSize: 14.0,
+    );
+
+    const SvgTheme newTheme2 = SvgTheme(
+      currentColor: currentColor,
+      fontSize: 15.0,
+    );
+
+    final SvgParser parser = SvgParser();
+    final DrawableRoot root = await parser.parse(
+      svgStr,
+      theme: oldTheme,
+    );
+
+    expect(root.compatibilityTester.isCompatible(oldTheme, newTheme), false);
+    expect(root.compatibilityTester.isCompatible(oldTheme, newTheme2), true);
+  });
+
+  test('Tracks em/ex', () async {
+    const String svgStr = '''<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" >
+   <circle id="circle" r="25em" cx="70ex" cy="70rem" fill="red" />
+</svg>''';
+
+    const Color currentColor = Color(0xFFB0E3BE);
+
+    const SvgTheme oldTheme = SvgTheme(
+      currentColor: currentColor,
+      fontSize: 14.0,
+    );
+
+    final SvgTheme newTheme = SvgTheme(
+      currentColor: currentColor.withAlpha(50),
+      fontSize: 14.0,
+    );
+
+    const SvgTheme newTheme2 = SvgTheme(
+      currentColor: currentColor,
+      fontSize: 15.0,
+    );
+
+    final SvgParser parser = SvgParser();
+    final DrawableRoot root = await parser.parse(
+      svgStr,
+      theme: oldTheme,
+    );
+
+    expect(root.compatibilityTester.isCompatible(oldTheme, newTheme), true);
+    expect(root.compatibilityTester.isCompatible(oldTheme, newTheme2), false);
+  });
 }
