@@ -1,11 +1,27 @@
 # CHANGES
 
+## 1.0.2
+
+- Avoid cache invalidation when `currentColor` or font based units are not used.
+- Support `rem` units.
+
+## 1.0.1
+
+- Fix bug with incorrect fills in some cases of `<use>` elements.
+- Analysis cleanup of Dart code.
+- Fix bug where self-closing `<g>` tags could alter rendering.
+- Fix bug where an invalid `@stroke-dasharray` could cause an infinite loop.
+- Fix bugs related to nested `<g>` elements in `<defs>`.
+- Remove unnecessary `sync*` related code.
+
 ## 1.0.0
 
 - New widget/RenderObject implementation to avoid rebuilds/paints when
   near or overlapping an animating widget. Also should improve raster
   cacheability.
 - Correctly list web as a supported platform.
+- Support for em/ex units.
+- Stable 1.0.0 release.
 
 ## 0.23.0+1
 

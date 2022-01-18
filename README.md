@@ -135,19 +135,6 @@ try {
 - You want to load SVGs dynamically from network sources at runtime.
 - You want to paint SVG data and render it to an image.
 
-## TODO
-
-This list is not very well ordered. I'm mainly picking up things that seem
-interesting or useful, or where I've gotten a request to fix something/example
-of something that's broken.
-
-- Support Radial gradients that use percentages in the offsets.
-- Dash path with percentage dasharray values (need good examples).
-- Markers.
-- Filters/effects (will require upstream engine changes, but doable).
-- Android Vector Drawable support beyond PoC - I'm willing to put more time into
-  this if there's actually demand, but it doesn't come up often.
-
 ## Out of scope/non-goals
 
 - SMIL animations. That just seems crazy. I think it'll be possible to animate

@@ -314,7 +314,6 @@ abstract class PictureProvider<T, U> {
   final PictureInfoDecoderBuilder<U> decoderBuilder;
 
   /// The [PictureInfoDecoder] to use for loading this picture.
-  @visibleForTesting
   PictureInfoDecoder<U> decoder;
 
   /// The [PictureCache] for [Picture] objects created by [PictureProvider]
@@ -333,7 +332,6 @@ abstract class PictureProvider<T, U> {
   final ColorFilter? colorFilter;
 
   /// The default theme used when parsing SVG elements.
-  @visibleForTesting
   SvgTheme get theme => _theme;
   SvgTheme _theme;
 
@@ -343,16 +341,18 @@ abstract class PictureProvider<T, U> {
   /// rebuilds a [decoder] using [decoderBuilder] and the new theme.
   /// This will make the decoded SVG picture use properties from
   /// the new theme.
-  set theme(SvgTheme theme) {
-    if (_theme == theme) {
+  set theme(SvgTheme value) {
+    if (_theme == value) {
       return;
     }
-    decoder = decoderBuilder(theme);
-    _theme = theme;
+
     if (_lastKey != null) {
-      cache.evict(_lastKey!);
+      cache.maybeEvict(_lastKey!, _theme, value);
       _lastKey = null;
     }
+
+    decoder = decoderBuilder(value);
+    _theme = value;
   }
 
   T? _lastKey;
@@ -385,17 +385,16 @@ abstract class PictureProvider<T, U> {
         return;
       }
       FlutterError.reportError(FlutterErrorDetails(
-          exception: exception,
-          stack: stack,
-          library: 'SVG',
-          context: ErrorDescription('while resolving a picture'),
-          silent: true, // could be a network error or whatnot
-          informationCollector: () sync* {
-            yield DiagnosticsProperty<PictureProvider>(
-                'Picture provider', this);
-            yield DiagnosticsProperty<T>('Picture key', _lastKey,
-                defaultValue: null);
-          }));
+        exception: exception,
+        stack: stack,
+        library: 'SVG',
+        context: ErrorDescription('while resolving a picture'),
+        silent: true, // could be a network error or whatnot
+        informationCollector: () => <DiagnosticsNode>[
+          DiagnosticsProperty<PictureProvider>('Picture provider', this),
+          DiagnosticsProperty<T>('Picture key', _lastKey, defaultValue: null),
+        ],
+      ));
     });
     return stream;
   }
@@ -528,11 +527,13 @@ abstract class AssetBundlePictureProvider
   @override
   PictureStreamCompleter load(AssetBundlePictureKey key,
       {PictureErrorListener? onError}) {
-    return OneFramePictureStreamCompleter(_loadAsync(key, onError),
-        informationCollector: () sync* {
-      yield DiagnosticsProperty<PictureProvider>('Picture provider', this);
-      yield DiagnosticsProperty<AssetBundlePictureKey>('Picture key', key);
-    });
+    return OneFramePictureStreamCompleter(
+      _loadAsync(key, onError),
+      informationCollector: () => <DiagnosticsNode>[
+        DiagnosticsProperty<PictureProvider>('Picture provider', this),
+        DiagnosticsProperty<AssetBundlePictureKey>('Picture key', key),
+      ],
+    );
   }
 
   /// Fetches the picture from the asset bundle, decodes it, and returns a
@@ -625,14 +626,14 @@ class NetworkPicture
   @override
   PictureStreamCompleter load(PictureKey<NetworkPictureKeyData> key,
       {PictureErrorListener? onError}) {
-    return OneFramePictureStreamCompleter(_loadAsync(key, onError: onError),
-        informationCollector: () sync* {
-      yield DiagnosticsProperty<PictureProvider>('Picture provider', this);
-      yield DiagnosticsProperty<PictureKey<NetworkPictureKeyData>>(
-        'Picture key',
-        key,
-      );
-    });
+    return OneFramePictureStreamCompleter(
+      _loadAsync(key, onError: onError),
+      informationCollector: () => <DiagnosticsNode>[
+        DiagnosticsProperty<PictureProvider>('Picture provider', this),
+        DiagnosticsProperty<PictureKey<NetworkPictureKeyData>>(
+            'Picture key', key),
+      ],
+    );
   }
 
   Future<PictureInfo> _loadAsync(PictureKey<NetworkPictureKeyData> key,
@@ -692,10 +693,12 @@ class FilePicture extends PictureProvider<PictureKey<String>, Uint8List> {
   @override
   PictureStreamCompleter load(PictureKey<String> key,
       {PictureErrorListener? onError}) {
-    return OneFramePictureStreamCompleter(_loadAsync(key, onError: onError),
-        informationCollector: () sync* {
-      yield DiagnosticsProperty<String>('Path', file.path);
-    });
+    return OneFramePictureStreamCompleter(
+      _loadAsync(key, onError: onError),
+      informationCollector: () => <DiagnosticsNode>[
+        DiagnosticsProperty<String>('Path', file.path),
+      ],
+    );
   }
 
   Future<PictureInfo?> _loadAsync(PictureKey<String> key,

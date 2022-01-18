@@ -1,7 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_svg/src/picture_cache.dart';
-import 'package:flutter_svg/src/svg/theme.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:xml/xml.dart';
 
@@ -80,6 +79,7 @@ void main() {
       svgString,
     )..theme = const SvgTheme(
         fontSize: 14.0,
+        xHeight: 7.0,
       );
 
     await precachePicture(

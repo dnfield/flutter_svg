@@ -9,60 +9,6 @@ import '../utilities/http.dart';
 import '../utilities/numbers.dart';
 import '../vector_drawable.dart';
 
-final Map<String, double> _kTextSizeMap = <String, double>{
-  'xx-small': 10,
-  'x-small': 12,
-  'small': 14,
-  'medium': 18,
-  'large': 22,
-  'x-large': 26,
-  'xx-large': 32,
-};
-
-/// Parses a `font-size` attribute.
-///
-/// Uses [fontSize] to calculate the font size including em units.
-double? parseFontSize(
-  String? raw, {
-  required double fontSize,
-  double? parentValue,
-}) {
-  if (raw == null || raw == '') {
-    return null;
-  }
-
-  double? ret = parseDoubleWithUnits(
-    raw,
-    tryParse: true,
-    fontSize: fontSize,
-  );
-  if (ret != null) {
-    return ret;
-  }
-
-  raw = raw.toLowerCase().trim();
-  ret = _kTextSizeMap[raw];
-  if (ret != null) {
-    return ret;
-  }
-
-  if (raw == 'larger') {
-    if (parentValue == null) {
-      return _kTextSizeMap['large'];
-    }
-    return parentValue * 1.2;
-  }
-
-  if (raw == 'smaller') {
-    if (parentValue == null) {
-      return _kTextSizeMap['small'];
-    }
-    return parentValue / 1.2;
-  }
-
-  throw StateError('Could not parse font-size: $raw');
-}
-
 /// Parses a `text-anchor` attribute.
 DrawableTextAnchorPosition? parseTextAnchor(String? raw) {
   switch (raw) {
