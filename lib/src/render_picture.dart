@@ -122,7 +122,10 @@ class RenderPicture extends RenderBox {
   PictureInfo? get picture => _picture;
   PictureInfo? _picture;
   set picture(PictureInfo? val) {
-    if (val == picture) {
+    bool b1 = val?.picture == _picture?.picture;
+    bool b2 = val?.size == _picture?.size;
+    bool b3 = val?.viewport == _picture?.viewport;
+    if (b1&&b2&&b3) {
       return;
     }
     _picture = val;
