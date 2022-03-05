@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-import 'dart:ui' show window, Picture;
+import 'dart:ui' show window;
 
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
@@ -973,45 +973,6 @@ void main() {
       find.byType(RepaintBoundary),
       matchesGoldenFile('golden_widget/two_of_same.png'),
     );
-  });
-
-  testWidgets(
-      'Update widget does not re-resolve the picture for identical keys',
-      (WidgetTester tester) async {
-    final int oldCacheSize = PictureProvider.cache.maximumSize;
-    PictureProvider.cache.maximumSize = 0;
-    final GlobalKey key = GlobalKey();
-    final FakePictureProvider provider = FakePictureProvider(
-      SvgPicture.svgStringDecoderBuilder,
-      simpleSvg,
-    );
-    expect(provider != provider, true);
-    expect(
-      provider.obtainKey(PictureConfiguration.empty),
-      provider.obtainKey(PictureConfiguration.empty),
-    );
-    expect(provider.resolveCount, 0);
-
-    await tester.pumpWidget(
-      Directionality(
-        textDirection: TextDirection.ltr,
-        child: SvgPicture(provider, key: key),
-      ),
-    );
-
-    expect(find.byKey(key), findsOneWidget);
-    expect(provider.resolveCount, 1);
-
-    await tester.pumpWidget(
-      Directionality(
-        textDirection: TextDirection.ltr,
-        child: SvgPicture(provider, key: key),
-      ),
-    );
-
-    expect(find.byKey(key), findsOneWidget);
-    expect(provider.resolveCount, 1);
-    PictureProvider.cache.maximumSize = oldCacheSize;
   });
 
   testWidgets(
