@@ -1439,7 +1439,7 @@ class SvgParserState {
         defaultFillColor;
 
     if (explicitOpacity && color != null) {
-      opacity *= parseDouble(color.opacity)!.clamp(0.0, 1.0);
+      opacity *= color.opacity;
       return color.withOpacity(opacity);
     }
 
