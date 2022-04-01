@@ -191,8 +191,9 @@ Paragraph createParagraph(
   String text,
   DrawableStyle style,
   DrawablePaint? foregroundOverride,
+  Locale? locale,
 ) {
-  final ParagraphBuilder builder = ParagraphBuilder(ParagraphStyle())
+  final ParagraphBuilder builder = ParagraphBuilder(ParagraphStyle(locale: locale))
     ..pushStyle(
       style.textStyle!.toFlutterTextStyle(
         foregroundOverride: foregroundOverride,

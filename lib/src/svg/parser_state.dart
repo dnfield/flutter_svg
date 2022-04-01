@@ -571,6 +571,7 @@ class _Elements {
         value,
         lastTextInfo.style,
         lastTextInfo.style.fill,
+        parserState.theme.locale,
       );
       final Paragraph stroke = createParagraph(
         value,
@@ -578,6 +579,7 @@ class _Elements {
         DrawablePaint.isEmpty(lastTextInfo.style.stroke)
             ? transparentStroke
             : lastTextInfo.style.stroke,
+        parserState.theme.locale,
       );
       parserState.currentGroup!.children!.add(
         DrawableText(
@@ -1617,7 +1619,7 @@ class SvgParserState {
       mask: parseMask(),
       clipPath: parseClipPath(),
       textStyle: DrawableTextStyle(
-        fontFamily: getAttribute(attributes, 'font-family'),
+        fontFamily: parseFontFamily(getAttribute(attributes, 'font-family')),
         fontSize: parseFontSize(getAttribute(attributes, 'font-size'),
             parentValue: parentStyle?.textStyle?.fontSize),
         fontWeight: parseFontWeight(
@@ -1782,6 +1784,48 @@ class SvgParserState {
     }
 
     throw StateError('Could not parse "$colorString" as a color.');
+  }
+
+  /// Process CSS style font family list to decide a font family.
+  String? parseFontFamily(String? fontFamily) {
+    return theme.decideFontFamily?.call(_parseStringList(fontFamily));
+  }
+
+  static List<String>? _parseStringList(String? list) {
+    if (list == null) {
+      return null;
+    }
+
+    const int doubleQuote = 0x22, singleQuote = 0x27, comma = 0x2c;
+    final List<String> out = <String>[];
+    int? lastQuote;
+    StringBuffer sb = StringBuffer();
+    for (int i = 0; i < list.length; i++) {
+      final int c = list.codeUnitAt(i);
+      if (c == lastQuote) {
+        lastQuote = null;
+      } else if (c == doubleQuote || c == singleQuote) {
+        lastQuote = c;
+      } else if (c == comma) {
+        if (lastQuote != null) {
+          sb.writeCharCode(c);
+        } else {
+          _addIfNotEmptyString(out, sb.toString());
+          sb = StringBuffer();
+        }
+      } else {
+        sb.writeCharCode(c);
+      }
+    }
+    _addIfNotEmptyString(out, sb.toString());
+    return out;
+  }
+
+  static void _addIfNotEmptyString(List<String> list, String s) {
+    s = s.trim();
+    if (s.isNotEmpty) {
+      list.add(s);
+    }
   }
 }
 

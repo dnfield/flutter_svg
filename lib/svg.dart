@@ -799,6 +799,8 @@ class _SvgPictureState extends State<SvgPicture> {
       currentColor: currentColor,
       fontSize: fontSize,
       xHeight: xHeight,
+      locale: widget.theme?.locale ?? defaultSvgTheme?.locale,
+      decideFontFamily: widget.theme?.decideFontFamily ?? defaultSvgTheme?.decideFontFamily,
     );
   }
 
