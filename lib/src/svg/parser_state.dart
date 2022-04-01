@@ -2,6 +2,7 @@ import 'dart:collection';
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:path_drawing/path_drawing.dart';
 import 'package:vector_math/vector_math_64.dart';
 import 'package:xml/xml_events.dart' hide parseEvents;
@@ -1811,18 +1812,27 @@ class SvgParserState {
       final int c = list.codeUnitAt(i);
       if (c == lastQuote) {
         lastQuote = null;
+        continue;
       } else if (c == doubleQuote || c == singleQuote) {
-        lastQuote = c;
+        if (sb.isNotEmpty) {
+          throw StateError('Could not parse font-family: [$list]');
+        }
+        if (lastQuote == null) {
+          lastQuote = c;
+          continue;
+        }
       } else if (c == comma) {
-        if (lastQuote != null) {
-          sb.writeCharCode(c);
-        } else {
+        if (lastQuote == null) {
           _addIfNotEmptyString(out, sb.toString());
           sb = StringBuffer();
+          continue;
         }
-      } else {
-        sb.writeCharCode(c);
+      } else if (_isWhiteSpace(c)) {
+        if (lastQuote == null && sb.isEmpty) {
+          continue;
+        }
       }
+      sb.writeCharCode(c);
     }
     _addIfNotEmptyString(out, sb.toString());
     return out.isNotEmpty
@@ -1836,6 +1846,10 @@ class SvgParserState {
       list.add(s);
     }
   }
+
+  // FIXME: Should I use other??
+  static bool _isWhiteSpace(int codeUnit) =>
+      TextLayoutMetrics.isWhitespace(codeUnit);
 }
 
 /// The color black, with full opacity.
