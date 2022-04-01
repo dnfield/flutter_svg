@@ -35,6 +35,9 @@ class SvgTheme {
   final Locale? locale;
 
   /// Decide a font family based on specified font families.
+  /// [fontFamilies] may be null but never be an empty list.
+  /// The function may return null if it could not determine suitable font and in that case,
+  /// the text is rendered using the default font.
   final String? Function(List<String>? fontFamilies)? decideFontFamily;
 
   @override

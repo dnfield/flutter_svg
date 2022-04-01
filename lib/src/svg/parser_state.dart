@@ -1786,9 +1786,16 @@ class SvgParserState {
     throw StateError('Could not parse "$colorString" as a color.');
   }
 
-  /// Process CSS style font family list to decide a font family.
+  /// Parse CSS style font family list to decide a font family.
   String? parseFontFamily(String? fontFamily) {
-    return theme.decideFontFamily?.call(_parseStringList(fontFamily));
+    final fontFamilies = _parseStringList(fontFamily);
+    if (theme.decideFontFamily != null) {
+      return theme.decideFontFamily!(fontFamilies);
+    }
+    if (fontFamilies == null || fontFamilies.isEmpty) {
+      return null;
+    }
+    return fontFamilies[0];
   }
 
   static List<String>? _parseStringList(String? list) {
@@ -1818,7 +1825,9 @@ class SvgParserState {
       }
     }
     _addIfNotEmptyString(out, sb.toString());
-    return out;
+    return out.isNotEmpty
+        ? out
+        : null; // if the list is empty, return null instead.
   }
 
   static void _addIfNotEmptyString(List<String> list, String s) {
