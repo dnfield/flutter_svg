@@ -14,7 +14,7 @@ class SvgTheme {
     this.fontSize = 14,
     double? xHeight,
     this.locale,
-    this.decideFontFamily,
+    this.resolveFontFamily,
   }) : xHeight = xHeight ?? fontSize / 2;
 
   /// The default color applied to SVG elements that inherit the color property.
@@ -38,7 +38,7 @@ class SvgTheme {
   /// [fontFamilies] may be null but never be an empty list.
   /// The function may return null if it could not determine suitable font and in that case,
   /// the text is rendered using the default font.
-  final String? Function(List<String>? fontFamilies)? decideFontFamily;
+  final String? Function(List<String>? fontFamilies)? resolveFontFamily;
 
   @override
   bool operator ==(dynamic other) {
@@ -51,11 +51,12 @@ class SvgTheme {
         fontSize == other.fontSize &&
         xHeight == other.xHeight &&
         locale == other.locale &&
-        decideFontFamily == other.decideFontFamily;
+        resolveFontFamily == other.resolveFontFamily;
   }
 
   @override
-  int get hashCode => hashValues(currentColor, fontSize, xHeight, locale, decideFontFamily);
+  int get hashCode =>
+      hashValues(currentColor, fontSize, xHeight, locale, resolveFontFamily);
 
   @override
   String toString() {
