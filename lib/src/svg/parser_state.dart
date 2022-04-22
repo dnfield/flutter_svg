@@ -1789,7 +1789,7 @@ class SvgParserState {
 
   /// Parse CSS style font family list to decide a font family.
   String? parseFontFamily(String? fontFamily) {
-    final fontFamilies = _parseStringList(fontFamily);
+    final List<String>? fontFamilies = _parseStringList(fontFamily);
     if (theme.resolveFontFamily != null) {
       return theme.resolveFontFamily!(fontFamilies);
     }
