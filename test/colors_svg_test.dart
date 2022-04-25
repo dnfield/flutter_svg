@@ -26,6 +26,7 @@ void main() {
     expect(
         testSvgParserState.parseColor('transparent'), const Color(0x00FFFFFF));
     expect(testSvgParserState.parseColor('none'), null);
+    expect(testSvgParserState.parseColor('inherit'), null);
     expect(
         testSvgParserState.parseColor('hsl(0,0%,0%)'), const Color(0xFF000000));
     expect(testSvgParserState.parseColor('hsl(0,0%,100%)'),
