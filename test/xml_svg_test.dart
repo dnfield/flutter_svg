@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_svg/src/svg/parser_state.dart';
 import 'package:flutter_svg/src/utilities/xml.dart';
@@ -284,6 +285,50 @@ void main() {
       expect(
         svgStyle.fill?.color,
         equals(currentColor),
+      );
+    });
+
+    test('uses opacity for fill color', () {
+      const Color color = Color(0xFFB0E3BE);
+      const double opacity = 0.1;
+      final Color widthOpacityColor = color.withOpacity(opacity);
+
+      final XmlStartElementEvent svg =
+          parseEvents('<svg fill="$color" opacity="$opacity" />').first
+              as XmlStartElementEvent;
+
+      final TestSvgParserState parserState = TestSvgParserState();
+      parserState.attributes = svg.attributes.toAttributeMap();
+      final DrawableStyle svgStyle = parserState.parseStyle(
+        Rect.zero,
+        null,
+      );
+
+      expect(
+        svgStyle.fill?.color,
+        equals(widthOpacityColor),
+      );
+    });
+
+    test('uses inherit for fill color', () {
+      const Color color = Color(0xFFB0E3BE);
+
+      final XmlStartElementEvent svg =
+          parseEvents('<svg fill="inherit" ></svg>').first
+              as XmlStartElementEvent;
+
+      final TestSvgParserState parserState = TestSvgParserState();
+      parserState.attributes = svg.attributes.toAttributeMap();
+      const DrawableStyle parentStyle =
+          DrawableStyle(fill: DrawablePaint(PaintingStyle.fill, color: color));
+      final DrawableStyle svgStyle = parserState.parseStyle(
+        Rect.zero,
+        parentStyle,
+      );
+
+      expect(
+        svgStyle.fill?.color,
+        equals(color),
       );
     });
 
