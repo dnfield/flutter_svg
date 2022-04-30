@@ -90,18 +90,9 @@ void main() {
   });
 
   test('restore canvas accordingly', () async {
-    //https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/transform
-    const String svgWithTransform = '''
-<svg viewBox="-40 0 150 100" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-  <g fill="grey"
-     transform="rotate(-10 50 100)
-                translate(-36 45.5)
-                skewX(40)
-                scale(1 0.5)">
-    <path id="heart" d="M 10,30 A 20,20 0,0,1 50,30 A 20,20 0,0,1 90,30 Q 90,60 50,90 Q 10,60 10,30 z" />
-  </g>
-
-  <use xlink:href="#heart" fill="none" stroke="red"/>
+    const String svgWithViewBox = '''
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="1 1 15 15">
+  <path/>
 </svg>
 ''';
 
@@ -111,8 +102,8 @@ void main() {
     canvas.save();
 
     final DrawableRoot svgRoot = await svg.fromSvgString(
-      svgWithTransform,
-      'RestoreCanvasWithTransform',
+      svgWithViewBox,
+      'RestoreCanvasWithSvgViewBox',
     );
 
     svgRoot.scaleCanvasToViewBox(canvas, const Size.square(200));
