@@ -108,9 +108,11 @@ void main() {
     final PictureRecorder recorder = PictureRecorder();
     final Canvas canvas = Canvas(recorder);
 
+    canvas.save();
+
     final DrawableRoot svgRoot = await svg.fromSvgString(
       svgWithTransform,
-      'RestoieCanvasWithTransform',
+      'RestoreCanvasWithTransform',
     );
 
     svgRoot.scaleCanvasToViewBox(canvas, const Size.square(200));
@@ -118,7 +120,7 @@ void main() {
 
     svgRoot.draw(canvas, svgRoot.viewport.viewBoxRect);
 
-    expect(canvas.getSaveCount(), equals(1));
+    expect(canvas.getSaveCount(), equals(2));
 
     recorder.endRecording();
   });
