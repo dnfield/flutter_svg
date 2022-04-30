@@ -88,4 +88,38 @@ void main() {
         (mergedRoot.children.first as DrawableShape).style.stroke!;
     expect(strokePaintA.strokeWidth, strokePaintB.strokeWidth);
   });
+
+  test('restore canvas accordingly', () async {
+    //https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/transform
+    const String svgWithTransform = '''
+<svg viewBox="-40 0 150 100" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <g fill="grey"
+     transform="rotate(-10 50 100)
+                translate(-36 45.5)
+                skewX(40)
+                scale(1 0.5)">
+    <path id="heart" d="M 10,30 A 20,20 0,0,1 50,30 A 20,20 0,0,1 90,30 Q 90,60 50,90 Q 10,60 10,30 z" />
+  </g>
+
+  <use xlink:href="#heart" fill="none" stroke="red"/>
+</svg>
+''';
+
+    final PictureRecorder recorder = PictureRecorder();
+    final Canvas canvas = Canvas(recorder);
+
+    final DrawableRoot svgRoot = await svg.fromSvgString(
+      svgWithTransform,
+      'RestoieCanvasWithTransform',
+    );
+
+    svgRoot.scaleCanvasToViewBox(canvas, const Size.square(200));
+    svgRoot.clipCanvasToViewBox(canvas);
+
+    svgRoot.draw(canvas, svgRoot.viewport.viewBoxRect);
+
+    expect(canvas.getSaveCount(), equals(1));
+
+    recorder.endRecording();
+  });
 }
