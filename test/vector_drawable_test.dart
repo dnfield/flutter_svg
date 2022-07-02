@@ -2,7 +2,6 @@ import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:flutter_svg/src/svg/parser_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
