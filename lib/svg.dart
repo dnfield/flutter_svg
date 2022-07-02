@@ -780,8 +780,8 @@ class _SvgPictureState extends State<SvgPicture> {
     final SvgTheme? defaultSvgTheme = DefaultSvgTheme.of(context)?.theme;
     final TextStyle defaultTextStyle = DefaultTextStyle.of(context).style;
 
-    final Color? currentColor =
-        widget.theme?.currentColor ?? defaultSvgTheme?.currentColor;
+    final Color currentColor =
+        widget.theme?.currentColor ?? defaultSvgTheme?.currentColor ?? const Color(0xFF000000);
 
     final double fontSize = widget.theme?.fontSize ??
         defaultSvgTheme?.fontSize ??

@@ -117,7 +117,7 @@ void main() {
     recorder.endRecording();
   });
 
-  test('draws even if color is null', () async {
+  test('Does not draw if color is null', () async {
     final DrawableShape shape = DrawableShape(
       'test',
       Path()..addRect(const Rect.fromLTRB(0, 0, 50, 50)),
@@ -130,12 +130,8 @@ void main() {
     final PathRecordingCanvas canvas = PathRecordingCanvas();
     shape.draw(canvas, Rect.largest);
 
-    expect(canvas.paths.length, 2);
-    expect(canvas.paints.length, 2);
-    expect(canvas.paints.first.style, PaintingStyle.fill);
-    expect(canvas.paints.first.color, colorBlack);
-    expect(canvas.paints.last.style, PaintingStyle.stroke);
-    expect(canvas.paints.last.color, colorBlack);
+    expect(canvas.paths.length, 0);
+    expect(canvas.paints.length, 0);
   });
 }
 
