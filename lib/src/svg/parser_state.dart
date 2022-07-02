@@ -529,21 +529,31 @@ class _Elements {
         parserState.attribute('height', def: '0'),
       )!,
     );
-    final Image image = await resolveImage(href);
-    final DrawableParent parent = parserState._parentDrawables.last.drawable!;
-    final DrawableStyle? parentStyle = parent.style;
-    final DrawableRasterImage drawable = DrawableRasterImage(
-      parserState.attribute('id', def: ''),
-      image,
-      offset,
-      parserState.parseStyle(parserState.rootBounds, parentStyle,
-          currentColor: parent.color),
-      size: size,
-      transform: parseTransform(parserState.attribute('transform'))?.storage,
-    );
-    parserState.checkForIri(drawable);
+    if (href.startsWith('http')&& href.endsWith('.svg')){
+        final DrawableRoot drawable = await resolveSvg(
+          href,
+          parserState.theme,
+          parserState._key,
+          parserState._warningsAsErrors);
+      parserState.currentGroup!.children!.addAll(drawable.children);
 
-    parserState.currentGroup!.children!.add(drawable);
+    } else {
+        final Image image = await resolveImage(href);
+        final DrawableParent parent = parserState._parentDrawables.last.drawable!;
+        final DrawableStyle? parentStyle = parent.style;
+        final DrawableRasterImage drawable = DrawableRasterImage(
+          parserState.attribute('id', def: ''),
+          image,
+          offset,
+          parserState.parseStyle(parserState.rootBounds, parentStyle,
+              currentColor: parent.color),
+          size: size,
+          transform: parseTransform(parserState.attribute('transform'))?.storage,
+        );
+        parserState.checkForIri(drawable);
+
+        parserState.currentGroup!.children!.add(drawable);
+    }
   }
 
   static Future<void> text(
