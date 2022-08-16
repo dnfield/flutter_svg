@@ -15,8 +15,7 @@ import 'parsers.dart';
 
 final Set<String> _unhandledElements = <String>{'title', 'desc'};
 
-typedef _ParseFunc = Future<void>? Function(
-    SvgParserState parserState, bool warningsAsErrors);
+typedef _ParseFunc = Future<void>? Function(SvgParserState parserState, bool warningsAsErrors);
 typedef _PathFunc = Path? Function(SvgParserState parserState);
 
 final RegExp _trimPattern = RegExp(r'[\r|\n|\t]');
@@ -101,11 +100,9 @@ class _Elements {
       FlutterError.reportError(FlutterErrorDetails(
         exception: UnsupportedError(errorMessage),
         informationCollector: () => <DiagnosticsNode>[
-          ErrorDescription(
-              'The root <svg> element contained an unsupported nested SVG element.'),
+          ErrorDescription('The root <svg> element contained an unsupported nested SVG element.'),
           if (parserState._key != null) ErrorDescription(''),
-          if (parserState._key != null)
-            DiagnosticsProperty<String>('Picture key', parserState._key),
+          if (parserState._key != null) DiagnosticsProperty<String>('Picture key', parserState._key),
         ],
         library: 'SVG',
         context: ErrorDescription('in _Element.svg'),
@@ -117,8 +114,7 @@ class _Elements {
           DrawableGroup(
             id,
             <Drawable>[],
-            parserState.parseStyle(viewBox!.viewBoxRect, null,
-                currentColor: color),
+            parserState.parseStyle(viewBox!.viewBoxRect, null, currentColor: color),
             color: color,
           ),
         ),
@@ -143,16 +139,12 @@ class _Elements {
       return null;
     }
     final DrawableParent parent = parserState.currentGroup!;
-    final Color? color = parserState.parseColor(
-            parserState.attribute('color', def: null),
-            currentColor: parent.color ?? parserState.theme.currentColor) ??
-        parent.color;
+    final Color? color = parserState.parseColor(parserState.attribute('color', def: null), currentColor: parent.color ?? parserState.theme.currentColor) ?? parent.color;
 
     final DrawableGroup group = DrawableGroup(
       parserState.attribute('id', def: ''),
       <Drawable>[],
-      parserState.parseStyle(parserState.rootBounds, parent.style,
-          currentColor: color),
+      parserState.parseStyle(parserState.rootBounds, parent.style, currentColor: color),
       transform: parseTransform(parserState.attribute('transform'))?.storage,
       color: color,
     );
@@ -161,13 +153,9 @@ class _Elements {
     return null;
   }
 
-  static Future<void>? symbol(
-      SvgParserState parserState, bool warningsAsErrors) {
+  static Future<void>? symbol(SvgParserState parserState, bool warningsAsErrors) {
     final DrawableParent parent = parserState.currentGroup!;
-    final Color? color = parserState.parseColor(
-            parserState.attribute('color', def: null),
-            currentColor: parent.color ?? parserState.theme.currentColor) ??
-        parent.color;
+    final Color? color = parserState.parseColor(parserState.attribute('color', def: null), currentColor: parent.color ?? parserState.theme.currentColor) ?? parent.color;
 
     final DrawableGroup group = DrawableGroup(
       parserState.attribute('id', def: ''),
@@ -197,9 +185,7 @@ class _Elements {
       currentColor: parent.color,
     );
 
-    final Matrix4 transform =
-        parseTransform(parserState.attribute('transform')) ??
-            Matrix4.identity();
+    final Matrix4 transform = parseTransform(parserState.attribute('transform')) ?? Matrix4.identity();
     transform.translate(
       parserState.parseDoubleWithUnits(
         parserState.attribute('x', def: '0'),
@@ -209,8 +195,7 @@ class _Elements {
       )!,
     );
 
-    final DrawableStyleable ref =
-        parserState._definitions.getDrawable('url($xlinkHref)')!;
+    final DrawableStyleable ref = parserState._definitions.getDrawable('url($xlinkHref)')!;
     final DrawableGroup group = DrawableGroup(
       parserState.attribute('id', def: ''),
       <Drawable>[ref.mergeStyle(style)],
@@ -240,11 +225,8 @@ class _Elements {
           'stop-opacity',
           def: '1',
         )!;
-        final Color stopColor = parserState.parseColor(
-                getAttribute(parserState.attributes, 'stop-color'),
-                currentColor: parent.color ?? parserState.theme.currentColor) ??
-            parent.color ??
-            colorBlack;
+        final Color stopColor =
+            parserState.parseColor(getAttribute(parserState.attributes, 'stop-color'), currentColor: parent.color ?? parserState.theme.currentColor) ?? parent.color ?? colorBlack;
         colors.add(stopColor.withOpacity(parseDouble(rawOpacity)!));
 
         final String rawOffset = getAttribute(
@@ -285,14 +267,12 @@ class _Elements {
 
     if (parserState._currentStartElement!.isSelfClosing) {
       final String? href = getHrefAttribute(parserState.attributes);
-      final DrawableGradient? ref =
-          parserState._definitions.getGradient<DrawableGradient>('url($href)');
+      final DrawableGradient? ref = parserState._definitions.getGradient<DrawableGradient>('url($href)');
       if (ref == null) {
         reportMissingDef(parserState._key, href, 'radialGradient');
       } else {
         if (gradientUnits == null) {
-          isObjectBoundingBox =
-              ref.unitMode == GradientUnitMode.objectBoundingBox;
+          isObjectBoundingBox = ref.unitMode == GradientUnitMode.objectBoundingBox;
         }
         colors.addAll(ref.colors!);
         offsets.addAll(ref.offsets!);
@@ -309,27 +289,11 @@ class _Elements {
       fx = parseDecimalOrPercentage(rawFx!);
       fy = parseDecimalOrPercentage(rawFy!);
     } else {
-      cx = isPercentage(rawCx!)
-          ? parsePercentage(rawCx) * parserState.rootBounds.width +
-              parserState.rootBounds.left
-          : parserState.parseDoubleWithUnits(rawCx)!;
-      cy = isPercentage(rawCy!)
-          ? parsePercentage(rawCy) * parserState.rootBounds.height +
-              parserState.rootBounds.top
-          : parserState.parseDoubleWithUnits(rawCy)!;
-      r = isPercentage(rawR!)
-          ? parsePercentage(rawR) *
-              ((parserState.rootBounds.height + parserState.rootBounds.width) /
-                  2)
-          : parserState.parseDoubleWithUnits(rawR)!;
-      fx = isPercentage(rawFx!)
-          ? parsePercentage(rawFx) * parserState.rootBounds.width +
-              parserState.rootBounds.left
-          : parserState.parseDoubleWithUnits(rawFx)!;
-      fy = isPercentage(rawFy!)
-          ? parsePercentage(rawFy) * parserState.rootBounds.height +
-              parserState.rootBounds.top
-          : parserState.parseDoubleWithUnits(rawFy)!;
+      cx = isPercentage(rawCx!) ? parsePercentage(rawCx) * parserState.rootBounds.width + parserState.rootBounds.left : parserState.parseDoubleWithUnits(rawCx)!;
+      cy = isPercentage(rawCy!) ? parsePercentage(rawCy) * parserState.rootBounds.height + parserState.rootBounds.top : parserState.parseDoubleWithUnits(rawCy)!;
+      r = isPercentage(rawR!) ? parsePercentage(rawR) * ((parserState.rootBounds.height + parserState.rootBounds.width) / 2) : parserState.parseDoubleWithUnits(rawR)!;
+      fx = isPercentage(rawFx!) ? parsePercentage(rawFx) * parserState.rootBounds.width + parserState.rootBounds.left : parserState.parseDoubleWithUnits(rawFx)!;
+      fy = isPercentage(rawFy!) ? parsePercentage(rawFy) * parserState.rootBounds.height + parserState.rootBounds.top : parserState.parseDoubleWithUnits(rawFy)!;
     }
 
     parserState._definitions.addGradient(
@@ -341,9 +305,7 @@ class _Elements {
         focalRadius: 0.0,
         colors: colors,
         offsets: offsets,
-        unitMode: isObjectBoundingBox
-            ? GradientUnitMode.objectBoundingBox
-            : GradientUnitMode.userSpaceOnUse,
+        unitMode: isObjectBoundingBox ? GradientUnitMode.objectBoundingBox : GradientUnitMode.userSpaceOnUse,
         spreadMethod: spreadMethod,
         transform: originalTransform?.storage,
       ),
@@ -372,14 +334,12 @@ class _Elements {
     final List<double> offsets = <double>[];
     if (parserState._currentStartElement!.isSelfClosing) {
       final String? href = getHrefAttribute(parserState.attributes);
-      final DrawableGradient? ref =
-          parserState._definitions.getGradient<DrawableGradient>('url($href)');
+      final DrawableGradient? ref = parserState._definitions.getGradient<DrawableGradient>('url($href)');
       if (ref == null) {
         reportMissingDef(parserState._key, href, 'linearGradient');
       } else {
         if (gradientUnits == null) {
-          isObjectBoundingBox =
-              ref.unitMode == GradientUnitMode.objectBoundingBox;
+          isObjectBoundingBox = ref.unitMode == GradientUnitMode.objectBoundingBox;
         }
         colors.addAll(ref.colors!);
         offsets.addAll(ref.offsets!);
@@ -400,25 +360,13 @@ class _Elements {
       );
     } else {
       fromOffset = Offset(
-        isPercentage(x1)
-            ? parsePercentage(x1) * parserState.rootBounds.width +
-                parserState.rootBounds.left
-            : parserState.parseDoubleWithUnits(x1)!,
-        isPercentage(y1)
-            ? parsePercentage(y1) * parserState.rootBounds.height +
-                parserState.rootBounds.top
-            : parserState.parseDoubleWithUnits(y1)!,
+        isPercentage(x1) ? parsePercentage(x1) * parserState.rootBounds.width + parserState.rootBounds.left : parserState.parseDoubleWithUnits(x1)!,
+        isPercentage(y1) ? parsePercentage(y1) * parserState.rootBounds.height + parserState.rootBounds.top : parserState.parseDoubleWithUnits(y1)!,
       );
 
       toOffset = Offset(
-        isPercentage(x2)
-            ? parsePercentage(x2) * parserState.rootBounds.width +
-                parserState.rootBounds.left
-            : parserState.parseDoubleWithUnits(x2)!,
-        isPercentage(y2)
-            ? parsePercentage(y2) * parserState.rootBounds.height +
-                parserState.rootBounds.top
-            : parserState.parseDoubleWithUnits(y2)!,
+        isPercentage(x2) ? parsePercentage(x2) * parserState.rootBounds.width + parserState.rootBounds.left : parserState.parseDoubleWithUnits(x2)!,
+        isPercentage(y2) ? parsePercentage(y2) * parserState.rootBounds.height + parserState.rootBounds.top : parserState.parseDoubleWithUnits(y2)!,
       );
     }
 
@@ -430,9 +378,7 @@ class _Elements {
         colors: colors,
         offsets: offsets,
         spreadMethod: spreadMethod,
-        unitMode: isObjectBoundingBox
-            ? GradientUnitMode.objectBoundingBox
-            : GradientUnitMode.userSpaceOnUse,
+        unitMode: isObjectBoundingBox ? GradientUnitMode.objectBoundingBox : GradientUnitMode.userSpaceOnUse,
         transform: originalTransform?.storage,
       ),
     );
@@ -440,8 +386,7 @@ class _Elements {
     return null;
   }
 
-  static Future<void>? clipPath(
-      SvgParserState parserState, bool warningsAsErrors) {
+  static Future<void>? clipPath(SvgParserState parserState, bool warningsAsErrors) {
     final String id = parserState.buildUrlIri();
 
     final List<Path> paths = <Path>[];
@@ -458,8 +403,7 @@ class _Elements {
             pathFn(parserState),
           )!;
           nextPath.fillType = parserState.parseFillRule('clip-rule')!;
-          if (currentPath != null &&
-              nextPath.fillType != currentPath.fillType) {
+          if (currentPath != null && nextPath.fillType != currentPath.fillType) {
             currentPath = nextPath;
             paths.add(currentPath);
           } else if (currentPath == null) {
@@ -470,8 +414,7 @@ class _Elements {
           }
         } else if (event.name == 'use') {
           final String? xlinkHref = getHrefAttribute(parserState.attributes);
-          final DrawableStyleable? definitionDrawable =
-              parserState._definitions.getDrawable('url($xlinkHref)');
+          final DrawableStyleable? definitionDrawable = parserState._definitions.getDrawable('url($xlinkHref)');
 
           void extractPathsFromDrawable(Drawable? target) {
             if (target is DrawableShape) {
@@ -483,19 +426,16 @@ class _Elements {
 
           extractPathsFromDrawable(definitionDrawable);
         } else {
-          final String errorMessage =
-              'Unsupported clipPath child ${event.name}';
+          final String errorMessage = 'Unsupported clipPath child ${event.name}';
           if (warningsAsErrors) {
             throw UnsupportedError(errorMessage);
           }
           FlutterError.reportError(FlutterErrorDetails(
             exception: UnsupportedError(errorMessage),
             informationCollector: () => <DiagnosticsNode>[
-              ErrorDescription(
-                  'The <clipPath> element contained an unsupported child ${event.name}'),
+              ErrorDescription('The <clipPath> element contained an unsupported child ${event.name}'),
               if (parserState._key != null) ErrorDescription(''),
-              if (parserState._key != null)
-                DiagnosticsProperty<String>('Picture key', parserState._key),
+              if (parserState._key != null) DiagnosticsProperty<String>('Picture key', parserState._key),
             ],
             library: 'SVG',
             context: ErrorDescription('in _Element.clipPath'),
@@ -507,8 +447,7 @@ class _Elements {
     return null;
   }
 
-  static Future<void> image(
-      SvgParserState parserState, bool warningsAsErrors) async {
+  static Future<void> image(SvgParserState parserState, bool warningsAsErrors) async {
     final String? href = getHrefAttribute(parserState.attributes);
     if (href == null) {
       return;
@@ -536,8 +475,7 @@ class _Elements {
       parserState.attribute('id', def: ''),
       image,
       offset,
-      parserState.parseStyle(parserState.rootBounds, parentStyle,
-          currentColor: parent.color),
+      parserState.parseStyle(parserState.rootBounds, parentStyle, currentColor: parent.color),
       size: size,
       transform: parseTransform(parserState.attribute('transform'))?.storage,
     );
@@ -577,9 +515,7 @@ class _Elements {
       final Paragraph stroke = createParagraph(
         value,
         lastTextInfo.style,
-        DrawablePaint.isEmpty(lastTextInfo.style.stroke)
-            ? transparentStroke
-            : lastTextInfo.style.stroke,
+        DrawablePaint.isEmpty(lastTextInfo.style.stroke) ? transparentStroke : lastTextInfo.style.stroke,
       );
       parserState.currentGroup!.children!.add(
         DrawableText(
@@ -587,8 +523,7 @@ class _Elements {
           fill,
           stroke,
           lastTextInfo.offset,
-          lastTextInfo.style.textStyle!.anchor ??
-              DrawableTextAnchorPosition.start,
+          lastTextInfo.style.textStyle!.anchor ?? DrawableTextAnchorPosition.start,
           transform: lastTextInfo.transform?.storage,
         ),
       );
@@ -613,8 +548,7 @@ class _Elements {
         }
       }
 
-      final DrawableStyle? parentStyle =
-          lastTextInfo?.style ?? parserState.currentGroup!.style;
+      final DrawableStyle? parentStyle = lastTextInfo?.style ?? parserState.currentGroup!.style;
 
       textInfos.add(_TextInfo(
         parserState.parseStyle(
@@ -635,8 +569,7 @@ class _Elements {
       if (event is XmlCDATAEvent) {
         _processText(event.text.trim());
       } else if (event is XmlTextEvent) {
-        final String? space =
-            getAttribute(parserState.attributes, 'space', def: null);
+        final String? space = getAttribute(parserState.attributes, 'space', def: null);
         if (space != 'preserve') {
           _processText(event.text.trim());
         } else {
@@ -794,17 +727,72 @@ class SvgParserState {
     this.theme,
     this._key,
     this._warningsAsErrors,
-  )
-  // ignore: unnecessary_null_comparison
-  : assert(events != null),
-        _eventIterator = events.iterator;
+  ) {
+    Iterable<XmlEvent>? sortedEvents;
+    if (events.any((XmlEvent element) => element is XmlStartElementEvent && element.name == 'defs')) {
+      sortedEvents = reorderDefs(events);
+    }
+    _eventIterator = (sortedEvents ?? events).iterator;
+  }
+
+  /// Reorder a list of events to move all defs elements to the start
+  /// of their repective parent groups.
+  static Iterable<XmlEvent> reorderDefs(Iterable<XmlEvent> events) {
+    if (events.isEmpty || events.length == 1) {
+      return events;
+    }
+    if (events.first is XmlStartElementEvent && (events.first as XmlStartElementEvent).name == 'svg') {
+      return <XmlEvent>[events.first, ...reorderDefs(events.skip(1).take(events.length - 2)), events.last];
+    }
+    final List<XmlEvent> result = <XmlEvent>[];
+    int depth = 0;
+    int childStart = 0;
+    bool containsDefs = false;
+    for (int i = 0; i < events.length; i++) {
+      final XmlEvent event = events.elementAt(i);
+      if (event is XmlStartElementEvent) {
+        if (depth == 0) {
+          if (event.isSelfClosing) {
+            result.add(event);
+            continue;
+          }
+          childStart = i;
+        } else {
+          if (event.name == 'defs') {
+            containsDefs = true;
+          }
+        }
+        if (!event.isSelfClosing) {
+          depth++;
+        }
+      } else if (event is XmlEndElementEvent) {
+        depth--;
+        if (depth == 0) {
+          final Iterable<XmlEvent> children = events.skip(childStart).take(i - childStart + 1);
+          if (event.name == 'defs') {
+            result.insertAll(0, children);
+          } else {
+            if (!containsDefs) {
+              result.addAll(children);
+            } else {
+              result.addAll(<XmlEvent>[children.first, ...reorderDefs(children.skip(1).take(children.length - 2)), children.last]);
+            }
+          }
+          containsDefs = false;
+        }
+      } else if (depth == 0) {
+        result.add(event);
+      }
+    }
+    return result;
+  }
 
   _SvgCompatibilityTester _compatibilityTester = _SvgCompatibilityTester();
 
   /// The theme used when parsing SVG elements.
   final SvgTheme theme;
 
-  final Iterator<XmlEvent> _eventIterator;
+  late final Iterator<XmlEvent> _eventIterator;
   final String? _key;
   final bool _warningsAsErrors;
   final DrawableDefinitionServer _definitions = DrawableDefinitionServer();
@@ -840,10 +828,8 @@ class SvgParserState {
       final XmlEvent event = _eventIterator.current;
       bool isSelfClosing = false;
       if (event is XmlStartElementEvent) {
-        final Map<String, String> attributeMap =
-            event.attributes.toAttributeMap();
-        if (getAttribute(attributeMap, 'display') == 'none' ||
-            getAttribute(attributeMap, 'visibility') == 'hidden') {
+        final Map<String, String> attributeMap = event.attributes.toAttributeMap();
+        if (getAttribute(attributeMap, 'display') == 'none' || getAttribute(attributeMap, 'visibility') == 'hidden') {
           print('SVG Warning: Discarding:\n\n  $event\n\n'
               'and any children it has since it is not visible.\n'
               'If that element is meant to be visible, the `display` or '
@@ -880,20 +866,7 @@ class SvgParserState {
     _compatibilityTester = _SvgCompatibilityTester();
     for (XmlEvent event in _readSubtree()) {
       if (event is XmlStartElementEvent) {
-        if (startElement(event)) {
-          continue;
-        }
-        final _ParseFunc? parseFunc = _svgElementParsers[event.name];
-        await parseFunc?.call(this, _warningsAsErrors);
-        if (parseFunc == null) {
-          if (!event.isSelfClosing) {
-            _discardSubtree();
-          }
-          assert(() {
-            unhandledElement(event);
-            return true;
-          }());
-        }
+        await startElement(event);
       } else if (event is XmlEndElementEvent) {
         endElement(event);
       }
@@ -908,8 +881,7 @@ class SvgParserState {
   Map<String, String> get attributes => _currentAttributes;
 
   /// Gets the attribute for the current position of the parser.
-  String? attribute(String name, {String? def}) =>
-      getAttribute(attributes, name, def: def);
+  String? attribute(String name, {String? def}) => getAttribute(attributes, name, def: def);
 
   /// The current group, if any, in the [Drawable] heirarchy.
   DrawableParent? get currentGroup {
@@ -968,7 +940,7 @@ class SvgParserState {
   }
 
   /// Potentially handles a starting element.
-  bool startElement(XmlStartElementEvent event) {
+  Future<void> startElement(XmlStartElementEvent event) async {
     if (event.name == 'defs') {
       if (!event.isSelfClosing) {
         addGroup(
@@ -981,10 +953,23 @@ class SvgParserState {
             transform: currentGroup?.transform,
           ),
         );
-        return true;
+        return;
       }
     }
-    return addShape(event);
+    if (addShape(event)) {
+      return;
+    }
+    final _ParseFunc? parseFunc = _svgElementParsers[event.name];
+    await parseFunc?.call(this, _warningsAsErrors);
+    if (parseFunc == null) {
+      if (!event.isSelfClosing) {
+        _discardSubtree();
+      }
+      assert(() {
+        unhandledElement(event);
+        return true;
+      }());
+    }
   }
 
   /// Handles the end of an XML element.
@@ -999,22 +984,18 @@ class SvgParserState {
   /// Will only print an error once for unhandled/unexpected elements, except for
   /// `<style/>`, `<title/>`, and `<desc/>` elements.
   void unhandledElement(XmlStartElementEvent event) {
-    final String errorMessage =
-        'unhandled element ${event.name}; Picture key: $_key';
+    final String errorMessage = 'unhandled element ${event.name}; Picture key: $_key';
     if (_warningsAsErrors) {
       // Throw error instead of log warning.
       throw UnimplementedError(errorMessage);
     }
     if (event.name == 'style') {
       FlutterError.reportError(FlutterErrorDetails(
-        exception: UnimplementedError(
-            'The <style> element is not implemented in this library.'),
+        exception: UnimplementedError('The <style> element is not implemented in this library.'),
         informationCollector: () => <DiagnosticsNode>[
-          ErrorDescription(
-              'Style elements are not supported by this library and the requested SVG may not '
+          ErrorDescription('Style elements are not supported by this library and the requested SVG may not '
               'render as intended.'),
-          ErrorHint(
-              'If possible, ensure the SVG uses inline styles and/or attributes (which are '
+          ErrorHint('If possible, ensure the SVG uses inline styles and/or attributes (which are '
               'supported), or use a preprocessing utility such as svgcleaner to inline the '
               'styles for you.'),
           ErrorDescription(''),
@@ -1035,8 +1016,7 @@ class SvgParserState {
   static const int kCssPointsPerInch = 72;
 
   /// The multiplicand to convert from CSS points to pixels.
-  static const double kPointsToPixelFactor =
-      kCssPixelsPerInch / kCssPointsPerInch;
+  static const double kPointsToPixelFactor = kCssPixelsPerInch / kCssPointsPerInch;
 
   /// Parses a `rawDouble` `String` to a `double`
   /// taking into account absolute and relative units
@@ -1143,12 +1123,8 @@ class SvgParserState {
     }
     assert(() {
       final RegExp notDigits = RegExp(r'[^\d\.]');
-      if (!raw.endsWith('px') &&
-          !raw.endsWith('em') &&
-          !raw.endsWith('ex') &&
-          raw.contains(notDigits)) {
-        print(
-            'Warning: Flutter SVG only supports the following formats for `width` and `height` on the SVG root:\n'
+      if (!raw.endsWith('px') && !raw.endsWith('em') && !raw.endsWith('ex') && raw.contains(notDigits)) {
+        print('Warning: Flutter SVG only supports the following formats for `width` and `height` on the SVG root:\n'
             '  width="100%"\n'
             '  width="100em"\n'
             '  width="100ex"\n'
@@ -1323,20 +1299,12 @@ class SvgParserState {
       opacity *= parseDouble(rawOpacity)!.clamp(0.0, 1.0);
     }
 
-    final String? rawStrokeCap =
-        getAttribute(attributes, 'stroke-linecap', def: null);
-    final String? rawLineJoin =
-        getAttribute(attributes, 'stroke-linejoin', def: null);
-    final String? rawMiterLimit =
-        getAttribute(attributes, 'stroke-miterlimit', def: null);
-    final String? rawStrokeWidth =
-        getAttribute(attributes, 'stroke-width', def: null);
+    final String? rawStrokeCap = getAttribute(attributes, 'stroke-linecap', def: null);
+    final String? rawLineJoin = getAttribute(attributes, 'stroke-linejoin', def: null);
+    final String? rawMiterLimit = getAttribute(attributes, 'stroke-miterlimit', def: null);
+    final String? rawStrokeWidth = getAttribute(attributes, 'stroke-width', def: null);
 
-    final String? anyStrokeAttribute = rawStroke ??
-        rawStrokeCap ??
-        rawLineJoin ??
-        rawMiterLimit ??
-        rawStrokeWidth;
+    final String? anyStrokeAttribute = rawStroke ?? rawStrokeCap ?? rawLineJoin ?? rawMiterLimit ?? rawStrokeWidth;
     if (anyStrokeAttribute == null && DrawablePaint.isEmpty(parentStroke)) {
       return null;
     } else if (rawStroke == 'none') {
@@ -1361,33 +1329,17 @@ class SvgParserState {
 
     final DrawablePaint paint = DrawablePaint(
       PaintingStyle.stroke,
-      color: (strokeColor ??
-              currentColor ??
-              parentStroke?.color ??
-              definitionPaint?.color)
-          ?.withOpacity(opacity),
+      color: (strokeColor ?? currentColor ?? parentStroke?.color ?? definitionPaint?.color)?.withOpacity(opacity),
       strokeCap: StrokeCap.values.firstWhere(
         (StrokeCap sc) => sc.toString() == 'StrokeCap.$rawStrokeCap',
-        orElse: () =>
-            parentStroke?.strokeCap ??
-            definitionPaint?.strokeCap ??
-            StrokeCap.butt,
+        orElse: () => parentStroke?.strokeCap ?? definitionPaint?.strokeCap ?? StrokeCap.butt,
       ),
       strokeJoin: StrokeJoin.values.firstWhere(
         (StrokeJoin sj) => sj.toString() == 'StrokeJoin.$rawLineJoin',
-        orElse: () =>
-            parentStroke?.strokeJoin ??
-            definitionPaint?.strokeJoin ??
-            StrokeJoin.miter,
+        orElse: () => parentStroke?.strokeJoin ?? definitionPaint?.strokeJoin ?? StrokeJoin.miter,
       ),
-      strokeMiterLimit: parseDouble(rawMiterLimit) ??
-          parentStroke?.strokeMiterLimit ??
-          definitionPaint?.strokeMiterLimit ??
-          4.0,
-      strokeWidth: parseDoubleWithUnits(rawStrokeWidth) ??
-          parentStroke?.strokeWidth ??
-          definitionPaint?.strokeWidth ??
-          1.0,
+      strokeMiterLimit: parseDouble(rawMiterLimit) ?? parentStroke?.strokeMiterLimit ?? definitionPaint?.strokeMiterLimit ?? 4.0,
+      strokeWidth: parseDoubleWithUnits(rawStrokeWidth) ?? parentStroke?.strokeWidth ?? definitionPaint?.strokeWidth ?? 1.0,
     );
 
     return DrawablePaint.merge(definitionPaint, paint);
@@ -1428,8 +1380,7 @@ class SvgParserState {
       currentColor,
     );
 
-    if (rawFill == '' &&
-        (fillColor == null || parentFill == DrawablePaint.empty)) {
+    if (rawFill == '' && (fillColor == null || parentFill == DrawablePaint.empty)) {
       return null;
     }
     if (rawFill == 'none') {
@@ -1450,9 +1401,7 @@ class SvgParserState {
     Color? defaultFillColor,
     Color? currentColor,
   ) {
-    final Color? color = parseColor(rawFill, currentColor: currentColor) ??
-        parentFillColor ??
-        defaultFillColor;
+    final Color? color = parseColor(rawFill, currentColor: currentColor) ?? parentFillColor ?? defaultFillColor;
 
     if (explicitOpacity && color != null) {
       return color.withOpacity(opacity);
@@ -1472,8 +1421,7 @@ class SvgParserState {
 
   /// Applies a transform to a path if the [attributes] contain a `transform`.
   Path? applyTransformIfNeeded(Path? path) {
-    final Matrix4? transform =
-        parseTransform(getAttribute(attributes, 'transform', def: null));
+    final Matrix4? transform = parseTransform(getAttribute(attributes, 'transform', def: null));
 
     if (transform != null) {
       return path!.transform(transform.storage);
@@ -1582,8 +1530,7 @@ class SvgParserState {
       case 'line-through':
         return TextDecoration.lineThrough;
     }
-    throw UnsupportedError(
-        'Attribute value for text-decoration="$textDecoration"'
+    throw UnsupportedError('Attribute value for text-decoration="$textDecoration"'
         ' is not supported');
   }
 
@@ -1604,8 +1551,7 @@ class SvgParserState {
       case 'wavy':
         return TextDecorationStyle.wavy;
     }
-    throw UnsupportedError(
-        'Attribute value for text-decoration-style="$textDecorationStyle"'
+    throw UnsupportedError('Attribute value for text-decoration-style="$textDecorationStyle"'
         ' is not supported');
   }
 
@@ -1623,8 +1569,7 @@ class SvgParserState {
       stroke: parseStroke(bounds, parentStyle?.stroke, currentColor),
       dashArray: parseDashArray(),
       dashOffset: parseDashOffset(),
-      fill:
-          parseFill(bounds, parentStyle?.fill, defaultFillColor, currentColor),
+      fill: parseFill(bounds, parentStyle?.fill, defaultFillColor, currentColor),
       pathFillType: parseFillRule(
         'fill-rule',
         parentStyle != null ? null : 'nonzero',
@@ -1634,8 +1579,7 @@ class SvgParserState {
       clipPath: parseClipPath(),
       textStyle: DrawableTextStyle(
         fontFamily: getAttribute(attributes, 'font-family'),
-        fontSize: parseFontSize(getAttribute(attributes, 'font-size'),
-            parentValue: parentStyle?.textStyle?.fontSize),
+        fontSize: parseFontSize(getAttribute(attributes, 'font-size'), parentValue: parentStyle?.textStyle?.fontSize),
         fontWeight: parseFontWeight(
           getAttribute(attributes, 'font-weight', def: null),
         ),
@@ -1696,27 +1640,19 @@ class SvgParserState {
 
     // handle rgba() colors e.g. rgba(255, 255, 255, 1.0)
     if (colorString.toLowerCase().startsWith('rgba')) {
-      final List<String> rawColorElements = colorString
-          .substring(colorString.indexOf('(') + 1, colorString.indexOf(')'))
-          .split(',')
-          .map((String rawColor) => rawColor.trim())
-          .toList();
+      final List<String> rawColorElements =
+          colorString.substring(colorString.indexOf('(') + 1, colorString.indexOf(')')).split(',').map((String rawColor) => rawColor.trim()).toList();
 
       final double opacity = parseDouble(rawColorElements.removeLast())!;
 
-      final List<int> rgb = rawColorElements
-          .map((String rawColor) => int.parse(rawColor))
-          .toList();
+      final List<int> rgb = rawColorElements.map((String rawColor) => int.parse(rawColor)).toList();
 
       return Color.fromRGBO(rgb[0], rgb[1], rgb[2], opacity);
     }
 
     // Conversion code from: https://github.com/MichaelFenwick/Color, thanks :)
     if (colorString.toLowerCase().startsWith('hsl')) {
-      final List<int> values = colorString
-          .substring(colorString.indexOf('(') + 1, colorString.indexOf(')'))
-          .split(',')
-          .map((String rawColor) {
+      final List<int> values = colorString.substring(colorString.indexOf('(') + 1, colorString.indexOf(')')).split(',').map((String rawColor) {
         rawColor = rawColor.trim();
 
         if (rawColor.endsWith('%')) {
@@ -1755,30 +1691,22 @@ class SvgParserState {
         rgb[2] = 6 - hue * 6;
       }
 
-      rgb = rgb
-          .map((double val) => val + (1 - saturation) * (0.5 - val))
-          .toList();
+      rgb = rgb.map((double val) => val + (1 - saturation) * (0.5 - val)).toList();
 
       if (luminance < 0.5) {
         rgb = rgb.map((double val) => luminance * 2 * val).toList();
       } else {
-        rgb = rgb
-            .map((double val) => luminance * 2 * (1 - val) + 2 * val - 1)
-            .toList();
+        rgb = rgb.map((double val) => luminance * 2 * (1 - val) + 2 * val - 1).toList();
       }
 
       rgb = rgb.map((double val) => val * 255).toList();
 
-      return Color.fromARGB(
-          alpha, rgb[0].round(), rgb[1].round(), rgb[2].round());
+      return Color.fromARGB(alpha, rgb[0].round(), rgb[1].round(), rgb[2].round());
     }
 
     // handle rgb() colors e.g. rgb(255, 255, 255)
     if (colorString.toLowerCase().startsWith('rgb')) {
-      final List<int> rgb = colorString
-          .substring(colorString.indexOf('(') + 1, colorString.indexOf(')'))
-          .split(',')
-          .map((String rawColor) {
+      final List<int> rgb = colorString.substring(colorString.indexOf('(') + 1, colorString.indexOf(')')).split(',').map((String rawColor) {
         rawColor = rawColor.trim();
         if (rawColor.endsWith('%')) {
           rawColor = rawColor.substring(0, rawColor.length - 1);
