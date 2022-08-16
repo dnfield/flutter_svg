@@ -826,6 +826,8 @@ class SvgParserState {
         depth -= 1;
         assert(depth >= 0);
       }
+      _currentAttributes = <String, String>{};
+      _currentStartElement = null;
       if (depth < subtreeStartDepth) {
         return;
       }
@@ -854,6 +856,8 @@ class SvgParserState {
           }
           continue;
         }
+        _currentAttributes = attributeMap;
+        _currentStartElement = event;
         depth += 1;
         isSelfClosing = event.isSelfClosing;
       }
@@ -862,6 +866,8 @@ class SvgParserState {
       if (isSelfClosing || event is XmlEndElementEvent) {
         depth -= 1;
         assert(depth >= 0);
+        _currentAttributes = <String, String>{};
+        _currentStartElement = null;
       }
       if (depth < subtreeStartDepth) {
         return;
@@ -872,41 +878,24 @@ class SvgParserState {
   /// Drive the [XmlTextReader] to EOF and produce a [DrawableRoot].
   Future<DrawableRoot> parse() async {
     _compatibilityTester = _SvgCompatibilityTester();
-    bool isInDefs = false;
-    final List<XmlEvent> tree = _readSubtree().toList();
-    for (final XmlEvent event in tree) {
+    for (XmlEvent event in _readSubtree()) {
       if (event is XmlStartElementEvent) {
-        if (event.name == 'svg' || event.name == 'defs' || isInDefs) {
-          if (event.name == 'defs') {
-            isInDefs = true;
-          }
-          startElement(event);
-        }
-      } else if (event is XmlEndElementEvent) {
-        if (event.name == 'defs' || isInDefs) {
-          if (event.name == 'defs') {
-            isInDefs = false;
-          }
-          endElement(event);
-        }
-      }
-    }
-    for (final XmlEvent event in tree) {
-      if (event is XmlStartElementEvent) {
-        if (event.name == 'defs' || isInDefs) {
-          isInDefs = true;
+        if (startElement(event)) {
           continue;
         }
-        if (event.name != 'svg') {
-          startElement(event);
+        final _ParseFunc? parseFunc = _svgElementParsers[event.name];
+        await parseFunc?.call(this, _warningsAsErrors);
+        if (parseFunc == null) {
+          if (!event.isSelfClosing) {
+            _discardSubtree();
+          }
+          assert(() {
+            unhandledElement(event);
+            return true;
+          }());
         }
       } else if (event is XmlEndElementEvent) {
-        if (!isInDefs) {
-          endElement(event);
-        }
-        if (event.name == 'defs') {
-          isInDefs = false;
-        }
+        endElement(event);
       }
     }
     if (_root == null) {
@@ -979,36 +968,23 @@ class SvgParserState {
   }
 
   /// Potentially handles a starting element.
-  Future<void> startElement(XmlStartElementEvent event) async {
-    _currentAttributes = event.attributes.toAttributeMap();
-    _currentStartElement = event;
+  bool startElement(XmlStartElementEvent event) {
     if (event.name == 'defs') {
-      addGroup(
-        event,
-        DrawableGroup(
-          '__defs__${event.hashCode}',
-          <Drawable>[],
-          null,
-          color: currentGroup?.color,
-          transform: currentGroup?.transform,
-        ),
-      );
-      return;
-    }
-    addShape(event);
-    final _ParseFunc? parseFunc = _svgElementParsers[event.name];
-    await parseFunc?.call(this, _warningsAsErrors);
-    if (parseFunc == null) {
       if (!event.isSelfClosing) {
-        _currentAttributes = <String, String>{};
-        _currentStartElement = null;
-        _discardSubtree();
-      }
-      assert(() {
-        unhandledElement(event);
+        addGroup(
+          event,
+          DrawableGroup(
+            '__defs__${event.hashCode}',
+            <Drawable>[],
+            null,
+            color: currentGroup?.color,
+            transform: currentGroup?.transform,
+          ),
+        );
         return true;
-      }());
+      }
     }
+    return addShape(event);
   }
 
   /// Handles the end of an XML element.
