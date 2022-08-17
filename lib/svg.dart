@@ -780,8 +780,9 @@ class _SvgPictureState extends State<SvgPicture> {
     final SvgTheme? defaultSvgTheme = DefaultSvgTheme.of(context)?.theme;
     final TextStyle defaultTextStyle = DefaultTextStyle.of(context).style;
 
-    final Color currentColor =
-        widget.theme?.currentColor ?? defaultSvgTheme?.currentColor ?? const Color(0xFF000000);
+    final Color currentColor = widget.theme?.currentColor ??
+        defaultSvgTheme?.currentColor ??
+        const Color(0xFF000000);
 
     final double fontSize = widget.theme?.fontSize ??
         defaultSvgTheme?.fontSize ??
@@ -864,17 +865,19 @@ class _SvgPictureState extends State<SvgPicture> {
   Widget build(BuildContext context) {
     late Widget child;
     if (_picture != null) {
-      final Rect viewport = Offset.zero & _picture!.viewport.size;
+      final Size renderSize = _picture!.size == Size.infinite
+          ? _picture!.viewport.size
+          : _picture!.size;
 
       double? width = widget.width;
       double? height = widget.height;
       if (width == null && height == null) {
-        width = viewport.width;
-        height = viewport.height;
+        width = renderSize.width;
+        height = renderSize.height;
       } else if (height != null) {
-        width = height / viewport.height * viewport.width;
+        width = height / renderSize.height * renderSize.width;
       } else if (width != null) {
-        height = width / viewport.width * viewport.height;
+        height = width / renderSize.width * renderSize.height;
       }
 
       child = SizedBox(
@@ -885,7 +888,7 @@ class _SvgPictureState extends State<SvgPicture> {
           alignment: widget.alignment,
           clipBehavior: widget.clipBehavior,
           child: SizedBox.fromSize(
-            size: viewport.size,
+            size: renderSize,
             child: RawPicture(
               _picture,
               matchTextDirection: widget.matchTextDirection,
