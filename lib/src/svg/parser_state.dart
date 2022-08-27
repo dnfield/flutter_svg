@@ -733,8 +733,8 @@ class _Paths {
       getAttribute(attributes, 'height', def: '0'),
     )!;
     final Rect rect = Rect.fromLTWH(x, y, w, h);
-    String? rxRaw = getAttribute(attributes, 'rx');
-    String? ryRaw = getAttribute(attributes, 'ry');
+    String? rxRaw = getAttribute(attributes, 'rx', def: null);
+    String? ryRaw = getAttribute(attributes, 'ry', def: null);
     rxRaw ??= ryRaw;
     ryRaw ??= rxRaw;
 
