@@ -200,6 +200,7 @@ class _Elements {
       color: color,
     );
     parserState.addGroup(currentElement, group, id ?? '');
+    parserState._completeProcessing(id, currentElement);
   }
 
   static Future<void>? use(SvgParserState parserState,
