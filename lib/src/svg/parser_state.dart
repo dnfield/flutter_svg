@@ -207,18 +207,17 @@ class _Elements {
       attributes,
       currentColor: parent.color,
     )
-        .then((DrawableStyle style) {
-      parserState._getDrawable(xlinkHref, currentElement).then((DrawableStyleable ref) {
-        final DrawableGroup group = DrawableGroup(
-          id,
-          <Drawable>[ref.mergeStyle(style)],
-          style,
-          transform: transform.storage,
-        );
-        parserState.checkForIri(group, id);
-        parent.children!.add(group);
-        parserState._completeProcessing(id, currentElement);
-      });
+        .then((DrawableStyle style) async {
+      final DrawableStyleable ref = await parserState._getDrawable(xlinkHref, currentElement);
+      final DrawableGroup group = DrawableGroup(
+        id,
+        <Drawable>[ref.mergeStyle(style)],
+        style,
+        transform: transform.storage,
+      );
+      parserState.checkForIri(group, id);
+      parent.children!.add(group);
+      parserState._completeProcessing(id, currentElement);
     });
   }
 
@@ -325,7 +324,7 @@ class _Elements {
         transform: originalTransform?.storage,
       ),
     );
-    parserState._unknownDefinitions[iri]?.complete();
+    parserState._markUnkownDefinitionComplete(iri);
     parserState._completeProcessing(id, currentElement);
   }
 
@@ -397,7 +396,7 @@ class _Elements {
         transform: originalTransform?.storage,
       ),
     );
-    parserState._unknownDefinitions[iri]?.complete();
+    parserState._markUnkownDefinitionComplete(iri);
     parserState._completeProcessing(id, currentElement);
   }
 
@@ -457,8 +456,7 @@ class _Elements {
       }
     }
     parserState._definitions.addClipPath(id, paths);
-    parserState._unknownDefinitions[parserState._buildHref(id)]?.complete();
-    return;
+    parserState._markUnkownDefinitionComplete(parserState._buildHref(id));
   }
 
   static Future<void> image(SvgParserState parserState, Map<String, String> attributes, bool warningsAsErrors) async {
@@ -758,6 +756,7 @@ class SvgParserState {
   final bool _warningsAsErrors;
   final DrawableDefinitionServer _definitions = DrawableDefinitionServer();
   final Map<String, Completer<void>> _unknownDefinitions = <String, Completer<void>>{};
+  final Map<String, List<XmlStartElementEvent?>> _waitingForDefinitions = <String, List<XmlStartElementEvent?>>{};
   final Set<XmlStartElementEvent?> _processing = <XmlStartElementEvent?>{};
   final Queue<_SvgGroupTuple> _parentDrawables = ListQueue<_SvgGroupTuple>(10);
   Completer<void>? _drawingCompleter;
@@ -875,7 +874,7 @@ class SvgParserState {
     final String iri = buildUrlIri(id);
     if (iri != emptyUrlIri) {
       _definitions.addDrawable(iri, drawable!);
-      _unknownDefinitions[_buildHref(id)]?.complete();
+      _markUnkownDefinitionComplete(_buildHref(id));
       return true;
     }
     return false;
@@ -1706,8 +1705,9 @@ class SvgParserState {
 
   void _completeProcessing(String? id, XmlStartElementEvent? currentElement) {
     _processing.remove(currentElement);
-    if (_processing.isEmpty && !_unknownDefinitions.keys.contains(_buildHref(id))) {
-      _drawingCompleter?.complete();
+    if (_processing.isEmpty && !_unknownDefinitions.keys.contains(_buildHref(id)) && _drawingCompleter != null) {
+      // TODO(ikbendewilliam): remove Implicit check if _drawingCompleter != null
+      _drawingCompleter!.complete();
     }
   }
 
@@ -1748,12 +1748,12 @@ class SvgParserState {
   }
 
   Future<void> _waitForRef(String ref, XmlStartElementEvent? event) async {
-    final Completer<void> completer = Completer<void>();
-    _unknownDefinitions.addAll(<String, Completer<void>>{
-      ref: completer,
-    });
+    _unknownDefinitions[ref] ??= Completer<void>();
+    final Completer<void> completer = _unknownDefinitions[ref]!;
     final bool isInProcessing = _processing.contains(event);
     if (isInProcessing) {
+      _waitingForDefinitions[ref] ??= <XmlStartElementEvent?>[];
+      _waitingForDefinitions[ref]!.add(event);
       _processing.remove(event);
     }
     // No other elements are being processed if _drawingCompleter is null.
@@ -1762,10 +1762,13 @@ class SvgParserState {
       _drawingCompleter?.complete();
     }
     await completer.future;
-    if (isInProcessing) {
-      _processing.add(event);
-    }
     _unknownDefinitions.remove(ref);
+  }
+
+  void _markUnkownDefinitionComplete(String iri) {
+    _waitingForDefinitions[iri]?.forEach(_processing.add);
+    _waitingForDefinitions.remove(iri);
+    _unknownDefinitions[iri]?.complete();
   }
 }
 

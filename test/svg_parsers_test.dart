@@ -1,4 +1,4 @@
-import 'dart:ui' show Color, Offset, PathFillType, Size;
+import 'dart:ui' show Color, Offset, PathFillType, Size, Gradient;
 
 import 'package:flutter_svg/parser.dart';
 import 'package:flutter_svg/src/svg/parsers.dart';
@@ -1419,7 +1419,7 @@ BAAO9TXL0Y4OHwAAAABJRU5ErkJggg==" x="1ex" y="0.5ex" width="2ex" height="1.5ex" /
       final DrawableGroup? circle = find<DrawableGroup>(group1!, 'anotherCircle');
       expect(circle, isNotNull);
       final DrawableShape shape = circle!.children!.first as DrawableShape;
-      expect(shape.style.stroke?.color, const Color(0xff0000ff));
+      expect(shape.style.stroke?.shader is Gradient, true);
       expect(circle.style?.fill?.color, const Color(0xff0000ff));
     });
   });
