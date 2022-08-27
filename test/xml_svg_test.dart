@@ -22,27 +22,20 @@ class TestSvgParserState extends SvgParserState {
 
 void main() {
   test('Xlink href tests', () {
-    final XmlStartElementEvent el =
-        parseEvents('<test href="http://localhost" />').first
-            as XmlStartElementEvent;
+    final XmlStartElementEvent el = parseEvents('<test href="http://localhost" />').first as XmlStartElementEvent;
 
-    final XmlStartElementEvent elXlink =
-        parseEvents('<test xmlns:xlink="$kXlinkNamespace" '
-                'xlink:href="http://localhost" />')
-            .first as XmlStartElementEvent;
+    final XmlStartElementEvent elXlink = parseEvents('<test xmlns:xlink="$kXlinkNamespace" '
+            'xlink:href="http://localhost" />')
+        .first as XmlStartElementEvent;
 
-    expect(
-        getHrefAttribute(el.attributes.toAttributeMap()), 'http://localhost');
-    expect(getHrefAttribute(elXlink.attributes.toAttributeMap()),
-        'http://localhost');
+    expect(getHrefAttribute(el.attributes.toAttributeMap()), 'http://localhost');
+    expect(getHrefAttribute(elXlink.attributes.toAttributeMap()), 'http://localhost');
   });
 
   test('Attribute and style tests', () {
-    final XmlStartElementEvent el =
-        parseEvents('<test stroke="#fff" fill="#eee" stroke-dashpattern="1 2" '
-                'style="stroke-opacity:1;fill-opacity:.23" />')
-            .first as XmlStartElementEvent;
-
+    final XmlStartElementEvent el = parseEvents('<test stroke="#fff" fill="#eee" stroke-dashpattern="1 2" '
+            'style="stroke-opacity:1;fill-opacity:.23" />')
+        .first as XmlStartElementEvent;
     final Map<String, String> attributes = el.attributes.toAttributeMap();
     expect(getAttribute(attributes, 'stroke'), '#fff');
     expect(getAttribute(attributes, 'fill'), '#eee');
@@ -57,46 +50,32 @@ void main() {
 
   // if the parsing logic changes, we can simplify some methods.  for now assert that whitespace in attributes is preserved
   test('Attribute WhiteSpace test', () {
-    final XmlStartElementEvent xd =
-        parseEvents('<test attr="  asdf" attr2="asdf  " attr3="asdf" />').first
-            as XmlStartElementEvent;
+    final XmlStartElementEvent xd = parseEvents('<test attr="  asdf" attr2="asdf  " attr3="asdf" />').first as XmlStartElementEvent;
 
     expect(
       xd.attributes[0].value,
       '  asdf',
-      reason:
-          'XML Parsing implementation no longer preserves leading whitespace in attributes!',
+      reason: 'XML Parsing implementation no longer preserves leading whitespace in attributes!',
     );
     expect(
       xd.attributes[1].value,
       'asdf  ',
-      reason:
-          'XML Parsing implementation no longer preserves trailing whitespace in attributes!',
+      reason: 'XML Parsing implementation no longer preserves trailing whitespace in attributes!',
     );
   });
 
   test('viewBox tests', () {
     const Rect rect = Rect.fromLTWH(0.0, 0.0, 100.0, 100.0);
 
-    final XmlStartElementEvent svgWithViewBox =
-        parseEvents('<svg viewBox="0 0 100 100" />').first
-            as XmlStartElementEvent;
-    final XmlStartElementEvent svgWithViewBoxAndWidthHeight =
-        parseEvents('<svg width="50px" height="50px" viewBox="0 0 100 100" />')
-            .first as XmlStartElementEvent;
-    final XmlStartElementEvent svgWithWidthHeight =
-        parseEvents('<svg width="100" height="100" />').first
-            as XmlStartElementEvent;
-    final XmlStartElementEvent svgWithViewBoxMinXMinY =
-        parseEvents('<svg viewBox="42 56 100 100" />').first
-            as XmlStartElementEvent;
-    final XmlStartElementEvent svgWithNoSizeInfo =
-        parseEvents('<svg />').first as XmlStartElementEvent;
+    final XmlStartElementEvent svgWithViewBox = parseEvents('<svg viewBox="0 0 100 100" />').first as XmlStartElementEvent;
+    final XmlStartElementEvent svgWithViewBoxAndWidthHeight = parseEvents('<svg width="50px" height="50px" viewBox="0 0 100 100" />').first as XmlStartElementEvent;
+    final XmlStartElementEvent svgWithWidthHeight = parseEvents('<svg width="100" height="100" />').first as XmlStartElementEvent;
+    final XmlStartElementEvent svgWithViewBoxMinXMinY = parseEvents('<svg viewBox="42 56 100 100" />').first as XmlStartElementEvent;
+    final XmlStartElementEvent svgWithNoSizeInfo = parseEvents('<svg />').first as XmlStartElementEvent;
 
     final TestSvgParserState parserState = TestSvgParserState();
 
-    parserState.attributes =
-        svgWithViewBoxAndWidthHeight.attributes.toAttributeMap();
+    parserState.attributes = svgWithViewBoxAndWidthHeight.attributes.toAttributeMap();
     expect(parserState.parseViewBox()!.size, const Size(50, 50));
 
     parserState.attributes = svgWithViewBox.attributes.toAttributeMap();
@@ -105,8 +84,7 @@ void main() {
     parserState.attributes = svgWithViewBox.attributes.toAttributeMap();
     expect(parserState.parseViewBox()!.viewBoxOffset, Offset.zero);
 
-    parserState.attributes =
-        svgWithViewBoxAndWidthHeight.attributes.toAttributeMap();
+    parserState.attributes = svgWithViewBoxAndWidthHeight.attributes.toAttributeMap();
     expect(parserState.parseViewBox()!.viewBoxRect, rect);
 
     parserState.attributes = svgWithWidthHeight.attributes.toAttributeMap();
@@ -129,21 +107,12 @@ void main() {
   });
 
   test('TileMode tests', () {
-    final XmlStartElementEvent pad =
-        parseEvents('<linearGradient spreadMethod="pad" />').first
-            as XmlStartElementEvent;
-    final XmlStartElementEvent reflect =
-        parseEvents('<linearGradient spreadMethod="reflect" />').first
-            as XmlStartElementEvent;
-    final XmlStartElementEvent repeat =
-        parseEvents('<linearGradient spreadMethod="repeat" />').first
-            as XmlStartElementEvent;
-    final XmlStartElementEvent invalid =
-        parseEvents('<linearGradient spreadMethod="invalid" />').first
-            as XmlStartElementEvent;
+    final XmlStartElementEvent pad = parseEvents('<linearGradient spreadMethod="pad" />').first as XmlStartElementEvent;
+    final XmlStartElementEvent reflect = parseEvents('<linearGradient spreadMethod="reflect" />').first as XmlStartElementEvent;
+    final XmlStartElementEvent repeat = parseEvents('<linearGradient spreadMethod="repeat" />').first as XmlStartElementEvent;
+    final XmlStartElementEvent invalid = parseEvents('<linearGradient spreadMethod="invalid" />').first as XmlStartElementEvent;
 
-    final XmlStartElementEvent none =
-        parseEvents('<linearGradient />').first as XmlStartElementEvent;
+    final XmlStartElementEvent none = parseEvents('<linearGradient />').first as XmlStartElementEvent;
 
     final TestSvgParserState parserState = TestSvgParserState();
     parserState.attributes = pad.attributes.toAttributeMap();
@@ -163,12 +132,8 @@ void main() {
   });
 
   test('@stroke-dashoffset tests', () {
-    final XmlStartElementEvent abs =
-        parseEvents('<stroke stroke-dashoffset="20" />').first
-            as XmlStartElementEvent;
-    final XmlStartElementEvent pct =
-        parseEvents('<stroke stroke-dashoffset="20%" />').first
-            as XmlStartElementEvent;
+    final XmlStartElementEvent abs = parseEvents('<stroke stroke-dashoffset="20" />').first as XmlStartElementEvent;
+    final XmlStartElementEvent pct = parseEvents('<stroke stroke-dashoffset="20%" />').first as XmlStartElementEvent;
 
     final TestSvgParserState parserState = TestSvgParserState();
     parserState.attributes = abs.attributes.toAttributeMap();
@@ -199,8 +164,7 @@ void main() {
     expect(parserState.parseFontWeight('normal'), FontWeight.normal);
     expect(parserState.parseFontWeight('bold'), FontWeight.bold);
 
-    expect(
-        () => parserState.parseFontWeight('invalid'), throwsUnsupportedError);
+    expect(() => parserState.parseFontWeight('invalid'), throwsUnsupportedError);
   });
 
   test('font-style tests', () {
@@ -216,46 +180,34 @@ void main() {
   test('text-decoration tests', () {
     final TestSvgParserState parserState = TestSvgParserState();
     expect(parserState.parseTextDecoration('none'), TextDecoration.none);
-    expect(parserState.parseTextDecoration('line-through'),
-        TextDecoration.lineThrough);
-    expect(
-        parserState.parseTextDecoration('overline'), TextDecoration.overline);
-    expect(
-        parserState.parseTextDecoration('underline'), TextDecoration.underline);
+    expect(parserState.parseTextDecoration('line-through'), TextDecoration.lineThrough);
+    expect(parserState.parseTextDecoration('overline'), TextDecoration.overline);
+    expect(parserState.parseTextDecoration('underline'), TextDecoration.underline);
 
     expect(parserState.parseTextDecoration(null), isNull);
-    expect(() => parserState.parseTextDecoration('invalid'),
-        throwsUnsupportedError);
+    expect(() => parserState.parseTextDecoration('invalid'), throwsUnsupportedError);
   });
 
   test('text-decoration-style tests', () {
     final TestSvgParserState parserState = TestSvgParserState();
-    expect(parserState.parseTextDecorationStyle('solid'),
-        TextDecorationStyle.solid);
-    expect(parserState.parseTextDecorationStyle('dashed'),
-        TextDecorationStyle.dashed);
-    expect(parserState.parseTextDecorationStyle('dotted'),
-        TextDecorationStyle.dotted);
-    expect(parserState.parseTextDecorationStyle('double'),
-        TextDecorationStyle.double);
-    expect(
-        parserState.parseTextDecorationStyle('wavy'), TextDecorationStyle.wavy);
+    expect(parserState.parseTextDecorationStyle('solid'), TextDecorationStyle.solid);
+    expect(parserState.parseTextDecorationStyle('dashed'), TextDecorationStyle.dashed);
+    expect(parserState.parseTextDecorationStyle('dotted'), TextDecorationStyle.dotted);
+    expect(parserState.parseTextDecorationStyle('double'), TextDecorationStyle.double);
+    expect(parserState.parseTextDecorationStyle('wavy'), TextDecorationStyle.wavy);
 
     expect(parserState.parseTextDecorationStyle(null), isNull);
-    expect(() => parserState.parseTextDecorationStyle('invalid'),
-        throwsUnsupportedError);
+    expect(() => parserState.parseTextDecorationStyle('invalid'), throwsUnsupportedError);
   });
 
   group('parseStyle', () {
-    test('uses currentColor for stroke color', () {
+    test('uses currentColor for stroke color', () async {
       const Color currentColor = Color(0xFFB0E3BE);
-      final XmlStartElementEvent svg =
-          parseEvents('<svg stroke="currentColor" />').first
-              as XmlStartElementEvent;
+      final XmlStartElementEvent svg = parseEvents('<svg stroke="currentColor" />').first as XmlStartElementEvent;
 
       final TestSvgParserState parserState = TestSvgParserState();
       parserState.attributes = svg.attributes.toAttributeMap();
-      final DrawableStyle svgStyle = parserState.parseStyle(
+      final DrawableStyle svgStyle = await parserState.parseStyle(
         Rect.zero,
         null,
         currentColor: currentColor,
@@ -267,15 +219,13 @@ void main() {
       );
     });
 
-    test('uses currentColor for fill color', () {
+    test('uses currentColor for fill color', () async {
       const Color currentColor = Color(0xFFB0E3BE);
-      final XmlStartElementEvent svg =
-          parseEvents('<svg fill="currentColor" />').first
-              as XmlStartElementEvent;
+      final XmlStartElementEvent svg = parseEvents('<svg fill="currentColor" />').first as XmlStartElementEvent;
 
       final TestSvgParserState parserState = TestSvgParserState();
       parserState.attributes = svg.attributes.toAttributeMap();
-      final DrawableStyle svgStyle = parserState.parseStyle(
+      final DrawableStyle svgStyle = await parserState.parseStyle(
         Rect.zero,
         null,
         currentColor: currentColor,
@@ -288,10 +238,8 @@ void main() {
     });
 
     group('calculates em units based on the font size for', () {
-      test('stroke width', () {
-        final XmlStartElementEvent svg =
-            parseEvents('<circle stroke="green" stroke-width="2em" />').first
-                as XmlStartElementEvent;
+      test('stroke width', () async {
+        final XmlStartElementEvent svg = parseEvents('<circle stroke="green" stroke-width="2em" />').first as XmlStartElementEvent;
 
         const double fontSize = 26.0;
 
@@ -299,7 +247,7 @@ void main() {
           fontSize: fontSize,
         );
         parserState.attributes = svg.attributes.toAttributeMap();
-        final DrawableStyle svgStyle = parserState.parseStyle(Rect.zero, null);
+        final DrawableStyle svgStyle = await parserState.parseStyle(Rect.zero, null);
 
         expect(
           svgStyle.stroke?.strokeWidth,
@@ -307,7 +255,7 @@ void main() {
         );
       });
 
-      test('dash array', () {
+      test('dash array', () async {
         final XmlStartElementEvent svg = parseEvents(
           '<line x2="10" y2="10" stroke="black" stroke-dasharray="0.2em 0.5em 10" />',
         ).first as XmlStartElementEvent;
@@ -318,7 +266,7 @@ void main() {
           fontSize: fontSize,
         );
         parserState.attributes = svg.attributes.toAttributeMap();
-        final DrawableStyle svgStyle = parserState.parseStyle(Rect.zero, null);
+        final DrawableStyle svgStyle = await parserState.parseStyle(Rect.zero, null);
 
         expect(
           <double>[
@@ -334,7 +282,7 @@ void main() {
         );
       });
 
-      test('dash offset', () {
+      test('dash offset', () async {
         final XmlStartElementEvent svg = parseEvents(
           '<line x2="5" y2="30" stroke="black" stroke-dasharray="3 1" stroke-dashoffset="0.15em" />',
         ).first as XmlStartElementEvent;
@@ -345,7 +293,7 @@ void main() {
           fontSize: fontSize,
         );
         parserState.attributes = svg.attributes.toAttributeMap();
-        final DrawableStyle svgStyle = parserState.parseStyle(Rect.zero, null);
+        final DrawableStyle svgStyle = await parserState.parseStyle(Rect.zero, null);
 
         expect(
           svgStyle.dashOffset,
@@ -355,10 +303,8 @@ void main() {
     });
 
     group('calculates ex units based on the x-height for', () {
-      test('stroke width', () {
-        final XmlStartElementEvent svg =
-            parseEvents('<circle stroke="green" stroke-width="2ex" />').first
-                as XmlStartElementEvent;
+      test('stroke width', () async {
+        final XmlStartElementEvent svg = parseEvents('<circle stroke="green" stroke-width="2ex" />').first as XmlStartElementEvent;
 
         const double fontSize = 26.0;
         const double xHeight = 11.0;
@@ -368,7 +314,7 @@ void main() {
           xHeight: xHeight,
         );
         parserState.attributes = svg.attributes.toAttributeMap();
-        final DrawableStyle svgStyle = parserState.parseStyle(Rect.zero, null);
+        final DrawableStyle svgStyle = await parserState.parseStyle(Rect.zero, null);
 
         expect(
           svgStyle.stroke?.strokeWidth,
@@ -376,7 +322,7 @@ void main() {
         );
       });
 
-      test('dash array', () {
+      test('dash array', () async {
         final XmlStartElementEvent svg = parseEvents(
           '<line x2="10" y2="10" stroke="black" stroke-dasharray="0.2ex 0.5ex 10" />',
         ).first as XmlStartElementEvent;
@@ -389,7 +335,7 @@ void main() {
           xHeight: xHeight,
         );
         parserState.attributes = svg.attributes.toAttributeMap();
-        final DrawableStyle svgStyle = parserState.parseStyle(Rect.zero, null);
+        final DrawableStyle svgStyle = await parserState.parseStyle(Rect.zero, null);
 
         expect(
           <double>[
@@ -405,7 +351,7 @@ void main() {
         );
       });
 
-      test('dash offset', () {
+      test('dash offset', () async {
         final XmlStartElementEvent svg = parseEvents(
           '<line x2="5" y2="30" stroke="black" stroke-dasharray="3 1" stroke-dashoffset="0.15ex" />',
         ).first as XmlStartElementEvent;
@@ -418,7 +364,7 @@ void main() {
           xHeight: xHeight,
         );
         parserState.attributes = svg.attributes.toAttributeMap();
-        final DrawableStyle svgStyle = parserState.parseStyle(Rect.zero, null);
+        final DrawableStyle svgStyle = await parserState.parseStyle(Rect.zero, null);
 
         expect(
           svgStyle.dashOffset,

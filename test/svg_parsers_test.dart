@@ -15,16 +15,11 @@ void main() {
     expected.translate(0.338957, 0.010104, 0);
     expected.translate(-0.5214, 0.125, 0);
     expected.translate(0.987, 0.789, 0);
-    expect(
-        parseTransform(
-            'translate(0.338957,0.010104), translate(-0.5214,0.125),translate(0.987,0.789)'),
-        expected);
+    expect(parseTransform('translate(0.338957,0.010104), translate(-0.5214,0.125),translate(0.987,0.789)'), expected);
 
     expected = Matrix4.translationValues(0.338957, 0.010104, 0);
     expected.scale(0.869768, 1.000000, 1.0);
-    expect(
-        parseTransform('translate(0.338957,0.010104),scale(0.869768,1.000000)'),
-        expected);
+    expect(parseTransform('translate(0.338957,0.010104),scale(0.869768,1.000000)'), expected);
   });
 
   test('SVG Transform parser tests', () {
@@ -33,14 +28,11 @@ void main() {
 
     expect(parseTransform('skewX(60)'), Matrix4.skewX(60.0));
     expect(parseTransform('skewY(60)'), Matrix4.skewY(60.0));
-    expect(parseTransform('translate(10,0.0)'),
-        Matrix4.translationValues(10.0, 0.0, 0.0));
+    expect(parseTransform('translate(10,0.0)'), Matrix4.translationValues(10.0, 0.0, 0.0));
     expect(parseTransform('skewX(60)'), Matrix4.skewX(60.0));
 
-    expect(parseTransform('scale(10)'),
-        Matrix4.identity()..scale(10.0, 10.0, 1.0));
-    expect(parseTransform('scale(10, 15)'),
-        Matrix4.identity()..scale(10.0, 15.0, 1.0));
+    expect(parseTransform('scale(10)'), Matrix4.identity()..scale(10.0, 10.0, 1.0));
+    expect(parseTransform('scale(10, 15)'), Matrix4.identity()..scale(10.0, 15.0, 1.0));
 
     expect(parseTransform('rotate(20)'), Matrix4.rotationZ(radians(20.0)));
     expect(
@@ -74,8 +66,7 @@ void main() {
           5.0, 6.0, 0.0, 1.0
         ]));
 
-    expect(parseTransform('rotate(20)\n\tscale(10)'),
-        Matrix4.rotationZ(radians(20.0))..scale(10.0, 10.0, 1.0));
+    expect(parseTransform('rotate(20)\n\tscale(10)'), Matrix4.rotationZ(radians(20.0))..scale(10.0, 10.0, 1.0));
   });
 
   test('FillRule tests', () {
@@ -196,8 +187,7 @@ void main() {
       ),
     );
 
-    expect(() => parserState.parseFontSize('invalid'),
-        throwsA(const TypeMatcher<StateError>()));
+    expect(() => parserState.parseFontSize('invalid'), throwsA(const TypeMatcher<StateError>()));
   });
 
   test('relative font size tests', () {
@@ -250,8 +240,7 @@ void main() {
   });
 
   test('Check any ids', () async {
-    const String svgStr =
-        '''<svg id="svgRoot" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 166 202">
+    const String svgStr = '''<svg id="svgRoot" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 166 202">
     <defs>
         <linearGradient id="triangleGradient">
             <stop offset="20%" stop-color="#000000" stop-opacity=".55" />
@@ -312,8 +301,7 @@ void main() {
     expect(find<DrawableShape>(root, 'Oval') != null, true);
   });
 
-  test('Throws with unsupported elements with warnings as errors enabled',
-      () async {
+  test('Throws with unsupported elements with warnings as errors enabled', () async {
     const String svgStr = '''<?xml version="1.0" encoding="UTF-8"?>
 <svg width="27px" height="90px" viewBox="5 10 18 70" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
     <!-- Generator: Sketch 53 (72520) - https://sketchapp.com -->
@@ -589,8 +577,7 @@ void main() {
           ),
         );
 
-        final DrawableLinearGradient? gradient =
-            root.definitions.getGradient('url(#gradient-1)');
+        final DrawableLinearGradient? gradient = root.definitions.getGradient('url(#gradient-1)');
 
         expect(gradient, isNotNull);
 
@@ -630,8 +617,7 @@ void main() {
           ),
         );
 
-        final DrawableLinearGradient? gradient =
-            root.definitions.getGradient('url(#gradient-1)');
+        final DrawableLinearGradient? gradient = root.definitions.getGradient('url(#gradient-1)');
 
         expect(gradient, isNotNull);
 
@@ -671,8 +657,7 @@ void main() {
           ),
         );
 
-        final DrawableLinearGradient? gradient =
-            root.definitions.getGradient('url(#gradient-1)');
+        final DrawableLinearGradient? gradient = root.definitions.getGradient('url(#gradient-1)');
 
         expect(gradient, isNotNull);
 
@@ -784,8 +769,7 @@ void main() {
         ),
       );
 
-      final DrawableRadialGradient? gradient =
-          root.definitions.getGradient('url(#gradient)');
+      final DrawableRadialGradient? gradient = root.definitions.getGradient('url(#gradient)');
 
       expect(gradient, isNotNull);
 
@@ -819,8 +803,7 @@ void main() {
         ),
       );
 
-      final DrawableLinearGradient? gradient =
-          root.definitions.getGradient('url(#gradient)');
+      final DrawableLinearGradient? gradient = root.definitions.getGradient('url(#gradient)');
 
       expect(gradient, isNotNull);
 
@@ -850,8 +833,7 @@ BAAO9TXL0Y4OHwAAAABJRU5ErkJggg==" x="1em" y="0.5em" width="2em" height="1.5em" /
         ),
       );
 
-      final DrawableRasterImage? image =
-          find<DrawableRasterImage>(root, 'image');
+      final DrawableRasterImage? image = find<DrawableRasterImage>(root, 'image');
 
       const Offset expectedOffset = Offset(fontSize * 1, fontSize * 0.5);
       const Size expectedSize = Size(fontSize * 2, fontSize * 1.5);
@@ -965,8 +947,7 @@ BAAO9TXL0Y4OHwAAAABJRU5ErkJggg==" x="1em" y="0.5em" width="2em" height="1.5em" /
         ),
       );
 
-      final DrawableRadialGradient? gradient =
-          root.definitions.getGradient('url(#gradient)');
+      final DrawableRadialGradient? gradient = root.definitions.getGradient('url(#gradient)');
 
       expect(gradient, isNotNull);
 
@@ -1002,8 +983,7 @@ BAAO9TXL0Y4OHwAAAABJRU5ErkJggg==" x="1em" y="0.5em" width="2em" height="1.5em" /
         ),
       );
 
-      final DrawableLinearGradient? gradient =
-          root.definitions.getGradient('url(#gradient)');
+      final DrawableLinearGradient? gradient = root.definitions.getGradient('url(#gradient)');
 
       expect(gradient, isNotNull);
 
@@ -1035,8 +1015,7 @@ BAAO9TXL0Y4OHwAAAABJRU5ErkJggg==" x="1ex" y="0.5ex" width="2ex" height="1.5ex" /
         ),
       );
 
-      final DrawableRasterImage? image =
-          find<DrawableRasterImage>(root, 'image');
+      final DrawableRasterImage? image = find<DrawableRasterImage>(root, 'image');
 
       const Offset expectedOffset = Offset(xHeight * 1, xHeight * 0.5);
       const Size expectedSize = Size(xHeight * 2, xHeight * 1.5);

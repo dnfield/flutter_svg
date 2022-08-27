@@ -22,18 +22,21 @@ String? getAttribute(
   String name, {
   String? def = '',
   bool checkStyle = true,
+  bool useRegexp = false,
 }) {
   String raw = '';
   if (checkStyle) {
     final String? style = _getAttribute(el, 'style');
     if (style != '' && style != null) {
-      // Probably possible to slightly optimize this (e.g. use indexOf instead of split),
-      // but handling potential whitespace will get complicated and this just works.
-      // I also don't feel like writing benchmarks for what is likely a micro-optimization.
+      // We could do this, but split is a tiny bit faster:
+      // final int attributeIndex = style.indexOf(RegExp('(^|;)\s*$name\s*:'));
+      // if (attributeIndex != -1) {
+      //   final int endIndex = style.indexOf(';', attributeIndex + 1);
+      //   final String attribute = style.substring(attributeIndex + 1, endIndex == -1 ? null : endIndex);
+      //   raw = attribute.substring(attribute.indexOf(':') + 1).trim();
+      // }
       final List<String> styles = style.split(';');
-      raw = styles.firstWhere(
-          (String str) => str.trimLeft().startsWith(name + ':'),
-          orElse: () => '');
+      raw = styles.firstWhere((String str) => str.trimLeft().startsWith(name + ':'), orElse: () => '');
 
       if (raw != '') {
         raw = raw.substring(raw.indexOf(':') + 1).trim();
@@ -63,7 +66,6 @@ String _getAttribute(
 extension AttributeMapXmlEventAttributeExtension on List<XmlEventAttribute> {
   /// Converts the List<XmlEventAttribute> to an attribute map.
   Map<String, String> toAttributeMap() => <String, String>{
-        for (final XmlEventAttribute attribute in this)
-          attribute.localName: attribute.value.trim(),
+        for (final XmlEventAttribute attribute in this) attribute.localName: attribute.value.trim(),
       };
 }

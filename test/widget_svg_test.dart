@@ -7,7 +7,6 @@ import 'dart:ui' show window;
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-
 import 'package:flutter_test/flutter_test.dart';
 
 class _TolerantComparator extends LocalFileComparator {
@@ -24,8 +23,7 @@ class _TolerantComparator extends LocalFileComparator {
       if (result.diffPercent >= .06) {
         throw FlutterError(error);
       } else {
-        print(
-            'Warning - golden differed less than .06% (${result.diffPercent}%), '
+        print('Warning - golden differed less than .06% (${result.diffPercent}%), '
             'ignoring failure but producing output');
         print(error);
       }
@@ -46,10 +44,8 @@ void main() {
   late FakeHttpClient fakeHttpClient;
 
   setUpAll(() {
-    final LocalFileComparator oldComparator =
-        goldenFileComparator as LocalFileComparator;
-    final _TolerantComparator newComparator = _TolerantComparator(
-        Uri.parse(oldComparator.basedir.toString() + 'test'));
+    final LocalFileComparator oldComparator = goldenFileComparator as LocalFileComparator;
+    final _TolerantComparator newComparator = _TolerantComparator(Uri.parse(oldComparator.basedir.toString() + 'test'));
     expect(oldComparator.basedir, newComparator.basedir);
     goldenFileComparator = newComparator;
   });
@@ -62,9 +58,7 @@ void main() {
     fakeHttpClient = FakeHttpClient(fakeRequest);
   });
 
-  testWidgets(
-      'SvgPicture does not use a color filtering widget when no color specified',
-      (WidgetTester tester) async {
+  testWidgets('SvgPicture does not use a color filtering widget when no color specified', (WidgetTester tester) async {
     expect(PictureProvider.cache.count, 0);
     await tester.pumpWidget(
       SvgPicture.string(
@@ -78,8 +72,7 @@ void main() {
     expect(find.byType(ColorFiltered), findsNothing);
   });
 
-  testWidgets('SvgPicture does not invalidate the cache when color changes',
-      (WidgetTester tester) async {
+  testWidgets('SvgPicture does not invalidate the cache when color changes', (WidgetTester tester) async {
     expect(PictureProvider.cache.count, 0);
     await tester.pumpWidget(
       SvgPicture.string(
@@ -104,9 +97,7 @@ void main() {
     expect(PictureProvider.cache.count, 1);
   });
 
-  testWidgets(
-      'SvgPicture does invalidate the cache when color changes and color filter is cached',
-      (WidgetTester tester) async {
+  testWidgets('SvgPicture does invalidate the cache when color changes and color filter is cached', (WidgetTester tester) async {
     expect(PictureProvider.cache.count, 0);
     await tester.pumpWidget(
       SvgPicture.string(
@@ -133,9 +124,7 @@ void main() {
     expect(PictureProvider.cache.count, 2);
   });
 
-  testWidgets(
-      'SvgPicture does invalidate the cache when color changes and color filter is cached (override)',
-      (WidgetTester tester) async {
+  testWidgets('SvgPicture does invalidate the cache when color changes and color filter is cached (override)', (WidgetTester tester) async {
     svg.cacheColorFilterOverride = true;
     expect(PictureProvider.cache.count, 0);
     await tester.pumpWidget(
@@ -161,8 +150,7 @@ void main() {
     expect(PictureProvider.cache.count, 2);
   });
 
-  testWidgets('SvgPicture can work with a FittedBox',
-      (WidgetTester tester) async {
+  testWidgets('SvgPicture can work with a FittedBox', (WidgetTester tester) async {
     final GlobalKey key = GlobalKey();
     await tester.pumpWidget(
       MediaQuery(
@@ -365,8 +353,7 @@ void main() {
     await _checkWidgetAndGolden(key, 'flutter_logo.asset.png');
   });
 
-  testWidgets('SvgPicture.asset DefaultAssetBundle',
-      (WidgetTester tester) async {
+  testWidgets('SvgPicture.asset DefaultAssetBundle', (WidgetTester tester) async {
     final FakeAssetBundle fakeAsset = FakeAssetBundle();
     final GlobalKey key = GlobalKey();
     await tester.pumpWidget(
@@ -418,8 +405,7 @@ void main() {
           data: MediaQueryData.fromWindow(window),
           child: RepaintBoundary(
             key: key,
-            child: SvgPicture.network('test.svg',
-                headers: const <String, String>{'a': 'b'}),
+            child: SvgPicture.network('test.svg', headers: const <String, String>{'a': 'b'}),
           ),
         ),
       );
@@ -428,8 +414,7 @@ void main() {
     }, createHttpClient: (SecurityContext? c) => fakeHttpClient);
   });
 
-  testWidgets('SvgPicture can be created without a MediaQuery',
-      (WidgetTester tester) async {
+  testWidgets('SvgPicture can be created without a MediaQuery', (WidgetTester tester) async {
     final GlobalKey key = GlobalKey();
     await tester.pumpWidget(
       RepaintBoundary(
@@ -522,8 +507,7 @@ void main() {
     expect(find.byType(Semantics), findsNothing);
   }, semanticsEnabled: true);
 
-  testWidgets('SvgPicture colorFilter - flutter logo',
-      (WidgetTester tester) async {
+  testWidgets('SvgPicture colorFilter - flutter logo', (WidgetTester tester) async {
     final GlobalKey key = GlobalKey();
     await tester.pumpWidget(
       RepaintBoundary(
@@ -541,8 +525,7 @@ void main() {
     await _checkWidgetAndGolden(key, 'flutter_logo.string.color_filter.png');
   });
 
-  testWidgets('SvgPicture colorFilter - flutter logo - BlendMode.color',
-      (WidgetTester tester) async {
+  testWidgets('SvgPicture colorFilter - flutter logo - BlendMode.color', (WidgetTester tester) async {
     final GlobalKey key = GlobalKey();
     await tester.pumpWidget(
       RepaintBoundary(
@@ -558,13 +541,11 @@ void main() {
     );
 
     await tester.pumpAndSettle();
-    await _checkWidgetAndGolden(
-        key, 'flutter_logo.string.color_filter.blendmode_color.png');
+    await _checkWidgetAndGolden(key, 'flutter_logo.string.color_filter.blendmode_color.png');
   });
 
   testWidgets('SvgPicture colorFilter with text', (WidgetTester tester) async {
-    const String svgData =
-        '''<svg font-family="arial" font-size="14" height="160" width="88" xmlns="http://www.w3.org/2000/svg">
+    const String svgData = '''<svg font-family="arial" font-size="14" height="160" width="88" xmlns="http://www.w3.org/2000/svg">
   <g stroke="#000" stroke-linecap="round" stroke-width="2" stroke-opacity="1" fill-opacity="1" stroke-linejoin="miter">
     <g>
       <line x1="60" x2="88" y1="136" y2="136"/>
@@ -594,15 +575,6 @@ void main() {
     await _checkWidgetAndGolden(key, 'text_color_filter.png');
   });
 
-  testWidgets('Nested SVG elements report a FlutterError',
-      (WidgetTester tester) async {
-    await svg.fromSvgString(
-        '<svg viewBox="0 0 166 202"><svg viewBox="0 0 166 202"></svg></svg>',
-        'test');
-    final UnsupportedError error = tester.takeException() as UnsupportedError;
-    expect(error.message, 'Unsupported nested <svg> element.');
-  });
-
   testWidgets('Can take AlignmentDirectional', (WidgetTester tester) async {
     await tester.pumpWidget(Directionality(
       textDirection: TextDirection.ltr,
@@ -614,8 +586,7 @@ void main() {
     expect(find.byType(SvgPicture), findsOneWidget);
   });
 
-  testWidgets('SvgPicture.string respects clipBehavior',
-      (WidgetTester tester) async {
+  testWidgets('SvgPicture.string respects clipBehavior', (WidgetTester tester) async {
     await tester.pumpWidget(Directionality(
       textDirection: TextDirection.ltr,
       child: SvgPicture.string(svgStr),
@@ -623,8 +594,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Check that the render object has received the default clip behavior.
-    final RenderFittedBox renderObject =
-        tester.allRenderObjects.whereType<RenderFittedBox>().first;
+    final RenderFittedBox renderObject = tester.allRenderObjects.whereType<RenderFittedBox>().first;
     expect(renderObject.clipBehavior, equals(Clip.hardEdge));
 
     // Pump a new widget to check that the render object can update its clip
@@ -639,8 +609,7 @@ void main() {
     expect(renderObject.clipBehavior, equals(Clip.antiAlias));
   });
 
-  testWidgets('SvgPicture.asset respects clipBehavior',
-      (WidgetTester tester) async {
+  testWidgets('SvgPicture.asset respects clipBehavior', (WidgetTester tester) async {
     final FakeAssetBundle fakeAsset = FakeAssetBundle();
     await tester.pumpWidget(Directionality(
       textDirection: TextDirection.ltr,
@@ -652,8 +621,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Check that the render object has received the default clip behavior.
-    final RenderFittedBox renderObject =
-        tester.allRenderObjects.whereType<RenderFittedBox>().first;
+    final RenderFittedBox renderObject = tester.allRenderObjects.whereType<RenderFittedBox>().first;
     expect(renderObject.clipBehavior, equals(Clip.hardEdge));
 
     // Pump a new widget to check that the render object can update its clip
@@ -672,8 +640,7 @@ void main() {
     expect(renderObject.clipBehavior, equals(Clip.antiAlias));
   });
 
-  testWidgets('SvgPicture.memory respects clipBehavior',
-      (WidgetTester tester) async {
+  testWidgets('SvgPicture.memory respects clipBehavior', (WidgetTester tester) async {
     await tester.pumpWidget(Directionality(
       textDirection: TextDirection.ltr,
       child: SvgPicture.memory(svgBytes),
@@ -681,8 +648,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Check that the render object has received the default clip behavior.
-    final RenderFittedBox renderObject =
-        tester.allRenderObjects.whereType<RenderFittedBox>().first;
+    final RenderFittedBox renderObject = tester.allRenderObjects.whereType<RenderFittedBox>().first;
     expect(renderObject.clipBehavior, equals(Clip.hardEdge));
 
     // Pump a new widget to check that the render object can update its clip
@@ -697,8 +663,7 @@ void main() {
     expect(renderObject.clipBehavior, equals(Clip.antiAlias));
   });
 
-  testWidgets('SvgPicture.network respects clipBehavior',
-      (WidgetTester tester) async {
+  testWidgets('SvgPicture.network respects clipBehavior', (WidgetTester tester) async {
     await HttpOverrides.runZoned(() async {
       await tester.pumpWidget(
         Directionality(
@@ -709,8 +674,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Check that the render object has received the default clip behavior.
-      final RenderFittedBox renderObject =
-          tester.allRenderObjects.whereType<RenderFittedBox>().first;
+      final RenderFittedBox renderObject = tester.allRenderObjects.whereType<RenderFittedBox>().first;
       expect(renderObject.clipBehavior, equals(Clip.hardEdge));
 
       // Pump a new widget to check that the render object can update its clip
@@ -734,8 +698,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Check that the render object has received the default clip behavior.
-    final RenderFittedBox renderObject =
-        tester.allRenderObjects.whereType<RenderFittedBox>().first;
+    final RenderFittedBox renderObject = tester.allRenderObjects.whereType<RenderFittedBox>().first;
     expect(renderObject.clipBehavior, equals(Clip.hardEdge));
 
     // Pump a new widget to check that the render object can update its clip
@@ -774,8 +737,7 @@ void main() {
       await _checkWidgetAndGolden(key, 'circle.em_ex.png');
     });
 
-    testWidgets('rect (x, y, width, height, rx, ry)',
-        (WidgetTester tester) async {
+    testWidgets('rect (x, y, width, height, rx, ry)', (WidgetTester tester) async {
       final GlobalKey key = GlobalKey();
 
       const String svgStr = '''
@@ -873,8 +835,7 @@ void main() {
       await _checkWidgetAndGolden(key, 'circle.em_ex.png');
     });
 
-    testWidgets('rect (x, y, width, height, rx, ry)',
-        (WidgetTester tester) async {
+    testWidgets('rect (x, y, width, height, rx, ry)', (WidgetTester tester) async {
       final GlobalKey key = GlobalKey();
 
       const String svgStr = '''
@@ -975,9 +936,7 @@ void main() {
     );
   });
 
-  testWidgets(
-      'Update widget without a cache does not result in an disposed picture',
-      (WidgetTester tester) async {
+  testWidgets('Update widget without a cache does not result in an disposed picture', (WidgetTester tester) async {
     final int oldCacheSize = PictureProvider.cache.maximumSize;
     PictureProvider.cache.maximumSize = 0;
     final GlobalKey key = GlobalKey();
@@ -1133,8 +1092,7 @@ class FakeHttpClientResponse extends Fake implements HttpClientResponse {
   int contentLength = svgStr.length;
 
   @override
-  HttpClientResponseCompressionState get compressionState =>
-      HttpClientResponseCompressionState.notCompressed;
+  HttpClientResponseCompressionState get compressionState => HttpClientResponseCompressionState.notCompressed;
 
   @override
   StreamSubscription<List<int>> listen(
