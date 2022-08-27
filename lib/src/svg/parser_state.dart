@@ -1324,7 +1324,7 @@ class SvgParserState {
     XmlStartElementEvent? event,
     Map<String, String> attributes,
   ) async {
-    final String rawFill = getAttribute(attributes, 'fill', def: '')!; // TODO(ikbendewilliam): fill is null while it should be currentColor (works in stroke)
+    final String rawFill = getAttribute(attributes, 'fill', def: '')!;
     final String? rawFillOpacity = getAttribute(attributes, 'fill-opacity', def: '1.0');
     final String? rawOpacity = getAttribute(attributes, 'opacity', def: '');
     double opacity = parseDouble(rawFillOpacity)!.clamp(0.0, 1.0).toDouble();
@@ -1762,10 +1762,10 @@ class SvgParserState {
       _drawingCompleter?.complete();
     }
     await completer.future;
-    _unknownDefinitions.remove(ref);
     if (isInProcessing) {
       _processing.add(event);
     }
+    _unknownDefinitions.remove(ref);
   }
 }
 
