@@ -1178,4 +1178,52 @@ BAAO9TXL0Y4OHwAAAABJRU5ErkJggg==" x="1ex" y="0.5ex" width="2ex" height="1.5ex" /
     expect(image.size!.width, image.image.width);
     expect(image.size!.height, image.image.height);
   });
+
+  group('out of order ref and defs', () {
+    test('ref behind use', () async {
+      const String svgStr = '''
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <use id="anotherCircle" href="#circle" x="2em" y="4em" fill="blue"/>
+  <circle id="circle" cx="5" cy="5" r="4" stroke="blue"/>
+</svg>
+''';
+      final DrawableRoot root = await SvgParser().parse(svgStr);
+      final DrawableGroup? circle = find<DrawableGroup>(root, 'anotherCircle');
+      expect(circle, isNotNull);
+    });
+
+    // TODO(ikbendewilliam): More tests!
+
+    test('defs behind paths that uses it', () async {
+      const String svgStr = '''<svg id="svgRoot" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 166 202">
+    <path id="path1" fill="#42A5F5" fill-opacity=".8" d="M37.7 128.9 9.8 101 100.4 10.4 156.2 10.4"/>
+    <path id="path2" fill="#42A5F5" fill-opacity=".8" d="M156.2 94 100.4 94 79.5 114.9 107.4 142.8"/>
+    <path id="path3" fill="#0D47A1" d="M79.5 170.7 100.4 191.6 156.2 191.6 156.2 191.6 107.4 142.8"/>
+    <g id="group1" transform="matrix(0.7071, -0.7071, 0.7071, 0.7071, -77.667, 98.057)">
+        <rect width="39.4" height="39.4" x="59.8" y="123.1" fill="#42A5F5" />
+        <rect width="39.4" height="5.5" x="59.8" y="162.5" fill="url(#rectangleGradient)" />
+    </g>
+    <path id="path4" d="M79.5 170.7 120.9 156.4 107.4 142.8" fill="url(#triangleGradient)" />
+    <defs>
+        <linearGradient id="triangleGradient">
+            <stop offset="20%" stop-color="#000000" stop-opacity=".55" />
+            <stop offset="85%" stop-color="#616161" stop-opacity=".01" />
+        </linearGradient>
+        <linearGradient id="rectangleGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+            <stop offset="20%" stop-color="#000000" stop-opacity=".15" />
+            <stop offset="85%" stop-color="#616161" stop-opacity=".01" />
+        </linearGradient>
+    </defs>
+</svg>''';
+      final SvgParser parser = SvgParser();
+      final DrawableRoot root = await parser.parse(svgStr);
+
+      expect(root.id == 'svgRoot', true);
+      expect(find<DrawableGroup>(root, 'group1') != null, true);
+      expect(find<DrawableShape>(root, 'path1') != null, true);
+      expect(find<DrawableShape>(root, 'path2') != null, true);
+      expect(find<DrawableShape>(root, 'path3') != null, true);
+      expect(find<DrawableShape>(root, 'path4') != null, true);
+    });
+  });
 }

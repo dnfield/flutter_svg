@@ -143,7 +143,7 @@ class _Elements {
     final DrawableParent parent = parserState.currentGroup!;
     final Color? color = parserState.parseColor(parserState.attribute('color', def: null), currentColor: parent.color ?? parserState.theme.currentColor) ?? parent.color;
     final String? id = parserState.attribute('id', def: '');
-    final XmlStartElementEvent? currentElement = parserState._currentStartElement;
+    final XmlStartElementEvent currentElement = parserState._currentStartElement!;
     parserState._drawing.add(currentElement);
     parserState.parseStyle(parserState.rootBounds, parent.style, currentColor: color).then((DrawableStyle style) {
       final DrawableGroup group = DrawableGroup(
@@ -154,8 +154,8 @@ class _Elements {
         color: color,
       );
       parent.children!.add(group);
-      parserState.addGroup(parserState._currentStartElement!, group, id ?? '');
-      parserState._completeDrawing(currentElement);
+      parserState.addGroup(currentElement, group, id ?? '');
+      parserState._completeDrawing(id, currentElement);
     });
     return null;
   }
@@ -164,6 +164,7 @@ class _Elements {
     final DrawableParent parent = parserState.currentGroup!;
     final Color? color = parserState.parseColor(parserState.attribute('color', def: null), currentColor: parent.color ?? parserState.theme.currentColor) ?? parent.color;
     final String? id = parserState.attribute('id', def: '');
+    final XmlStartElementEvent currentElement = parserState._currentStartElement!;
     final DrawableGroup group = DrawableGroup(
       id,
       <Drawable>[],
@@ -175,7 +176,7 @@ class _Elements {
       transform: parseTransform(parserState.attribute('transform'))?.storage,
       color: color,
     );
-    parserState.addGroup(parserState._currentStartElement!, group, id ?? '');
+    parserState.addGroup(currentElement, group, id ?? '');
     return;
   }
 
@@ -197,7 +198,7 @@ class _Elements {
     );
 
     final String id = parserState.attribute('id') ?? '';
-    final XmlStartElementEvent? currentElement = parserState._currentStartElement;
+    final XmlStartElementEvent currentElement = parserState._currentStartElement!;
     parserState._drawing.add(currentElement);
     parserState
         .parseStyle(
@@ -206,7 +207,7 @@ class _Elements {
       currentColor: parent.color,
     )
         .then((DrawableStyle style) {
-      parserState._getDrawable(xlinkHref).then((DrawableStyleable ref) {
+      parserState._getDrawable(xlinkHref, currentElement).then((DrawableStyleable ref) {
         final DrawableGroup group = DrawableGroup(
           id,
           <Drawable>[ref.mergeStyle(style)],
@@ -216,7 +217,7 @@ class _Elements {
         parserState.checkForIri(group, id);
 
         parent.children!.add(group);
-        parserState._completeDrawing(currentElement);
+        parserState._completeDrawing(id, currentElement);
       });
     });
   }
@@ -253,10 +254,10 @@ class _Elements {
     return null;
   }
 
-  static Future<void>? radialGradient(
+  static Future<void> radialGradient(
     SvgParserState parserState,
     bool warningsAsErrors,
-  ) {
+  ) async {
     final String? gradientUnits = getAttribute(
       parserState.attributes,
       'gradientUnits',
@@ -280,18 +281,14 @@ class _Elements {
 
     if (parserState._currentStartElement!.isSelfClosing) {
       final String? href = getHrefAttribute(parserState.attributes);
-      final DrawableGradient? ref = parserState._definitions.getGradient<DrawableGradient>('url($href)');
-      if (ref == null) {
-        reportMissingDef(parserState._key, href, 'radialGradient');
-      } else {
-        if (gradientUnits == null) {
-          isObjectBoundingBox = ref.unitMode == GradientUnitMode.objectBoundingBox;
-        }
-        colors.addAll(ref.colors!);
-        offsets.addAll(ref.offsets!);
+      final DrawableGradient ref = await parserState._getGradient(href ?? '', parserState._currentStartElement!);
+      if (gradientUnits == null) {
+        isObjectBoundingBox = ref.unitMode == GradientUnitMode.objectBoundingBox;
       }
+      colors.addAll(ref.colors!);
+      offsets.addAll(ref.offsets!);
     } else {
-      parseStops(parserState, colors, offsets);
+      await parseStops(parserState, colors, offsets);
     }
 
     late double cx, cy, r, fx, fy;
@@ -323,13 +320,13 @@ class _Elements {
         transform: originalTransform?.storage,
       ),
     );
-    return null;
+    parserState._unknownDefinitions[parserState._buildHref(id)]?.complete();
   }
 
-  static Future<void>? linearGradient(
+  static Future<void> linearGradient(
     SvgParserState parserState,
     bool warningsAsErrors,
-  ) {
+  ) async {
     final String? gradientUnits = parserState.attribute('gradientUnits');
     bool isObjectBoundingBox = gradientUnits != 'userSpaceOnUse';
 
@@ -347,16 +344,12 @@ class _Elements {
     final List<double> offsets = <double>[];
     if (parserState._currentStartElement!.isSelfClosing) {
       final String? href = getHrefAttribute(parserState.attributes);
-      final DrawableGradient? ref = parserState._definitions.getGradient<DrawableGradient>('url($href)');
-      if (ref == null) {
-        reportMissingDef(parserState._key, href, 'linearGradient');
-      } else {
-        if (gradientUnits == null) {
-          isObjectBoundingBox = ref.unitMode == GradientUnitMode.objectBoundingBox;
-        }
-        colors.addAll(ref.colors!);
-        offsets.addAll(ref.offsets!);
+      final DrawableGradient ref = await parserState._getGradient(href ?? '', parserState._currentStartElement!);
+      if (gradientUnits == null) {
+        isObjectBoundingBox = ref.unitMode == GradientUnitMode.objectBoundingBox;
       }
+      colors.addAll(ref.colors!);
+      offsets.addAll(ref.offsets!);
     } else {
       parseStops(parserState, colors, offsets);
     }
@@ -382,7 +375,6 @@ class _Elements {
         isPercentage(y2) ? parsePercentage(y2) * parserState.rootBounds.height + parserState.rootBounds.top : parserState.parseDoubleWithUnits(y2)!,
       );
     }
-
     parserState._definitions.addGradient(
       id,
       DrawableLinearGradient(
@@ -395,8 +387,7 @@ class _Elements {
         transform: originalTransform?.storage,
       ),
     );
-
-    return null;
+    parserState._unknownDefinitions[parserState._buildHref(id)]?.complete();
   }
 
   static Future<void>? clipPath(SvgParserState parserState, bool warningsAsErrors) {
@@ -497,7 +488,7 @@ class _Elements {
       );
       parserState.checkForIri(drawable, id ?? '');
       group.children!.add(drawable);
-      parserState._completeDrawing(currentElement);
+      parserState._completeDrawing(id, currentElement);
     });
   }
 
@@ -847,6 +838,9 @@ class SvgParserState {
     if (_drawing.isNotEmpty) {
       _drawingCompleter = Completer<void>();
       await _drawingCompleter!.future;
+      for (final String key in _unknownDefinitions.keys) {
+        reportMissingDef('', key, 'parse');
+      }
     }
     if (_root == null) {
       throw StateError('Invalid SVG data');
@@ -877,10 +871,7 @@ class SvgParserState {
     final String iri = buildUrlIri(id);
     if (iri != emptyUrlIri) {
       _definitions.addDrawable(iri, drawable!);
-      // if (_unknownDefinitions.containsKey(iri)) {
-      //   _unknownDefinitions[iri]!.complete();
-      //   _unknownDefinitions.remove(iri);
-      // }
+      _unknownDefinitions[_buildHref(id)]?.complete();
       return true;
     }
     return false;
@@ -920,7 +911,7 @@ class SvgParserState {
       );
       checkForIri(drawable, id);
       parent.children!.add(drawable);
-      _completeDrawing(currentElement);
+      _completeDrawing(id, currentElement);
     });
     return true;
   }
@@ -1167,6 +1158,8 @@ class SvgParserState {
   /// Builds an IRI in the form of `'url(#id)'`.
   String buildUrlIri(String id) => 'url(#$id)';
 
+  String _buildHref(String? id) => '#$id';
+
   /// An empty IRI.
   static const String emptyUrlIri = DrawableDefinitionServer.emptyUrlIri;
 
@@ -1235,32 +1228,28 @@ class SvgParserState {
     return null;
   }
 
-  DrawablePaint _getDefinitionPaint(
+  Future<DrawablePaint> _getDefinitionPaint(
     String? key,
     PaintingStyle paintingStyle,
     String iri,
     DrawableDefinitionServer definitions,
-    Rect bounds, {
+    Rect bounds,
+    XmlStartElementEvent? event, {
     double? opacity,
-  }) {
-    final Shader? shader = definitions.getShader(iri, bounds);
-    if (shader == null) {
-      reportMissingDef(key, iri, '_getDefinitionPaint');
-    }
-
-    return DrawablePaint(
-      paintingStyle,
-      shader: shader,
-      color: opacity != null ? Color.fromRGBO(255, 255, 255, opacity) : null,
-    );
-  }
+  }) async =>
+      DrawablePaint(
+        paintingStyle,
+        shader: await _getShader(iri, bounds, event),
+        color: opacity != null ? Color.fromRGBO(255, 255, 255, opacity) : null,
+      );
 
   /// Parses a @stroke attribute into a [Paint].
-  DrawablePaint? parseStroke(
+  Future<DrawablePaint?> parseStroke(
     Rect bounds,
     DrawablePaint? parentStroke,
     Color? currentColor,
-  ) {
+    XmlStartElementEvent? event,
+  ) async {
     final String? rawStroke = getAttribute(attributes, 'stroke', def: null);
     final String? rawStrokeOpacity = getAttribute(
       attributes,
@@ -1288,12 +1277,13 @@ class SvgParserState {
     DrawablePaint? definitionPaint;
     Color? strokeColor;
     if (rawStroke?.startsWith('url') == true) {
-      definitionPaint = _getDefinitionPaint(
+      definitionPaint = await _getDefinitionPaint(
         _key,
         PaintingStyle.stroke,
         rawStroke!,
         _definitions,
         bounds,
+        event,
         opacity: opacity,
       );
       strokeColor = definitionPaint.color;
@@ -1320,12 +1310,13 @@ class SvgParserState {
   }
 
   /// Parses a `fill` attribute.
-  DrawablePaint? parseFill(
+  Future<DrawablePaint?> parseFill(
     Rect bounds,
     DrawablePaint? parentFill,
     Color? defaultFillColor,
     Color? currentColor,
-  ) {
+    XmlStartElementEvent? event,
+  ) async {
     final String rawFill = attribute('fill', def: '')!;
     final String? rawFillOpacity = attribute('fill-opacity', def: '1.0');
     final String? rawOpacity = attribute('opacity', def: '');
@@ -1341,6 +1332,7 @@ class SvgParserState {
         rawFill,
         _definitions,
         bounds,
+        event,
         opacity: opacity,
       );
     }
@@ -1405,16 +1397,16 @@ class SvgParserState {
   }
 
   /// Parses a `clipPath` element into a list of [Path]s.
-  List<Path>? parseClipPath() {
+  Future<List<Path>?> parseClipPath() async {
     final String? rawClipAttribute = getAttribute(attributes, 'clip-path');
     if (rawClipAttribute?.isNotEmpty == true) {
       final List<Path>? paths = _definitions.getClipPath(rawClipAttribute!);
-      // if (paths == null) {
-      //   final Completer<void> completer = Completer<void>();
-      //   _unknownDefinitions.addAll(<String, Completer<void>>{rawClipAttribute: completer});
-      //   await completer.future;
-      //   return _definitions.getClipPath(rawClipAttribute);
-      // }
+      if (paths == null) {
+        final Completer<void> completer = Completer<void>();
+        _unknownDefinitions.addAll(<String, Completer<void>>{rawClipAttribute: completer});
+        await completer.future;
+        return _definitions.getClipPath(rawClipAttribute);
+      }
       return paths;
     }
 
@@ -1545,19 +1537,20 @@ class SvgParserState {
     Color? defaultFillColor,
     Color? currentColor,
   }) async {
+    final XmlStartElementEvent? event = _currentStartElement;
     return DrawableStyle.mergeAndBlend(
       parentStyle,
-      stroke: parseStroke(bounds, parentStyle?.stroke, currentColor),
+      stroke: await parseStroke(bounds, parentStyle?.stroke, currentColor, event),
       dashArray: parseDashArray(),
       dashOffset: parseDashOffset(),
-      fill: parseFill(bounds, parentStyle?.fill, defaultFillColor, currentColor),
+      fill: await parseFill(bounds, parentStyle?.fill, defaultFillColor, currentColor, event),
       pathFillType: parseFillRule(
         'fill-rule',
         parentStyle != null ? null : 'nonzero',
       ),
       groupOpacity: parseOpacity(),
       mask: parseMask(),
-      clipPath: parseClipPath(),
+      clipPath: await parseClipPath(),
       textStyle: DrawableTextStyle(
         fontFamily: getAttribute(attributes, 'font-family'),
         fontSize: parseFontSize(getAttribute(attributes, 'font-size'), parentValue: parentStyle?.textStyle?.fontSize),
@@ -1710,28 +1703,49 @@ class SvgParserState {
     throw StateError('Could not parse "$colorString" as a color.');
   }
 
-  void _completeDrawing(XmlStartElementEvent? currentElement) {
+  void _completeDrawing(String? id, XmlStartElementEvent? currentElement) {
     _drawing.remove(currentElement);
-    if (_drawing.isEmpty) {
+    if (_drawing.isEmpty && !_unknownDefinitions.keys.contains(_buildHref(id))) {
       _drawingCompleter?.complete();
     }
   }
 
-  Future<DrawableStyleable> _getDrawable(String xlinkHref) async {
+  Future<DrawableStyleable> _getDrawable(String xlinkHref, XmlStartElementEvent event) async {
     DrawableStyleable? ref = _definitions.getDrawable('url($xlinkHref)');
     if (ref == null) {
-      await _waitForRef(xlinkHref);
+      await _waitForRef(xlinkHref, event);
       ref = _definitions.getDrawable('url($xlinkHref)');
     }
     return ref!;
   }
 
-  Future<void> _waitForRef(String ref) async {
+  Future<DrawableGradient> _getGradient(String xlinkHref, XmlStartElementEvent event) async {
+    DrawableGradient? ref = _definitions.getGradient<DrawableGradient>('url($xlinkHref)');
+    if (ref == null) {
+      await _waitForRef(xlinkHref, event);
+      ref = _definitions.getGradient('url($xlinkHref)');
+    }
+    return ref!;
+  }
+
+  Future<Shader> _getShader(String xlinkHref, Rect bounds, XmlStartElementEvent? event) async {
+    Shader? ref = _definitions.getShader('url($xlinkHref)', bounds);
+    if (ref == null) {
+      await _waitForRef(xlinkHref, event);
+      ref = _definitions.getShader('url($xlinkHref)', bounds);
+    }
+    return ref!;
+  }
+
+  Future<void> _waitForRef(String ref, XmlStartElementEvent? event) async {
     final Completer<void> completer = Completer<void>();
     _unknownDefinitions.addAll(<String, Completer<void>>{
       ref: completer,
     });
-    return completer.future;
+    _drawing.remove(event);
+    await completer.future;
+    _unknownDefinitions.remove(ref);
+    _drawing.add(event);
   }
 }
 
