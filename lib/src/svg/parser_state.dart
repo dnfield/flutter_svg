@@ -482,6 +482,8 @@ class _Elements {
       }
       if (event is XmlStartElementEvent) {
         final _PathFunc? pathFn = _svgPathFuncs[event.name];
+        final Map<String, String> attributes =
+            event.attributes.toAttributeMap();
 
         if (pathFn != null) {
           final Path nextPath = parserState.applyTransformIfNeeded(
@@ -534,7 +536,7 @@ class _Elements {
       }
     }
     parserState._definitions.addClipPath(id, paths);
-    parserState._markUnkownDefinitionComplete(parserState._buildHref(id));
+    parserState._markUnkownDefinitionComplete(id);
   }
 
   static Future<void> image(SvgParserState parserState,
