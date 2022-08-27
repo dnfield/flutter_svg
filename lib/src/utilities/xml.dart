@@ -36,7 +36,9 @@ String? getAttribute(
       //   raw = attribute.substring(attribute.indexOf(':') + 1).trim();
       // }
       final List<String> styles = style.split(';');
-      raw = styles.firstWhere((String str) => str.trimLeft().startsWith(name + ':'), orElse: () => '');
+      raw = styles.firstWhere(
+          (String str) => str.trimLeft().startsWith(name + ':'),
+          orElse: () => '');
 
       if (raw != '') {
         raw = raw.substring(raw.indexOf(':') + 1).trim();
@@ -66,6 +68,7 @@ String _getAttribute(
 extension AttributeMapXmlEventAttributeExtension on List<XmlEventAttribute> {
   /// Converts the List<XmlEventAttribute> to an attribute map.
   Map<String, String> toAttributeMap() => <String, String>{
-        for (final XmlEventAttribute attribute in this) attribute.localName: attribute.value.trim(),
+        for (final XmlEventAttribute attribute in this)
+          attribute.localName: attribute.value.trim(),
       };
 }

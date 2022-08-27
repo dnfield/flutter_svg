@@ -15,11 +15,16 @@ void main() {
     expected.translate(0.338957, 0.010104, 0);
     expected.translate(-0.5214, 0.125, 0);
     expected.translate(0.987, 0.789, 0);
-    expect(parseTransform('translate(0.338957,0.010104), translate(-0.5214,0.125),translate(0.987,0.789)'), expected);
+    expect(
+        parseTransform(
+            'translate(0.338957,0.010104), translate(-0.5214,0.125),translate(0.987,0.789)'),
+        expected);
 
     expected = Matrix4.translationValues(0.338957, 0.010104, 0);
     expected.scale(0.869768, 1.000000, 1.0);
-    expect(parseTransform('translate(0.338957,0.010104),scale(0.869768,1.000000)'), expected);
+    expect(
+        parseTransform('translate(0.338957,0.010104),scale(0.869768,1.000000)'),
+        expected);
   });
 
   test('SVG Transform parser tests', () {
@@ -28,11 +33,14 @@ void main() {
 
     expect(parseTransform('skewX(60)'), Matrix4.skewX(60.0));
     expect(parseTransform('skewY(60)'), Matrix4.skewY(60.0));
-    expect(parseTransform('translate(10,0.0)'), Matrix4.translationValues(10.0, 0.0, 0.0));
+    expect(parseTransform('translate(10,0.0)'),
+        Matrix4.translationValues(10.0, 0.0, 0.0));
     expect(parseTransform('skewX(60)'), Matrix4.skewX(60.0));
 
-    expect(parseTransform('scale(10)'), Matrix4.identity()..scale(10.0, 10.0, 1.0));
-    expect(parseTransform('scale(10, 15)'), Matrix4.identity()..scale(10.0, 15.0, 1.0));
+    expect(parseTransform('scale(10)'),
+        Matrix4.identity()..scale(10.0, 10.0, 1.0));
+    expect(parseTransform('scale(10, 15)'),
+        Matrix4.identity()..scale(10.0, 15.0, 1.0));
 
     expect(parseTransform('rotate(20)'), Matrix4.rotationZ(radians(20.0)));
     expect(
@@ -66,7 +74,8 @@ void main() {
           5.0, 6.0, 0.0, 1.0
         ]));
 
-    expect(parseTransform('rotate(20)\n\tscale(10)'), Matrix4.rotationZ(radians(20.0))..scale(10.0, 10.0, 1.0));
+    expect(parseTransform('rotate(20)\n\tscale(10)'),
+        Matrix4.rotationZ(radians(20.0))..scale(10.0, 10.0, 1.0));
   });
 
   test('FillRule tests', () {
@@ -187,7 +196,8 @@ void main() {
       ),
     );
 
-    expect(() => parserState.parseFontSize('invalid'), throwsA(const TypeMatcher<StateError>()));
+    expect(() => parserState.parseFontSize('invalid'),
+        throwsA(const TypeMatcher<StateError>()));
   });
 
   test('relative font size tests', () {
@@ -240,7 +250,8 @@ void main() {
   });
 
   test('Check any ids', () async {
-    const String svgStr = '''<svg id="svgRoot" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 166 202">
+    const String svgStr =
+        '''<svg id="svgRoot" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 166 202">
     <defs>
         <linearGradient id="triangleGradient">
             <stop offset="20%" stop-color="#000000" stop-opacity=".55" />
@@ -301,7 +312,8 @@ void main() {
     expect(find<DrawableShape>(root, 'Oval'), isNotNull);
   });
 
-  test('Throws with unsupported elements with warnings as errors enabled', () async {
+  test('Throws with unsupported elements with warnings as errors enabled',
+      () async {
     const String svgStr = '''<?xml version="1.0" encoding="UTF-8"?>
 <svg width="27px" height="90px" viewBox="5 10 18 70" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
     <!-- Generator: Sketch 53 (72520) - https://sketchapp.com -->
@@ -577,7 +589,8 @@ void main() {
           ),
         );
 
-        final DrawableLinearGradient? gradient = root.definitions.getGradient('url(#gradient-1)');
+        final DrawableLinearGradient? gradient =
+            root.definitions.getGradient('url(#gradient-1)');
 
         expect(gradient, isNotNull);
 
@@ -617,7 +630,8 @@ void main() {
           ),
         );
 
-        final DrawableLinearGradient? gradient = root.definitions.getGradient('url(#gradient-1)');
+        final DrawableLinearGradient? gradient =
+            root.definitions.getGradient('url(#gradient-1)');
 
         expect(gradient, isNotNull);
 
@@ -657,7 +671,8 @@ void main() {
           ),
         );
 
-        final DrawableLinearGradient? gradient = root.definitions.getGradient('url(#gradient-1)');
+        final DrawableLinearGradient? gradient =
+            root.definitions.getGradient('url(#gradient-1)');
 
         expect(gradient, isNotNull);
 
@@ -769,7 +784,8 @@ void main() {
         ),
       );
 
-      final DrawableRadialGradient? gradient = root.definitions.getGradient('url(#gradient)');
+      final DrawableRadialGradient? gradient =
+          root.definitions.getGradient('url(#gradient)');
 
       expect(gradient, isNotNull);
 
@@ -803,7 +819,8 @@ void main() {
         ),
       );
 
-      final DrawableLinearGradient? gradient = root.definitions.getGradient('url(#gradient)');
+      final DrawableLinearGradient? gradient =
+          root.definitions.getGradient('url(#gradient)');
 
       expect(gradient, isNotNull);
 
@@ -833,7 +850,8 @@ BAAO9TXL0Y4OHwAAAABJRU5ErkJggg==" x="1em" y="0.5em" width="2em" height="1.5em" /
         ),
       );
 
-      final DrawableRasterImage? image = find<DrawableRasterImage>(root, 'image');
+      final DrawableRasterImage? image =
+          find<DrawableRasterImage>(root, 'image');
 
       const Offset expectedOffset = Offset(fontSize * 1, fontSize * 0.5);
       const Size expectedSize = Size(fontSize * 2, fontSize * 1.5);
@@ -947,7 +965,8 @@ BAAO9TXL0Y4OHwAAAABJRU5ErkJggg==" x="1em" y="0.5em" width="2em" height="1.5em" /
         ),
       );
 
-      final DrawableRadialGradient? gradient = root.definitions.getGradient('url(#gradient)');
+      final DrawableRadialGradient? gradient =
+          root.definitions.getGradient('url(#gradient)');
 
       expect(gradient, isNotNull);
 
@@ -983,7 +1002,8 @@ BAAO9TXL0Y4OHwAAAABJRU5ErkJggg==" x="1em" y="0.5em" width="2em" height="1.5em" /
         ),
       );
 
-      final DrawableLinearGradient? gradient = root.definitions.getGradient('url(#gradient)');
+      final DrawableLinearGradient? gradient =
+          root.definitions.getGradient('url(#gradient)');
 
       expect(gradient, isNotNull);
 
@@ -1015,7 +1035,8 @@ BAAO9TXL0Y4OHwAAAABJRU5ErkJggg==" x="1ex" y="0.5ex" width="2ex" height="1.5ex" /
         ),
       );
 
-      final DrawableRasterImage? image = find<DrawableRasterImage>(root, 'image');
+      final DrawableRasterImage? image =
+          find<DrawableRasterImage>(root, 'image');
 
       const Offset expectedOffset = Offset(xHeight * 1, xHeight * 0.5);
       const Size expectedSize = Size(xHeight * 2, xHeight * 1.5);
@@ -1174,7 +1195,8 @@ BAAO9TXL0Y4OHwAAAABJRU5ErkJggg==" x="1ex" y="0.5ex" width="2ex" height="1.5ex" /
     final DrawableRoot root = await parser.parse(svgStr);
 
     expect(root.children.length, 1);
-    final DrawableRasterImage image = root.children.first as DrawableRasterImage;
+    final DrawableRasterImage image =
+        root.children.first as DrawableRasterImage;
     expect(image.size!.width, image.image.width);
     expect(image.size!.height, image.image.height);
   });
@@ -1219,7 +1241,8 @@ BAAO9TXL0Y4OHwAAAABJRU5ErkJggg==" x="1ex" y="0.5ex" width="2ex" height="1.5ex" /
       final DrawableRoot root = await SvgParser().parse(svgStr);
       final DrawableGroup? group = find<DrawableGroup>(root, 'group');
       expect(group, isNotNull);
-      final DrawableGroup? circle = find<DrawableGroup>(group!, 'anotherCircle');
+      final DrawableGroup? circle =
+          find<DrawableGroup>(group!, 'anotherCircle');
       expect(circle, isNotNull);
     });
 
@@ -1267,7 +1290,8 @@ BAAO9TXL0Y4OHwAAAABJRU5ErkJggg==" x="1ex" y="0.5ex" width="2ex" height="1.5ex" /
     });
 
     test('defs in front of paths that use it', () async {
-      const String svgStr = '''<svg id="svgRoot" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 166 202">
+      const String svgStr =
+          '''<svg id="svgRoot" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 166 202">
     <defs>
       <linearGradient id="triangleGradient">
           <stop offset="20%" stop-color="#000000" stop-opacity=".55" />
@@ -1299,7 +1323,8 @@ BAAO9TXL0Y4OHwAAAABJRU5ErkJggg==" x="1ex" y="0.5ex" width="2ex" height="1.5ex" /
     });
 
     test('defs inbetween paths that use it', () async {
-      const String svgStr = '''<svg id="svgRoot" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 166 202">
+      const String svgStr =
+          '''<svg id="svgRoot" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 166 202">
     <path id="path1" fill="#42A5F5" fill-opacity=".8" d="M37.7 128.9 9.8 101 100.4 10.4 156.2 10.4"/>
     <path id="path2" fill="#42A5F5" fill-opacity=".8" d="M156.2 94 100.4 94 79.5 114.9 107.4 142.8"/>
     <path id="path3" fill="#0D47A1" d="M79.5 170.7 100.4 191.6 156.2 191.6 156.2 191.6 107.4 142.8"/>
@@ -1331,7 +1356,8 @@ BAAO9TXL0Y4OHwAAAABJRU5ErkJggg==" x="1ex" y="0.5ex" width="2ex" height="1.5ex" /
     });
 
     test('defs behind paths that use it', () async {
-      const String svgStr = '''<svg id="svgRoot" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 166 202">
+      const String svgStr =
+          '''<svg id="svgRoot" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 166 202">
     <path id="path1" fill="#42A5F5" fill-opacity=".8" d="M37.7 128.9 9.8 101 100.4 10.4 156.2 10.4"/>
     <path id="path2" fill="#42A5F5" fill-opacity=".8" d="M156.2 94 100.4 94 79.5 114.9 107.4 142.8"/>
     <path id="path3" fill="#0D47A1" d="M79.5 170.7 100.4 191.6 156.2 191.6 156.2 191.6 107.4 142.8"/>
@@ -1363,7 +1389,8 @@ BAAO9TXL0Y4OHwAAAABJRU5ErkJggg==" x="1ex" y="0.5ex" width="2ex" height="1.5ex" /
     });
 
     test('group with defs behind paths that use it', () async {
-      const String svgStr = '''<svg id="svgRoot" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 166 202">
+      const String svgStr =
+          '''<svg id="svgRoot" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 166 202">
   <g id="group1">
     <path id="path1" fill="#42A5F5" fill-opacity=".8" d="M37.7 128.9 9.8 101 100.4 10.4 156.2 10.4"/>
     <path id="path2" fill="#42A5F5" fill-opacity=".8" d="M156.2 94 100.4 94 79.5 114.9 107.4 142.8"/>
@@ -1398,8 +1425,11 @@ BAAO9TXL0Y4OHwAAAABJRU5ErkJggg==" x="1ex" y="0.5ex" width="2ex" height="1.5ex" /
       expect(find<DrawableShape>(group1, 'path4'), isNotNull);
     });
 
-    test('defs behind refs behind use and chained (use depends on circle, which depends on linearGradient in defs)', () async {
-      const String svgStr = '''<svg id="svgRoot" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 166 202">
+    test(
+        'defs behind refs behind use and chained (use depends on circle, which depends on linearGradient in defs)',
+        () async {
+      const String svgStr =
+          '''<svg id="svgRoot" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 166 202">
   <g id="group1" transform="matrix(0.7071, -0.7071, 0.7071, 0.7071, -77.667, 98.057)">
     <use id="anotherCircle" href="#circle" x="2em" y="4em" fill="blue"/>
     <circle id="circle" cx="5" cy="5" r="4" stroke="url(#rectangleGradient)"/>
@@ -1416,7 +1446,8 @@ BAAO9TXL0Y4OHwAAAABJRU5ErkJggg==" x="1ex" y="0.5ex" width="2ex" height="1.5ex" /
 
       final DrawableGroup? group1 = find<DrawableGroup>(root, 'group1');
       expect(group1, isNotNull);
-      final DrawableGroup? circle = find<DrawableGroup>(group1!, 'anotherCircle');
+      final DrawableGroup? circle =
+          find<DrawableGroup>(group1!, 'anotherCircle');
       expect(circle, isNotNull);
       final DrawableShape shape = circle!.children!.first as DrawableShape;
       expect(shape.style.stroke?.shader is Gradient, true);

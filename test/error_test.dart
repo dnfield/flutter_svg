@@ -27,7 +27,8 @@ void main() {
     FlutterError.onError = oldHandler;
   });
 
-  testWidgets('Report tag not found with valid tags afterward', (WidgetTester tester) async {
+  testWidgets('Report tag not found with valid tags afterward',
+      (WidgetTester tester) async {
     final FlutterExceptionHandler oldHandler = FlutterError.onError!;
     late FlutterErrorDetails error;
     FlutterError.onError = (FlutterErrorDetails details) {

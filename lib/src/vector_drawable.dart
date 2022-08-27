@@ -85,7 +85,8 @@ class DrawableStyle {
   ///
   /// This will not result in a drawing operation, but will clear out
   /// inheritance.
-  static final CircularIntervalList<double> emptyDashArray = CircularIntervalList<double>(const <double>[]);
+  static final CircularIntervalList<double> emptyDashArray =
+      CircularIntervalList<double>(const <double>[]);
 
   /// If not `null` and not `identical` with [DrawablePaint.empty], will result in a stroke
   /// for the rendered [DrawableShape]. Drawn __after__ the [fill].
@@ -193,7 +194,8 @@ class DrawablePaint {
       return a;
     }
 
-    if (identical(a, DrawablePaint.empty) || identical(b, DrawablePaint.empty)) {
+    if (identical(a, DrawablePaint.empty) ||
+        identical(b, DrawablePaint.empty)) {
       return a ?? b;
     }
 
@@ -202,7 +204,8 @@ class DrawablePaint {
     }
 
     // If we got here, the styles should not be null.
-    assert(a.style == b!.style, 'Cannot merge Paints with different PaintStyles; got:\na: $a\nb: $b.');
+    assert(a.style == b!.style,
+        'Cannot merge Paints with different PaintStyles; got:\na: $a\nb: $b.');
 
     b = b!;
     return DrawablePaint(
@@ -445,12 +448,14 @@ class DrawableTextStyle {
       height: height,
       locale: locale,
       background: background?.toFlutterPaint(),
-      foreground: foregroundOverride?.toFlutterPaint() ?? foreground?.toFlutterPaint(),
+      foreground:
+          foregroundOverride?.toFlutterPaint() ?? foreground?.toFlutterPaint(),
     );
   }
 
   @override
-  String toString() => 'DrawableTextStyle{$decoration,$decorationColor,$decorationStyle,$fontWeight,'
+  String toString() =>
+      'DrawableTextStyle{$decoration,$decorationColor,$decorationStyle,$fontWeight,'
       '$fontFamily,$fontSize,$fontStyle,$foreground,$background,$letterSpacing,$wordSpacing,$height,'
       '$locale,$textBaseline,$anchor}';
 }
@@ -502,7 +507,8 @@ class DrawableText implements Drawable {
   final Float64List? transform;
 
   @override
-  bool get hasDrawableContent => (fill?.width ?? 0.0) + (stroke?.width ?? 0.0) > 0.0;
+  bool get hasDrawableContent =>
+      (fill?.width ?? 0.0) + (stroke?.width ?? 0.0) > 0.0;
 
   @override
   void draw(Canvas canvas, Rect bounds) {
@@ -557,13 +563,15 @@ class DrawableText implements Drawable {
 class DrawableDefinitionServer {
   final Map<String, DrawableGradient> _gradients = <String, DrawableGradient>{};
   final Map<String, List<Path>> _clipPaths = <String, List<Path>>{};
-  final Map<String, DrawableStyleable> _drawables = <String, DrawableStyleable>{};
+  final Map<String, DrawableStyleable> _drawables =
+      <String, DrawableStyleable>{};
 
   /// An empty IRI for SVGs.
   static const String emptyUrlIri = 'url(#)';
 
   /// Attempt to lookup a [Drawable] by [id].
-  DrawableStyleable? getDrawable(String id, {bool nullOk = false}) => _drawables[id];
+  DrawableStyleable? getDrawable(String id, {bool nullOk = false}) =>
+      _drawables[id];
 
   /// Add a [Drawable] that can later be referred to by [id].
   void addDrawable(String id, DrawableStyleable drawable) {
@@ -572,13 +580,16 @@ class DrawableDefinitionServer {
   }
 
   /// Attempt to lookup a pre-defined [Shader] by [id].
-  Shader? getShader(String id, Rect bounds) => _gradients[id]?.createShader(bounds);
+  Shader? getShader(String id, Rect bounds) =>
+      _gradients[id]?.createShader(bounds);
 
   /// Retreive a gradient from the pre-defined [DrawableGradient] collection.
-  T? getGradient<T extends DrawableGradient?>(String id) => _gradients[id] as T?;
+  T? getGradient<T extends DrawableGradient?>(String id) =>
+      _gradients[id] as T?;
 
   /// Add a [DrawableGradient] to the pre-defined collection by [id].
-  void addGradient(String id, DrawableGradient gradient) => _gradients[id] = gradient;
+  void addGradient(String id, DrawableGradient gradient) =>
+      _gradients[id] = gradient;
 
   /// Get a [List<Path>] of clip paths by [id].
   List<Path>? getClipPath(String id) => _clipPaths[id];
@@ -657,13 +668,18 @@ class DrawableLinearGradient extends DrawableGradient {
 
   @override
   Shader createShader(Rect bounds) {
-    final bool isObjectBoundingBox = unitMode == GradientUnitMode.objectBoundingBox;
+    final bool isObjectBoundingBox =
+        unitMode == GradientUnitMode.objectBoundingBox;
 
-    Matrix4 m4transform = transform == null ? Matrix4.identity() : Matrix4.fromFloat64List(transform!);
+    Matrix4 m4transform = transform == null
+        ? Matrix4.identity()
+        : Matrix4.fromFloat64List(transform!);
 
     if (isObjectBoundingBox) {
-      final Matrix4 scale = affineMatrix(bounds.width, 0.0, 0.0, bounds.height, 0.0, 0.0);
-      final Matrix4 translate = affineMatrix(1.0, 0.0, 0.0, 1.0, bounds.left, bounds.top);
+      final Matrix4 scale =
+          affineMatrix(bounds.width, 0.0, 0.0, bounds.height, 0.0, 0.0);
+      final Matrix4 translate =
+          affineMatrix(1.0, 0.0, 0.0, 1.0, bounds.left, bounds.top);
       m4transform = translate.multiplied(scale)..multiply(m4transform);
     }
 
@@ -728,13 +744,18 @@ class DrawableRadialGradient extends DrawableGradient {
 
   @override
   Shader createShader(Rect bounds) {
-    final bool isObjectBoundingBox = unitMode == GradientUnitMode.objectBoundingBox;
+    final bool isObjectBoundingBox =
+        unitMode == GradientUnitMode.objectBoundingBox;
 
-    Matrix4 m4transform = transform == null ? Matrix4.identity() : Matrix4.fromFloat64List(transform!);
+    Matrix4 m4transform = transform == null
+        ? Matrix4.identity()
+        : Matrix4.fromFloat64List(transform!);
 
     if (isObjectBoundingBox) {
-      final Matrix4 scale = affineMatrix(bounds.width, 0.0, 0.0, bounds.height, 0.0, 0.0);
-      final Matrix4 translate = affineMatrix(1.0, 0.0, 0.0, 1.0, bounds.left, bounds.top);
+      final Matrix4 scale =
+          affineMatrix(bounds.width, 0.0, 0.0, bounds.height, 0.0, 0.0);
+      final Matrix4 translate =
+          affineMatrix(1.0, 0.0, 0.0, 1.0, bounds.left, bounds.top);
       m4transform = translate.multiplied(scale)..multiply(m4transform);
     }
 
@@ -870,7 +891,8 @@ class DrawableRoot implements DrawableParent {
   }
 
   @override
-  bool get hasDrawableContent => children.isNotEmpty == true && !viewport.viewBox.isEmpty;
+  bool get hasDrawableContent =>
+      children.isNotEmpty == true && !viewport.viewBox.isEmpty;
 
   /// Draws the contents or children of this [Drawable] to the `canvas`, using
   /// the `parentPaint` to optionally override the child's paint.
@@ -946,7 +968,8 @@ class DrawableRoot implements DrawableParent {
       textStyle: newStyle.textStyle,
     );
 
-    final List<Drawable> mergedChildren = children.map<Drawable>((Drawable child) {
+    final List<Drawable> mergedChildren =
+        children.map<Drawable>((Drawable child) {
       if (child is DrawableStyleable) {
         return child.mergeStyle(mergedStyle);
       }
@@ -1071,7 +1094,8 @@ class DrawableGroup implements DrawableStyleable, DrawableParent {
       textStyle: newStyle.textStyle,
     );
 
-    final List<Drawable> mergedChildren = children!.map<Drawable>((Drawable child) {
+    final List<Drawable> mergedChildren =
+        children!.map<Drawable>((Drawable child) {
       if (child is DrawableStyleable) {
         return child.mergeStyle(mergedStyle);
       }
@@ -1231,7 +1255,8 @@ class DrawableShape implements DrawableStyleable {
 
       if (style.stroke?.color != null) {
         assert(style.stroke!.style == PaintingStyle.stroke);
-        if (style.dashArray != null && !identical(style.dashArray, DrawableStyle.emptyDashArray)) {
+        if (style.dashArray != null &&
+            !identical(style.dashArray, DrawableStyle.emptyDashArray)) {
           canvas.drawPath(
             dashPath(
               path,
