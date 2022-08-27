@@ -15,9 +15,6 @@ class TestSvgParserState extends SvgParserState {
           'testKey',
           false,
         );
-
-  @override
-  late Map<String, String> attributes;
 }
 
 void main() {
@@ -75,33 +72,33 @@ void main() {
 
     final TestSvgParserState parserState = TestSvgParserState();
 
-    parserState.attributes = svgWithViewBoxAndWidthHeight.attributes.toAttributeMap();
-    expect(parserState.parseViewBox()!.size, const Size(50, 50));
+    Map<String, String> attributes = svgWithViewBoxAndWidthHeight.attributes.toAttributeMap();
+    expect(parserState.parseViewBox(attributes)!.size, const Size(50, 50));
 
-    parserState.attributes = svgWithViewBox.attributes.toAttributeMap();
-    expect(parserState.parseViewBox()!.viewBoxRect, rect);
+    attributes = svgWithViewBox.attributes.toAttributeMap();
+    expect(parserState.parseViewBox(attributes)!.viewBoxRect, rect);
 
-    parserState.attributes = svgWithViewBox.attributes.toAttributeMap();
-    expect(parserState.parseViewBox()!.viewBoxOffset, Offset.zero);
+    attributes = svgWithViewBox.attributes.toAttributeMap();
+    expect(parserState.parseViewBox(attributes)!.viewBoxOffset, Offset.zero);
 
-    parserState.attributes = svgWithViewBoxAndWidthHeight.attributes.toAttributeMap();
-    expect(parserState.parseViewBox()!.viewBoxRect, rect);
+    attributes = svgWithViewBoxAndWidthHeight.attributes.toAttributeMap();
+    expect(parserState.parseViewBox(attributes)!.viewBoxRect, rect);
 
-    parserState.attributes = svgWithWidthHeight.attributes.toAttributeMap();
-    expect(parserState.parseViewBox()!.viewBoxRect, rect);
+    attributes = svgWithWidthHeight.attributes.toAttributeMap();
+    expect(parserState.parseViewBox(attributes)!.viewBoxRect, rect);
 
-    parserState.attributes = svgWithNoSizeInfo.attributes.toAttributeMap();
-    expect(parserState.parseViewBox(nullOk: true), null);
+    attributes = svgWithNoSizeInfo.attributes.toAttributeMap();
+    expect(parserState.parseViewBox(attributes, nullOk: true), null);
 
-    parserState.attributes = svgWithNoSizeInfo.attributes.toAttributeMap();
-    expect(() => parserState.parseViewBox(), throwsStateError);
+    attributes = svgWithNoSizeInfo.attributes.toAttributeMap();
+    expect(() => parserState.parseViewBox(attributes), throwsStateError);
 
-    parserState.attributes = svgWithViewBoxMinXMinY.attributes.toAttributeMap();
-    expect(parserState.parseViewBox()!.viewBoxRect, rect);
+    attributes = svgWithViewBoxMinXMinY.attributes.toAttributeMap();
+    expect(parserState.parseViewBox(attributes)!.viewBoxRect, rect);
 
-    parserState.attributes = svgWithViewBoxMinXMinY.attributes.toAttributeMap();
+    attributes = svgWithViewBoxMinXMinY.attributes.toAttributeMap();
     expect(
-      parserState.parseViewBox()!.viewBoxOffset,
+      parserState.parseViewBox(attributes)!.viewBoxOffset,
       const Offset(-42.0, -56.0),
     );
   });
@@ -115,20 +112,20 @@ void main() {
     final XmlStartElementEvent none = parseEvents('<linearGradient />').first as XmlStartElementEvent;
 
     final TestSvgParserState parserState = TestSvgParserState();
-    parserState.attributes = pad.attributes.toAttributeMap();
-    expect(parserState.parseTileMode(), TileMode.clamp);
+    Map<String, String> attributes = pad.attributes.toAttributeMap();
+    expect(parserState.parseTileMode(attributes), TileMode.clamp);
 
-    parserState.attributes = invalid.attributes.toAttributeMap();
-    expect(parserState.parseTileMode(), TileMode.clamp);
+    attributes = invalid.attributes.toAttributeMap();
+    expect(parserState.parseTileMode(attributes), TileMode.clamp);
 
-    parserState.attributes = none.attributes.toAttributeMap();
-    expect(parserState.parseTileMode(), TileMode.clamp);
+    attributes = none.attributes.toAttributeMap();
+    expect(parserState.parseTileMode(attributes), TileMode.clamp);
 
-    parserState.attributes = reflect.attributes.toAttributeMap();
-    expect(parserState.parseTileMode(), TileMode.mirror);
+    attributes = reflect.attributes.toAttributeMap();
+    expect(parserState.parseTileMode(attributes), TileMode.mirror);
 
-    parserState.attributes = repeat.attributes.toAttributeMap();
-    expect(parserState.parseTileMode(), TileMode.repeated);
+    attributes = repeat.attributes.toAttributeMap();
+    expect(parserState.parseTileMode(attributes), TileMode.repeated);
   });
 
   test('@stroke-dashoffset tests', () {
@@ -136,15 +133,15 @@ void main() {
     final XmlStartElementEvent pct = parseEvents('<stroke stroke-dashoffset="20%" />').first as XmlStartElementEvent;
 
     final TestSvgParserState parserState = TestSvgParserState();
-    parserState.attributes = abs.attributes.toAttributeMap();
+    Map<String, String> attributes = abs.attributes.toAttributeMap();
     expect(
-      parserState.parseDashOffset(),
+      parserState.parseDashOffset(attributes),
       equals(const DashOffset.absolute(20.0)),
     );
 
-    parserState.attributes = pct.attributes.toAttributeMap();
+    attributes = pct.attributes.toAttributeMap();
     expect(
-      parserState.parseDashOffset(),
+      parserState.parseDashOffset(attributes),
       equals(DashOffset.percentage(0.2)),
     );
   });
@@ -206,10 +203,11 @@ void main() {
       final XmlStartElementEvent svg = parseEvents('<svg stroke="currentColor" />').first as XmlStartElementEvent;
 
       final TestSvgParserState parserState = TestSvgParserState();
-      parserState.attributes = svg.attributes.toAttributeMap();
+      final Map<String, String> attributes = svg.attributes.toAttributeMap();
       final DrawableStyle svgStyle = await parserState.parseStyle(
         Rect.zero,
         null,
+        attributes,
         currentColor: currentColor,
       );
 
@@ -224,10 +222,11 @@ void main() {
       final XmlStartElementEvent svg = parseEvents('<svg fill="currentColor" />').first as XmlStartElementEvent;
 
       final TestSvgParserState parserState = TestSvgParserState();
-      parserState.attributes = svg.attributes.toAttributeMap();
+      final Map<String, String> attributes = svg.attributes.toAttributeMap();
       final DrawableStyle svgStyle = await parserState.parseStyle(
         Rect.zero,
         null,
+        attributes,
         currentColor: currentColor,
       );
 
@@ -246,8 +245,8 @@ void main() {
         final TestSvgParserState parserState = TestSvgParserState(
           fontSize: fontSize,
         );
-        parserState.attributes = svg.attributes.toAttributeMap();
-        final DrawableStyle svgStyle = await parserState.parseStyle(Rect.zero, null);
+        final Map<String, String> attributes = svg.attributes.toAttributeMap();
+        final DrawableStyle svgStyle = await parserState.parseStyle(Rect.zero, null, attributes);
 
         expect(
           svgStyle.stroke?.strokeWidth,
@@ -265,8 +264,8 @@ void main() {
         final TestSvgParserState parserState = TestSvgParserState(
           fontSize: fontSize,
         );
-        parserState.attributes = svg.attributes.toAttributeMap();
-        final DrawableStyle svgStyle = await parserState.parseStyle(Rect.zero, null);
+        final Map<String, String> attributes = svg.attributes.toAttributeMap();
+        final DrawableStyle svgStyle = await parserState.parseStyle(Rect.zero, null, attributes);
 
         expect(
           <double>[
@@ -292,8 +291,8 @@ void main() {
         final TestSvgParserState parserState = TestSvgParserState(
           fontSize: fontSize,
         );
-        parserState.attributes = svg.attributes.toAttributeMap();
-        final DrawableStyle svgStyle = await parserState.parseStyle(Rect.zero, null);
+        final Map<String, String> attributes = svg.attributes.toAttributeMap();
+        final DrawableStyle svgStyle = await parserState.parseStyle(Rect.zero, null, attributes);
 
         expect(
           svgStyle.dashOffset,
@@ -313,8 +312,8 @@ void main() {
           fontSize: fontSize,
           xHeight: xHeight,
         );
-        parserState.attributes = svg.attributes.toAttributeMap();
-        final DrawableStyle svgStyle = await parserState.parseStyle(Rect.zero, null);
+        final Map<String, String> attributes = svg.attributes.toAttributeMap();
+        final DrawableStyle svgStyle = await parserState.parseStyle(Rect.zero, null, attributes);
 
         expect(
           svgStyle.stroke?.strokeWidth,
@@ -334,8 +333,8 @@ void main() {
           fontSize: fontSize,
           xHeight: xHeight,
         );
-        parserState.attributes = svg.attributes.toAttributeMap();
-        final DrawableStyle svgStyle = await parserState.parseStyle(Rect.zero, null);
+        final Map<String, String> attributes = svg.attributes.toAttributeMap();
+        final DrawableStyle svgStyle = await parserState.parseStyle(Rect.zero, null, attributes);
 
         expect(
           <double>[
@@ -363,8 +362,8 @@ void main() {
           fontSize: fontSize,
           xHeight: xHeight,
         );
-        parserState.attributes = svg.attributes.toAttributeMap();
-        final DrawableStyle svgStyle = await parserState.parseStyle(Rect.zero, null);
+        final Map<String, String> attributes = svg.attributes.toAttributeMap();
+        final DrawableStyle svgStyle = await parserState.parseStyle(Rect.zero, null, attributes);
 
         expect(
           svgStyle.dashOffset,

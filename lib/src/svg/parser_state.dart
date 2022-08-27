@@ -16,8 +16,8 @@ import 'parsers.dart';
 
 final Set<String> _unhandledElements = <String>{'title', 'desc'};
 
-typedef _ParseFunc = Future<void>? Function(SvgParserState parserState, bool warningsAsErrors);
-typedef _PathFunc = Path? Function(SvgParserState parserState);
+typedef _ParseFunc = Future<void>? Function(SvgParserState parserState, Map<String, String> attributes, bool warningsAsErrors);
+typedef _PathFunc = Path? Function(SvgParserState parserState, Map<String, String> attributes);
 
 final RegExp _trimPattern = RegExp(r'[\r|\n|\t]');
 
@@ -45,21 +45,21 @@ const Map<String, _PathFunc> _svgPathFuncs = <String, _PathFunc>{
   'line': _Paths.line,
 };
 
-Offset _parseCurrentOffset(SvgParserState parserState, Offset? lastOffset) {
-  final String? x = parserState.attribute('x', def: null);
-  final String? y = parserState.attribute('y', def: null);
+Offset _parseCurrentOffset(SvgParserState parserState, Map<String, String> attributes, Offset? lastOffset) {
+  final String? x = getAttribute(attributes, 'x', def: null);
+  final String? y = getAttribute(attributes, 'y', def: null);
 
   return Offset(
     x != null
         ? parserState.parseDoubleWithUnits(x)!
         : parserState.parseDoubleWithUnits(
-              parserState.attribute('dx', def: '0'),
+              getAttribute(attributes, 'dx', def: '0'),
             )! +
             (lastOffset?.dx ?? 0),
     y != null
         ? parserState.parseDoubleWithUnits(y)!
         : parserState.parseDoubleWithUnits(
-              parserState.attribute('dy', def: '0'),
+              getAttribute(attributes, 'dy', def: '0'),
             )! +
             (lastOffset?.dy ?? 0),
   );
@@ -82,13 +82,13 @@ class _TextInfo {
 
 // ignore: avoid_classes_with_only_static_members
 class _Elements {
-  static Future<void>? svg(SvgParserState parserState, bool warningsAsErrors) async {
-    final DrawableViewport? viewBox = parserState.parseViewBox();
+  static Future<void>? svg(SvgParserState parserState, Map<String, String> attributes, bool warningsAsErrors) async {
+    final DrawableViewport? viewBox = parserState.parseViewBox(attributes);
 
-    final String? id = parserState.attribute('id', def: '');
+    final String? id = getAttribute(attributes, 'id', def: '');
 
     final Color? color = parserState.parseColor(
-      parserState.attribute('color', def: null),
+      getAttribute(attributes, 'color', def: null),
       currentColor: parserState.theme.currentColor,
     );
 
@@ -108,102 +108,103 @@ class _Elements {
         library: 'SVG',
         context: ErrorDescription('in _Element.svg'),
       ));
-
-      parserState.parseStyle(viewBox!.viewBoxRect, null, currentColor: color).then(
-            (DrawableStyle style) => parserState._parentDrawables.addLast(
-              _SvgGroupTuple(
-                'svg',
-                DrawableGroup(
-                  id,
-                  <Drawable>[],
-                  style,
-                  color: color,
-                ),
-              ),
-            ),
-          );
+      parserState._processing.add(parserState._currentStartElement);
+      final DrawableStyle style = await parserState.parseStyle(viewBox!.viewBoxRect, null, attributes, currentColor: color);
+      parserState._parentDrawables.addLast(
+        _SvgGroupTuple(
+          'svg',
+          DrawableGroup(
+            id,
+            <Drawable>[],
+            style,
+            color: color,
+          ),
+        ),
+      );
     }
     parserState._root = DrawableRoot(
       id,
       viewBox!,
       <Drawable>[],
       parserState._definitions,
-      await parserState.parseStyle(viewBox.viewBoxRect, null, currentColor: color),
+      await parserState.parseStyle(viewBox.viewBoxRect, null, attributes, currentColor: color),
       color: color,
       compatibilityTester: parserState._compatibilityTester,
     );
     parserState.addGroup(parserState._currentStartElement!, parserState._root, id ?? '');
+    parserState._completeProcessing(id, parserState._currentStartElement);
     return;
   }
 
-  static Future<void>? g(SvgParserState parserState, bool warningsAsErrors) {
+  static Future<void> g(SvgParserState parserState, Map<String, String> attributes, bool warningsAsErrors) async {
     if (parserState._currentStartElement?.isSelfClosing == true) {
-      return null;
+      return;
     }
     final DrawableParent parent = parserState.currentGroup!;
-    final Color? color = parserState.parseColor(parserState.attribute('color', def: null), currentColor: parent.color ?? parserState.theme.currentColor) ?? parent.color;
-    final String? id = parserState.attribute('id', def: '');
+    final Color? color = parserState.parseColor(getAttribute(attributes, 'color', def: null), currentColor: parent.color ?? parserState.theme.currentColor) ?? parent.color;
+    final String? id = getAttribute(attributes, 'id', def: '');
     final XmlStartElementEvent currentElement = parserState._currentStartElement!;
-    parserState._drawing.add(currentElement);
-    parserState.parseStyle(parserState.rootBounds, parent.style, currentColor: color).then((DrawableStyle style) {
-      final DrawableGroup group = DrawableGroup(
-        id,
-        <Drawable>[],
-        style,
-        transform: parseTransform(parserState.attribute('transform'))?.storage,
-        color: color,
-      );
-      parent.children!.add(group);
-      parserState.addGroup(currentElement, group, id ?? '');
-      parserState._completeDrawing(id, currentElement);
-    });
-    return null;
+    parserState._processing.add(currentElement);
+
+    final DrawableStyle style = await parserState.parseStyle(parserState.rootBounds, parent.style, attributes, currentColor: color);
+    final DrawableGroup group = DrawableGroup(
+      id,
+      <Drawable>[],
+      style,
+      transform: parseTransform(getAttribute(attributes, 'transform'))?.storage,
+      color: color,
+    );
+    parent.children!.add(group);
+    parserState.addGroup(currentElement, group, id ?? '');
+    parserState._completeProcessing(id, currentElement);
   }
 
-  static Future<void>? symbol(SvgParserState parserState, bool warningsAsErrors) async {
+  static Future<void>? symbol(SvgParserState parserState, Map<String, String> attributes, bool warningsAsErrors) async {
     final DrawableParent parent = parserState.currentGroup!;
-    final Color? color = parserState.parseColor(parserState.attribute('color', def: null), currentColor: parent.color ?? parserState.theme.currentColor) ?? parent.color;
-    final String? id = parserState.attribute('id', def: '');
+    final Color? color = parserState.parseColor(getAttribute(attributes, 'color', def: null), currentColor: parent.color ?? parserState.theme.currentColor) ?? parent.color;
+    final String? id = getAttribute(attributes, 'id', def: '');
     final XmlStartElementEvent currentElement = parserState._currentStartElement!;
+    parserState._processing.add(currentElement);
     final DrawableGroup group = DrawableGroup(
       id,
       <Drawable>[],
       await parserState.parseStyle(
         parserState.rootBounds,
         parent.style,
+        attributes,
         currentColor: color,
       ),
-      transform: parseTransform(parserState.attribute('transform'))?.storage,
+      transform: parseTransform(getAttribute(attributes, 'transform'))?.storage,
       color: color,
     );
     parserState.addGroup(currentElement, group, id ?? '');
-    return;
   }
 
-  static Future<void>? use(SvgParserState parserState, bool warningsAsErrors) async {
+  static Future<void>? use(SvgParserState parserState, Map<String, String> attributes, bool warningsAsErrors) async {
     final DrawableParent? parent = parserState.currentGroup;
-    final String xlinkHref = getHrefAttribute(parserState.attributes)!;
+    final String xlinkHref = getHrefAttribute(attributes)!;
     if (xlinkHref.isEmpty) {
       return;
     }
 
-    final Matrix4 transform = parseTransform(parserState.attribute('transform')) ?? Matrix4.identity();
+    final Matrix4 transform = parseTransform(getAttribute(attributes, 'transform')) ?? Matrix4.identity();
     transform.translate(
       parserState.parseDoubleWithUnits(
-        parserState.attribute('x', def: '0'),
+        getAttribute(attributes, 'x', def: '0'),
       ),
       parserState.parseDoubleWithUnits(
-        parserState.attribute('y', def: '0'),
+        getAttribute(attributes, 'y', def: '0'),
       )!,
     );
 
-    final String id = parserState.attribute('id') ?? '';
+    final String id = getAttribute(attributes, 'id') ?? '';
     final XmlStartElementEvent currentElement = parserState._currentStartElement!;
-    parserState._drawing.add(currentElement);
+    parserState._processing.add(currentElement);
     parserState
         .parseStyle(
       parserState.rootBounds,
       parent!.style,
+      attributes,
       currentColor: parent.color,
     )
         .then((DrawableStyle style) {
@@ -215,14 +216,13 @@ class _Elements {
           transform: transform.storage,
         );
         parserState.checkForIri(group, id);
-
         parent.children!.add(group);
-        parserState._completeDrawing(id, currentElement);
+        parserState._completeProcessing(id, currentElement);
       });
     });
   }
 
-  static Future<void>? parseStops(
+  static void parseStops(
     SvgParserState parserState,
     List<Color> colors,
     List<double> offsets,
@@ -234,61 +234,66 @@ class _Elements {
         continue;
       }
       if (event is XmlStartElementEvent) {
+        final Map<String, String> attributes = event.attributes.toAttributeMap();
         final String rawOpacity = getAttribute(
-          parserState.attributes,
+          attributes,
           'stop-opacity',
           def: '1',
         )!;
         final Color stopColor =
-            parserState.parseColor(parserState.attribute('stop-color'), currentColor: parent.color ?? parserState.theme.currentColor) ?? parent.color ?? colorBlack;
+            parserState.parseColor(getAttribute(attributes, 'stop-color'), currentColor: parent.color ?? parserState.theme.currentColor) ?? parent.color ?? colorBlack;
         colors.add(stopColor.withOpacity(parseDouble(rawOpacity)!));
 
         final String rawOffset = getAttribute(
-          parserState.attributes,
+          attributes,
           'offset',
           def: '0%',
         )!;
         offsets.add(parseDecimalOrPercentage(rawOffset));
       }
     }
-    return null;
+    return;
   }
 
   static Future<void> radialGradient(
     SvgParserState parserState,
+    Map<String, String> attributes,
     bool warningsAsErrors,
   ) async {
     final String? gradientUnits = getAttribute(
-      parserState.attributes,
+      attributes,
       'gradientUnits',
       def: null,
     );
     bool isObjectBoundingBox = gradientUnits != 'userSpaceOnUse';
 
-    final String? rawCx = parserState.attribute('cx', def: '50%');
-    final String? rawCy = parserState.attribute('cy', def: '50%');
-    final String? rawR = parserState.attribute('r', def: '50%');
-    final String? rawFx = parserState.attribute('fx', def: rawCx);
-    final String? rawFy = parserState.attribute('fy', def: rawCy);
-    final TileMode spreadMethod = parserState.parseTileMode();
-    final String id = parserState.buildUrlIri(parserState.attribute('id') ?? '');
+    final String? rawCx = getAttribute(attributes, 'cx', def: '50%');
+    final String? rawCy = getAttribute(attributes, 'cy', def: '50%');
+    final String? rawR = getAttribute(attributes, 'r', def: '50%');
+    final String? rawFx = getAttribute(attributes, 'fx', def: rawCx);
+    final String? rawFy = getAttribute(attributes, 'fy', def: rawCy);
+    final TileMode spreadMethod = parserState.parseTileMode(attributes);
+    final String? id = getAttribute(attributes, 'id');
+    final String iri = parserState.buildUrlIri(id ?? '');
     final Matrix4? originalTransform = parseTransform(
-      parserState.attribute('gradientTransform', def: null),
+      getAttribute(attributes, 'gradientTransform', def: null),
     );
 
     final List<double> offsets = <double>[];
     final List<Color> colors = <Color>[];
 
+    final XmlStartElementEvent currentElement = parserState._currentStartElement!;
     if (parserState._currentStartElement!.isSelfClosing) {
-      final String? href = getHrefAttribute(parserState.attributes);
-      final DrawableGradient ref = await parserState._getGradient(href ?? '', parserState._currentStartElement!);
+      parserState._processing.add(currentElement);
+      final String? href = getHrefAttribute(attributes);
+      final DrawableGradient ref = await parserState._getGradient(href ?? '', currentElement);
       if (gradientUnits == null) {
         isObjectBoundingBox = ref.unitMode == GradientUnitMode.objectBoundingBox;
       }
       colors.addAll(ref.colors!);
       offsets.addAll(ref.offsets!);
     } else {
-      await parseStops(parserState, colors, offsets);
+      parseStops(parserState, colors, offsets);
     }
 
     late double cx, cy, r, fx, fy;
@@ -307,7 +312,7 @@ class _Elements {
     }
 
     parserState._definitions.addGradient(
-      id,
+      iri,
       DrawableRadialGradient(
         center: Offset(cx, cy),
         radius: r,
@@ -320,30 +325,35 @@ class _Elements {
         transform: originalTransform?.storage,
       ),
     );
-    parserState._unknownDefinitions[parserState._buildHref(id)]?.complete();
+    parserState._unknownDefinitions[iri]?.complete();
+    parserState._completeProcessing(id, currentElement);
   }
 
   static Future<void> linearGradient(
     SvgParserState parserState,
+    Map<String, String> attributes,
     bool warningsAsErrors,
   ) async {
-    final String? gradientUnits = parserState.attribute('gradientUnits');
+    final String? gradientUnits = getAttribute(attributes, 'gradientUnits');
     bool isObjectBoundingBox = gradientUnits != 'userSpaceOnUse';
 
-    final String x1 = parserState.attribute('x1', def: '0%')!;
-    final String x2 = parserState.attribute('x2', def: '100%')!;
-    final String y1 = parserState.attribute('y1', def: '0%')!;
-    final String y2 = parserState.attribute('y2', def: '0%')!;
-    final String id = parserState.buildUrlIri(parserState.attribute('id') ?? '');
+    final String x1 = getAttribute(attributes, 'x1', def: '0%')!;
+    final String x2 = getAttribute(attributes, 'x2', def: '100%')!;
+    final String y1 = getAttribute(attributes, 'y1', def: '0%')!;
+    final String y2 = getAttribute(attributes, 'y2', def: '0%')!;
+    final String? id = getAttribute(attributes, 'id');
+    final String iri = parserState.buildUrlIri(id ?? '');
     final Matrix4? originalTransform = parseTransform(
-      parserState.attribute('gradientTransform'),
+      getAttribute(attributes, 'gradientTransform'),
     );
-    final TileMode spreadMethod = parserState.parseTileMode();
+    final TileMode spreadMethod = parserState.parseTileMode(attributes);
 
     final List<Color> colors = <Color>[];
     final List<double> offsets = <double>[];
+    final XmlStartElementEvent currentElement = parserState._currentStartElement!;
     if (parserState._currentStartElement!.isSelfClosing) {
-      final String? href = getHrefAttribute(parserState.attributes);
+      parserState._processing.add(currentElement);
+      final String? href = getHrefAttribute(attributes);
       final DrawableGradient ref = await parserState._getGradient(href ?? '', parserState._currentStartElement!);
       if (gradientUnits == null) {
         isObjectBoundingBox = ref.unitMode == GradientUnitMode.objectBoundingBox;
@@ -376,7 +386,7 @@ class _Elements {
       );
     }
     parserState._definitions.addGradient(
-      id,
+      iri,
       DrawableLinearGradient(
         from: fromOffset,
         to: toOffset,
@@ -387,11 +397,12 @@ class _Elements {
         transform: originalTransform?.storage,
       ),
     );
-    parserState._unknownDefinitions[parserState._buildHref(id)]?.complete();
+    parserState._unknownDefinitions[iri]?.complete();
+    parserState._completeProcessing(id, currentElement);
   }
 
-  static Future<void>? clipPath(SvgParserState parserState, bool warningsAsErrors) {
-    final String id = parserState.buildUrlIri(parserState.attribute('id') ?? '');
+  static Future<void> clipPath(SvgParserState parserState, Map<String, String> attributes, bool warningsAsErrors) async {
+    final String id = parserState.buildUrlIri(getAttribute(attributes, 'id') ?? '');
 
     final List<Path> paths = <Path>[];
     Path? currentPath;
@@ -403,10 +414,8 @@ class _Elements {
         final _PathFunc? pathFn = _svgPathFuncs[event.name];
 
         if (pathFn != null) {
-          final Path nextPath = parserState.applyTransformIfNeeded(
-            pathFn(parserState),
-          )!;
-          nextPath.fillType = parserState.parseFillRule('clip-rule')!;
+          final Path nextPath = parserState.applyTransformIfNeeded(pathFn(parserState, attributes), attributes)!;
+          nextPath.fillType = parserState.parseFillRule(attributes, 'clip-rule')!;
           if (currentPath != null && nextPath.fillType != currentPath.fillType) {
             currentPath = nextPath;
             paths.add(currentPath);
@@ -417,8 +426,8 @@ class _Elements {
             currentPath.addPath(nextPath, Offset.zero);
           }
         } else if (event.name == 'use') {
-          final String? xlinkHref = getHrefAttribute(parserState.attributes);
-          final DrawableStyleable? definitionDrawable = parserState._definitions.getDrawable('url($xlinkHref)');
+          final String xlinkHref = getHrefAttribute(attributes) ?? '';
+          final DrawableStyleable? definitionDrawable = await parserState._getDrawable(xlinkHref, event);
 
           void extractPathsFromDrawable(Drawable? target) {
             if (target is DrawableShape) {
@@ -448,36 +457,37 @@ class _Elements {
       }
     }
     parserState._definitions.addClipPath(id, paths);
-    return null;
+    parserState._unknownDefinitions[parserState._buildHref(id)]?.complete();
+    return;
   }
 
-  static Future<void> image(SvgParserState parserState, bool warningsAsErrors) async {
-    final String? href = getHrefAttribute(parserState.attributes);
+  static Future<void> image(SvgParserState parserState, Map<String, String> attributes, bool warningsAsErrors) async {
+    final String? href = getHrefAttribute(attributes);
     if (href == null) {
       return;
     }
     final Offset offset = Offset(
       parserState.parseDoubleWithUnits(
-        parserState.attribute('x', def: '0'),
+        getAttribute(attributes, 'x', def: '0'),
       )!,
       parserState.parseDoubleWithUnits(
-        parserState.attribute('y', def: '0'),
+        getAttribute(attributes, 'y', def: '0'),
       )!,
     );
     final Image image = await resolveImage(href);
     final Size size = Size(
-      parserState.parseDoubleWithUnits(parserState.attribute('width')) ?? image.width.toDouble(),
-      parserState.parseDoubleWithUnits(parserState.attribute('height')) ?? image.height.toDouble(),
+      parserState.parseDoubleWithUnits(getAttribute(attributes, 'width', def: null)) ?? image.width.toDouble(),
+      parserState.parseDoubleWithUnits(getAttribute(attributes, 'height', def: null)) ?? image.height.toDouble(),
     );
     final DrawableParent parent = parserState._parentDrawables.last.drawable!;
     final DrawableStyle? parentStyle = parent.style;
     final DrawableParent group = parserState.currentGroup!;
-    final String? id = parserState.attribute('id');
-    final Float64List? transform = parseTransform(parserState.attribute('transform'))?.storage;
+    final String? id = getAttribute(attributes, 'id');
+    final Float64List? transform = parseTransform(getAttribute(attributes, 'transform'))?.storage;
     final XmlStartElementEvent? currentElement = parserState._currentStartElement;
-    parserState._drawing.add(currentElement);
+    parserState._processing.add(currentElement);
 
-    parserState.parseStyle(parserState.rootBounds, parentStyle, currentColor: parent.color).then((DrawableStyle style) {
+    parserState.parseStyle(parserState.rootBounds, parentStyle, attributes, currentColor: parent.color).then((DrawableStyle style) {
       final DrawableRasterImage drawable = DrawableRasterImage(
         id,
         image,
@@ -488,12 +498,13 @@ class _Elements {
       );
       parserState.checkForIri(drawable, id ?? '');
       group.children!.add(drawable);
-      parserState._completeDrawing(id, currentElement);
+      parserState._completeProcessing(id, currentElement);
     });
   }
 
   static Future<void> text(
     SvgParserState parserState,
+    Map<String, String> attributes,
     bool warningsAsErrors,
   ) async {
     assert(parserState.currentGroup != null);
@@ -508,7 +519,7 @@ class _Elements {
     final Queue<_TextInfo> textInfos = ListQueue<_TextInfo>();
     double lastTextWidth = 0;
 
-    void _processText(String value) {
+    void _processText(String value, Map<String, String> attributes) {
       if (value.isEmpty) {
         return;
       }
@@ -526,7 +537,7 @@ class _Elements {
       );
       parserState.currentGroup!.children!.add(
         DrawableText(
-          parserState.attribute('id', def: ''),
+          getAttribute(attributes, 'id', def: ''),
           fill,
           stroke,
           lastTextInfo.offset,
@@ -537,16 +548,17 @@ class _Elements {
       lastTextWidth = fill.maxIntrinsicWidth;
     }
 
-    Future<void> _processStartElement(XmlStartElementEvent event) async {
+    Future<void> _processStartElement(XmlStartElementEvent event, Map<String, String> attributes) async {
       _TextInfo? lastTextInfo;
       if (textInfos.isNotEmpty) {
         lastTextInfo = textInfos.last;
       }
       final Offset currentOffset = _parseCurrentOffset(
         parserState,
+        attributes,
         lastTextInfo?.offset.translate(lastTextWidth, 0),
       );
-      Matrix4? transform = parseTransform(parserState.attribute('transform'));
+      Matrix4? transform = parseTransform(getAttribute(attributes, 'transform'));
       if (lastTextInfo?.transform != null) {
         if (transform == null) {
           transform = lastTextInfo!.transform;
@@ -561,6 +573,7 @@ class _Elements {
         await parserState.parseStyle(
           parserState.rootBounds,
           parentStyle,
+          attributes,
         ),
         currentOffset,
         transform,
@@ -570,21 +583,21 @@ class _Elements {
       }
     }
 
-    await _processStartElement(parserState._currentStartElement!);
+    await _processStartElement(parserState._currentStartElement!, attributes);
 
     for (XmlEvent event in parserState._readSubtree()) {
       if (event is XmlCDATAEvent) {
-        _processText(event.text.trim());
+        _processText(event.text.trim(), attributes);
       } else if (event is XmlTextEvent) {
-        final String? space = parserState.attribute('space', def: null);
+        final String? space = getAttribute(attributes, 'space', def: null);
         if (space != 'preserve') {
-          _processText(event.text.trim());
+          _processText(event.text.trim(), attributes);
         } else {
-          _processText(event.text.replaceAll(_trimPattern, ''));
+          _processText(event.text.replaceAll(_trimPattern, ''), attributes);
         }
       }
       if (event is XmlStartElementEvent) {
-        _processStartElement(event);
+        await _processStartElement(event, attributes);
       } else if (event is XmlEndElementEvent) {
         textInfos.removeLast();
       }
@@ -594,41 +607,41 @@ class _Elements {
 
 // ignore: avoid_classes_with_only_static_members
 class _Paths {
-  static Path circle(SvgParserState parserState) {
+  static Path circle(SvgParserState parserState, Map<String, String> attributes) {
     final double cx = parserState.parseDoubleWithUnits(
-      parserState.attribute('cx', def: '0'),
+      getAttribute(attributes, 'cx', def: '0'),
     )!;
     final double cy = parserState.parseDoubleWithUnits(
-      parserState.attribute('cy', def: '0'),
+      getAttribute(attributes, 'cy', def: '0'),
     )!;
     final double r = parserState.parseDoubleWithUnits(
-      parserState.attribute('r', def: '0'),
+      getAttribute(attributes, 'r', def: '0'),
     )!;
     final Rect oval = Rect.fromCircle(center: Offset(cx, cy), radius: r);
     return Path()..addOval(oval);
   }
 
-  static Path path(SvgParserState parserState) {
-    final String d = parserState.attribute('d', def: '')!;
+  static Path path(SvgParserState parserState, Map<String, String> attributes) {
+    final String d = getAttribute(attributes, 'd', def: '')!;
     return parseSvgPathData(d);
   }
 
-  static Path rect(SvgParserState parserState) {
+  static Path rect(SvgParserState parserState, Map<String, String> attributes) {
     final double x = parserState.parseDoubleWithUnits(
-      parserState.attribute('x', def: '0'),
+      getAttribute(attributes, 'x', def: '0'),
     )!;
     final double y = parserState.parseDoubleWithUnits(
-      parserState.attribute('y', def: '0'),
+      getAttribute(attributes, 'y', def: '0'),
     )!;
     final double w = parserState.parseDoubleWithUnits(
-      parserState.attribute('width', def: '0'),
+      getAttribute(attributes, 'width', def: '0'),
     )!;
     final double h = parserState.parseDoubleWithUnits(
-      parserState.attribute('height', def: '0'),
+      getAttribute(attributes, 'height', def: '0'),
     )!;
     final Rect rect = Rect.fromLTWH(x, y, w, h);
-    String? rxRaw = parserState.attribute('rx');
-    String? ryRaw = parserState.attribute('ry');
+    String? rxRaw = getAttribute(attributes, 'rx');
+    String? ryRaw = getAttribute(attributes, 'ry');
     rxRaw ??= ryRaw;
     ryRaw ??= rxRaw;
 
@@ -642,16 +655,16 @@ class _Paths {
     return Path()..addRect(rect);
   }
 
-  static Path? polygon(SvgParserState parserState) {
-    return parsePathFromPoints(parserState, true);
+  static Path? polygon(SvgParserState parserState, Map<String, String> attributes) {
+    return parsePathFromPoints(parserState, attributes, true);
   }
 
-  static Path? polyline(SvgParserState parserState) {
-    return parsePathFromPoints(parserState, false);
+  static Path? polyline(SvgParserState parserState, Map<String, String> attributes) {
+    return parsePathFromPoints(parserState, attributes, false);
   }
 
-  static Path? parsePathFromPoints(SvgParserState parserState, bool close) {
-    final String points = parserState.attribute('points', def: '')!;
+  static Path? parsePathFromPoints(SvgParserState parserState, Map<String, String> attributes, bool close) {
+    final String points = getAttribute(attributes, 'points', def: '')!;
     if (points == '') {
       return null;
     }
@@ -660,36 +673,36 @@ class _Paths {
     return parseSvgPathData(path);
   }
 
-  static Path ellipse(SvgParserState parserState) {
+  static Path ellipse(SvgParserState parserState, Map<String, String> attributes) {
     final double cx = parserState.parseDoubleWithUnits(
-      parserState.attribute('cx', def: '0'),
+      getAttribute(attributes, 'cx', def: '0'),
     )!;
     final double cy = parserState.parseDoubleWithUnits(
-      parserState.attribute('cy', def: '0'),
+      getAttribute(attributes, 'cy', def: '0'),
     )!;
     final double rx = parserState.parseDoubleWithUnits(
-      parserState.attribute('rx', def: '0'),
+      getAttribute(attributes, 'rx', def: '0'),
     )!;
     final double ry = parserState.parseDoubleWithUnits(
-      parserState.attribute('ry', def: '0'),
+      getAttribute(attributes, 'ry', def: '0'),
     )!;
 
     final Rect r = Rect.fromLTWH(cx - rx, cy - ry, rx * 2, ry * 2);
     return Path()..addOval(r);
   }
 
-  static Path line(SvgParserState parserState) {
+  static Path line(SvgParserState parserState, Map<String, String> attributes) {
     final double x1 = parserState.parseDoubleWithUnits(
-      parserState.attribute('x1', def: '0'),
+      getAttribute(attributes, 'x1', def: '0'),
     )!;
     final double x2 = parserState.parseDoubleWithUnits(
-      parserState.attribute('x2', def: '0'),
+      getAttribute(attributes, 'x2', def: '0'),
     )!;
     final double y1 = parserState.parseDoubleWithUnits(
-      parserState.attribute('y1', def: '0'),
+      getAttribute(attributes, 'y1', def: '0'),
     )!;
     final double y2 = parserState.parseDoubleWithUnits(
-      parserState.attribute('y2', def: '0'),
+      getAttribute(attributes, 'y2', def: '0'),
     )!;
 
     return Path()
@@ -745,11 +758,10 @@ class SvgParserState {
   final bool _warningsAsErrors;
   final DrawableDefinitionServer _definitions = DrawableDefinitionServer();
   final Map<String, Completer<void>> _unknownDefinitions = <String, Completer<void>>{};
-  final List<XmlStartElementEvent?> _drawing = <XmlStartElementEvent?>[];
+  final Set<XmlStartElementEvent?> _processing = <XmlStartElementEvent?>{};
   final Queue<_SvgGroupTuple> _parentDrawables = ListQueue<_SvgGroupTuple>(10);
   Completer<void>? _drawingCompleter;
   DrawableRoot? _root;
-  late Map<String, String> _currentAttributes;
   XmlStartElementEvent? _currentStartElement;
 
   /// The current depth of the reader in the XML hierarchy.
@@ -765,7 +777,6 @@ class SvgParserState {
         depth -= 1;
         assert(depth >= 0);
       }
-      _currentAttributes = <String, String>{};
       _currentStartElement = null;
       if (depth < subtreeStartDepth) {
         return;
@@ -793,7 +804,6 @@ class SvgParserState {
           }
           continue;
         }
-        _currentAttributes = attributeMap;
         _currentStartElement = event;
         depth += 1;
         isSelfClosing = event.isSelfClosing;
@@ -803,7 +813,6 @@ class SvgParserState {
       if (isSelfClosing || event is XmlEndElementEvent) {
         depth -= 1;
         assert(depth >= 0);
-        _currentAttributes = <String, String>{};
         _currentStartElement = null;
       }
       if (depth < subtreeStartDepth) {
@@ -817,11 +826,12 @@ class SvgParserState {
     _compatibilityTester = _SvgCompatibilityTester();
     for (XmlEvent event in _readSubtree()) {
       if (event is XmlStartElementEvent) {
-        if (startElement(event)) {
+        final Map<String, String> attributes = event.attributes.toAttributeMap();
+        if (startElement(event, attributes)) {
           continue;
         }
         final _ParseFunc? parseFunc = _svgElementParsers[event.name];
-        await parseFunc?.call(this, _warningsAsErrors);
+        await parseFunc?.call(this, attributes, _warningsAsErrors);
         if (parseFunc == null) {
           if (!event.isSelfClosing) {
             _discardSubtree();
@@ -835,7 +845,7 @@ class SvgParserState {
         endElement(event);
       }
     }
-    if (_drawing.isNotEmpty) {
+    if (_processing.isNotEmpty) {
       _drawingCompleter = Completer<void>();
       await _drawingCompleter!.future;
       for (final String key in _unknownDefinitions.keys) {
@@ -847,12 +857,6 @@ class SvgParserState {
     }
     return _root!;
   }
-
-  /// The XML Attributes of the current node in the tree.
-  Map<String, String> get attributes => _currentAttributes;
-
-  /// Gets the attribute for the current position of the parser.
-  String? attribute(String name, {String? def}) => getAttribute(attributes, name, def: def);
 
   /// The current group, if any, in the [Drawable] heirarchy.
   DrawableParent? get currentGroup {
@@ -884,7 +888,7 @@ class SvgParserState {
   }
 
   /// Appends a [DrawableShape] to the [currentGroup].
-  bool addShape(XmlStartElementEvent event) {
+  bool addShape(XmlStartElementEvent event, Map<String, String> attributes) {
     final _PathFunc? pathFunc = _svgPathFuncs[event.name];
     if (pathFunc == null) {
       return false;
@@ -892,14 +896,15 @@ class SvgParserState {
 
     final DrawableParent parent = _parentDrawables.last.drawable!;
     final DrawableStyle? parentStyle = parent.style;
-    final Path path = pathFunc(this)!;
+    final Path path = pathFunc(this, attributes)!;
     final Float64List? transform = parseTransform(getAttribute(attributes, 'transform'))?.storage;
     final String id = getAttribute(attributes, 'id', def: '') ?? '';
     final XmlStartElementEvent? currentElement = _currentStartElement;
-    _drawing.add(currentElement);
+    _processing.add(currentElement);
     parseStyle(
       path.getBounds(),
       parentStyle,
+      attributes,
       defaultFillColor: colorBlack,
       currentColor: parent.color,
     ).then((DrawableStyle style) {
@@ -911,13 +916,13 @@ class SvgParserState {
       );
       checkForIri(drawable, id);
       parent.children!.add(drawable);
-      _completeDrawing(id, currentElement);
+      _completeProcessing(id, currentElement);
     });
     return true;
   }
 
   /// Potentially handles a starting element.
-  bool startElement(XmlStartElementEvent event) {
+  bool startElement(XmlStartElementEvent event, Map<String, String> attributes) {
     if (event.name == 'defs') {
       if (!event.isSelfClosing) {
         addGroup(
@@ -929,12 +934,12 @@ class SvgParserState {
             color: currentGroup?.color,
             transform: currentGroup?.transform,
           ),
-          attribute('id') ?? '',
+          getAttribute(attributes, 'id') ?? '',
         );
         return true;
       }
     }
-    return addShape(event);
+    return addShape(event, attributes);
   }
 
   /// Handles the end of an XML element.
@@ -1109,7 +1114,7 @@ class SvgParserState {
   ///
   /// The [respectWidthHeight] parameter specifies whether `width` and `height` attributes
   /// on the root SVG element should be treated in accordance with the specification.
-  DrawableViewport? parseViewBox({bool nullOk = false}) {
+  DrawableViewport? parseViewBox(Map<String, String> attributes, {bool nullOk = false}) {
     final String viewBox = getAttribute(attributes, 'viewBox')!;
     final String rawWidth = getAttribute(attributes, 'width')!;
     final String rawHeight = getAttribute(attributes, 'height')!;
@@ -1166,7 +1171,7 @@ class SvgParserState {
   /// Parses an @stroke-dasharray attribute into a [CircularIntervalList].
   ///
   /// Does not currently support percentages.
-  CircularIntervalList<double>? parseDashArray() {
+  CircularIntervalList<double>? parseDashArray(Map<String, String> attributes) {
     final String? rawDashArray = getAttribute(attributes, 'stroke-dasharray');
     if (rawDashArray == '') {
       return null;
@@ -1191,7 +1196,7 @@ class SvgParserState {
   }
 
   /// Parses a @stroke-dashoffset into a [DashOffset].
-  DashOffset? parseDashOffset() {
+  DashOffset? parseDashOffset(Map<String, String> attributes) {
     final String? rawDashOffset = getAttribute(attributes, 'stroke-dashoffset');
     if (rawDashOffset == '') {
       return null;
@@ -1205,8 +1210,8 @@ class SvgParserState {
   }
 
   /// Parses a `spreadMethod` attribute into a [TileMode].
-  TileMode parseTileMode() {
-    final String? spreadMethod = attribute('spreadMethod', def: 'pad');
+  TileMode parseTileMode(Map<String, String> attributes) {
+    final String? spreadMethod = getAttribute(attributes, 'spreadMethod', def: 'pad');
     switch (spreadMethod) {
       case 'pad':
         return TileMode.clamp;
@@ -1220,7 +1225,7 @@ class SvgParserState {
   }
 
   /// Parses an @opacity value into a [double], clamped between 0..1.
-  double? parseOpacity() {
+  double? parseOpacity(Map<String, String> attributes) {
     final String? rawOpacity = getAttribute(attributes, 'opacity', def: null);
     if (rawOpacity != null) {
       return parseDouble(rawOpacity)!.clamp(0.0, 1.0).toDouble();
@@ -1249,6 +1254,7 @@ class SvgParserState {
     DrawablePaint? parentStroke,
     Color? currentColor,
     XmlStartElementEvent? event,
+    Map<String, String> attributes,
   ) async {
     final String? rawStroke = getAttribute(attributes, 'stroke', def: null);
     final String? rawStrokeOpacity = getAttribute(
@@ -1316,10 +1322,11 @@ class SvgParserState {
     Color? defaultFillColor,
     Color? currentColor,
     XmlStartElementEvent? event,
+    Map<String, String> attributes,
   ) async {
-    final String rawFill = attribute('fill', def: '')!;
-    final String? rawFillOpacity = attribute('fill-opacity', def: '1.0');
-    final String? rawOpacity = attribute('opacity', def: '');
+    final String rawFill = getAttribute(attributes, 'fill', def: '')!; // TODO(ikbendewilliam): fill is null while it should be currentColor (works in stroke)
+    final String? rawFillOpacity = getAttribute(attributes, 'fill-opacity', def: '1.0');
+    final String? rawOpacity = getAttribute(attributes, 'opacity', def: '');
     double opacity = parseDouble(rawFillOpacity)!.clamp(0.0, 1.0).toDouble();
     if (rawOpacity != '') {
       opacity *= parseDouble(rawOpacity)!.clamp(0.0, 1.0);
@@ -1377,7 +1384,8 @@ class SvgParserState {
   }
 
   /// Parses a `fill-rule` attribute into a [PathFillType].
-  PathFillType? parseFillRule([
+  PathFillType? parseFillRule(
+    Map<String, String> attributes, [
     String attr = 'fill-rule',
     String? def = 'nonzero',
   ]) {
@@ -1386,7 +1394,7 @@ class SvgParserState {
   }
 
   /// Applies a transform to a path if the [attributes] contain a `transform`.
-  Path? applyTransformIfNeeded(Path? path) {
+  Path? applyTransformIfNeeded(Path? path, Map<String, String> attributes) {
     final Matrix4? transform = parseTransform(getAttribute(attributes, 'transform', def: null));
 
     if (transform != null) {
@@ -1397,19 +1405,11 @@ class SvgParserState {
   }
 
   /// Parses a `clipPath` element into a list of [Path]s.
-  Future<List<Path>?> parseClipPath() async {
+  Future<List<Path>?> parseClipPath(Map<String, String> attributes, XmlStartElementEvent? event) async {
     final String? rawClipAttribute = getAttribute(attributes, 'clip-path');
     if (rawClipAttribute?.isNotEmpty == true) {
-      final List<Path>? paths = _definitions.getClipPath(rawClipAttribute!);
-      if (paths == null) {
-        final Completer<void> completer = Completer<void>();
-        _unknownDefinitions.addAll(<String, Completer<void>>{rawClipAttribute: completer});
-        await completer.future;
-        return _definitions.getClipPath(rawClipAttribute);
-      }
-      return paths;
+      return _getClipPath(rawClipAttribute!, event);
     }
-
     return null;
   }
 
@@ -1432,12 +1432,11 @@ class SvgParserState {
   };
 
   /// Lookup the mask if the attribute is present.
-  DrawableStyleable? parseMask() {
+  Future<DrawableStyleable?> parseMask(XmlStartElementEvent? event, Map<String, String> attributes) async {
     final String? rawMaskAttribute = getAttribute(attributes, 'mask');
     if (rawMaskAttribute != '') {
-      return _definitions.getDrawable(rawMaskAttribute!);
+      return _getDrawable(rawMaskAttribute!, event);
     }
-
     return null;
   }
 
@@ -1533,24 +1532,26 @@ class SvgParserState {
   /// Remember that @style attribute takes precedence.
   Future<DrawableStyle> parseStyle(
     Rect bounds,
-    DrawableStyle? parentStyle, {
+    DrawableStyle? parentStyle,
+    Map<String, String> attributes, {
     Color? defaultFillColor,
     Color? currentColor,
   }) async {
     final XmlStartElementEvent? event = _currentStartElement;
     return DrawableStyle.mergeAndBlend(
       parentStyle,
-      stroke: await parseStroke(bounds, parentStyle?.stroke, currentColor, event),
-      dashArray: parseDashArray(),
-      dashOffset: parseDashOffset(),
-      fill: await parseFill(bounds, parentStyle?.fill, defaultFillColor, currentColor, event),
+      stroke: await parseStroke(bounds, parentStyle?.stroke, currentColor, event, attributes),
+      dashArray: parseDashArray(attributes),
+      dashOffset: parseDashOffset(attributes),
+      fill: await parseFill(bounds, parentStyle?.fill, defaultFillColor, currentColor, event, attributes),
       pathFillType: parseFillRule(
+        attributes,
         'fill-rule',
         parentStyle != null ? null : 'nonzero',
       ),
-      groupOpacity: parseOpacity(),
-      mask: parseMask(),
-      clipPath: await parseClipPath(),
+      groupOpacity: parseOpacity(attributes),
+      mask: await parseMask(event, attributes),
+      clipPath: await parseClipPath(attributes, event),
       textStyle: DrawableTextStyle(
         fontFamily: getAttribute(attributes, 'font-family'),
         fontSize: parseFontSize(getAttribute(attributes, 'font-size'), parentValue: parentStyle?.textStyle?.fontSize),
@@ -1703,14 +1704,14 @@ class SvgParserState {
     throw StateError('Could not parse "$colorString" as a color.');
   }
 
-  void _completeDrawing(String? id, XmlStartElementEvent? currentElement) {
-    _drawing.remove(currentElement);
-    if (_drawing.isEmpty && !_unknownDefinitions.keys.contains(_buildHref(id))) {
+  void _completeProcessing(String? id, XmlStartElementEvent? currentElement) {
+    _processing.remove(currentElement);
+    if (_processing.isEmpty && !_unknownDefinitions.keys.contains(_buildHref(id))) {
       _drawingCompleter?.complete();
     }
   }
 
-  Future<DrawableStyleable> _getDrawable(String xlinkHref, XmlStartElementEvent event) async {
+  Future<DrawableStyleable> _getDrawable(String xlinkHref, XmlStartElementEvent? event) async {
     DrawableStyleable? ref = _definitions.getDrawable('url($xlinkHref)');
     if (ref == null) {
       await _waitForRef(xlinkHref, event);
@@ -1719,20 +1720,29 @@ class SvgParserState {
     return ref!;
   }
 
+  Future<List<Path>> _getClipPath(String rawClipAttribute, XmlStartElementEvent? event) async {
+    List<Path>? ref = _definitions.getClipPath(rawClipAttribute);
+    if (ref == null) {
+      await _waitForRef(rawClipAttribute, event);
+      ref = _definitions.getClipPath(rawClipAttribute);
+    }
+    return ref!;
+  }
+
   Future<DrawableGradient> _getGradient(String xlinkHref, XmlStartElementEvent event) async {
-    DrawableGradient? ref = _definitions.getGradient<DrawableGradient>('url($xlinkHref)');
+    DrawableGradient? ref = _definitions.getGradient<DrawableGradient>(xlinkHref);
     if (ref == null) {
       await _waitForRef(xlinkHref, event);
-      ref = _definitions.getGradient('url($xlinkHref)');
+      ref = _definitions.getGradient(xlinkHref);
     }
     return ref!;
   }
 
   Future<Shader> _getShader(String xlinkHref, Rect bounds, XmlStartElementEvent? event) async {
-    Shader? ref = _definitions.getShader('url($xlinkHref)', bounds);
+    Shader? ref = _definitions.getShader(xlinkHref, bounds);
     if (ref == null) {
       await _waitForRef(xlinkHref, event);
-      ref = _definitions.getShader('url($xlinkHref)', bounds);
+      ref = _definitions.getShader(xlinkHref, bounds);
     }
     return ref!;
   }
@@ -1742,10 +1752,20 @@ class SvgParserState {
     _unknownDefinitions.addAll(<String, Completer<void>>{
       ref: completer,
     });
-    _drawing.remove(event);
+    final bool isInProcessing = _processing.contains(event);
+    if (isInProcessing) {
+      _processing.remove(event);
+    }
+    // No other elements are being processed if _drawingCompleter is null.
+    // This will result in reportMissingDef being calles for each element that is missing a definition.
+    if (_processing.isEmpty) {
+      _drawingCompleter?.complete();
+    }
     await completer.future;
     _unknownDefinitions.remove(ref);
-    _drawing.add(event);
+    if (isInProcessing) {
+      _processing.add(event);
+    }
   }
 }
 

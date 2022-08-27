@@ -1180,6 +1180,18 @@ BAAO9TXL0Y4OHwAAAABJRU5ErkJggg==" x="1ex" y="0.5ex" width="2ex" height="1.5ex" /
   });
 
   group('out of order ref and defs', () {
+    test('ref before use', () async {
+      const String svgStr = '''
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <circle id="circle" cx="5" cy="5" r="4" stroke="blue"/>
+  <use id="anotherCircle" href="#circle" x="2em" y="4em" fill="blue"/>
+</svg>
+''';
+      final DrawableRoot root = await SvgParser().parse(svgStr);
+      final DrawableGroup? circle = find<DrawableGroup>(root, 'anotherCircle');
+      expect(circle, isNotNull);
+    });
+
     test('ref behind use', () async {
       const String svgStr = '''
 <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
