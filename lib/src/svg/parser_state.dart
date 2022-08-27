@@ -848,8 +848,8 @@ class SvgParserState {
     if (_processing.isNotEmpty) {
       _drawingCompleter = Completer<void>();
       await _drawingCompleter!.future;
-      for (final String key in _unknownDefinitions.keys) {
-        reportMissingDef('', key, 'parse');
+      for (final String href in _unknownDefinitions.keys) {
+        reportMissingDef(_key, href, 'parse');
       }
     }
     if (_root == null) {
