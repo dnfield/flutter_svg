@@ -1,8 +1,8 @@
-# Contributing to Flutter SVG
+# Contributing Guide for Flutter SVG
 
 Found a bug? Want an enhancement?  Feel free to submit a pull request for it!
 
-## Creating a Pull Request
+## Create a Pull Request
 
 Contributions are welcome in this repo. Before submitting, please ensure that
 your request will pass CI:
