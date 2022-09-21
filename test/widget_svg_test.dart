@@ -55,8 +55,6 @@ void main() {
   });
 
   setUp(() {
-    PictureProvider.cache.clear();
-    svg.cacheColorFilterOverride = null;
     fakeResponse = FakeHttpClientResponse();
     fakeRequest = FakeHttpClientRequest(fakeResponse);
     fakeHttpClient = FakeHttpClient(fakeRequest);
@@ -65,7 +63,6 @@ void main() {
   testWidgets(
       'SvgPicture does not use a color filtering widget when no color specified',
       (WidgetTester tester) async {
-    expect(PictureProvider.cache.count, 0);
     await tester.pumpWidget(
       SvgPicture.string(
         svgStr,
@@ -74,91 +71,84 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(PictureProvider.cache.count, 1);
+
     expect(find.byType(ColorFiltered), findsNothing);
   });
 
   testWidgets('SvgPicture does not invalidate the cache when color changes',
       (WidgetTester tester) async {
-    expect(PictureProvider.cache.count, 0);
     await tester.pumpWidget(
       SvgPicture.string(
         svgStr,
         width: 100.0,
         height: 100.0,
-        color: const Color(0xFF990000),
+        colorFilter: const Color(0xFF990000),
       ),
     );
-
-    expect(PictureProvider.cache.count, 1);
 
     await tester.pumpWidget(
       SvgPicture.string(
         svgStr,
         width: 100.0,
         height: 100.0,
-        color: const Color(0xFF990099),
+        colorFilter: const Color(0xFF990099),
       ),
     );
-
-    expect(PictureProvider.cache.count, 1);
   });
 
   testWidgets(
       'SvgPicture does invalidate the cache when color changes and color filter is cached',
       (WidgetTester tester) async {
-    expect(PictureProvider.cache.count, 0);
     await tester.pumpWidget(
       SvgPicture.string(
         svgStr,
         width: 100.0,
         height: 100.0,
-        color: const Color(0xFF990000),
+        colorFilter: const Color(0xFF990000),
         cacheColorFilter: true,
       ),
     );
-
-    expect(PictureProvider.cache.count, 1);
 
     await tester.pumpWidget(
       SvgPicture.string(
         svgStr,
         width: 100.0,
         height: 100.0,
-        color: const Color(0xFF990099),
+        colorFilter: const ColorFilter.mode(
+          Color(0xFF990099),
+          BlendMode.srcIn,
+        ),
         cacheColorFilter: true,
       ),
     );
-
-    expect(PictureProvider.cache.count, 2);
   });
 
   testWidgets(
       'SvgPicture does invalidate the cache when color changes and color filter is cached (override)',
       (WidgetTester tester) async {
-    svg.cacheColorFilterOverride = true;
-    expect(PictureProvider.cache.count, 0);
     await tester.pumpWidget(
       SvgPicture.string(
         svgStr,
         width: 100.0,
         height: 100.0,
-        color: const Color(0xFF990000),
+        colorFilter: const ColorFilter.mode(
+          Color(0xFF990000),
+          BlendMode.srcIn,
+        ),
       ),
     );
-
-    expect(PictureProvider.cache.count, 1);
 
     await tester.pumpWidget(
       SvgPicture.string(
         svgStr,
         width: 100.0,
         height: 100.0,
-        color: const Color(0xFF990099),
+        colorFilter: const ColorFilter.mode(
+          Color(0xFF990099),
+          BlendMode.srcIn,
+        ),
       ),
     );
-
-    expect(PictureProvider.cache.count, 2);
   });
 
   testWidgets('SvgPicture can work with a FittedBox',
@@ -532,7 +522,10 @@ void main() {
           svgStr,
           width: 100.0,
           height: 100.0,
-          color: const Color(0xFF990000),
+          colorFilter: const ColorFilter.mode(
+            Color(0xFF990000),
+            BlendMode.srcIn,
+          ),
         ),
       ),
     );
@@ -551,8 +544,10 @@ void main() {
           svgStr,
           width: 100.0,
           height: 100.0,
-          color: const Color(0xFF990000),
-          colorBlendMode: BlendMode.color,
+          colorFilter: const ColorFilter.mode(
+            Color(0xFF990000),
+            BlendMode.color,
+          ),
         ),
       ),
     );
@@ -585,22 +580,16 @@ void main() {
           svgData,
           width: 100.0,
           height: 100.0,
-          color: const Color(0xFF990000),
+          colorFilter: const ColorFilter.mode(
+            Color(0xFF990000),
+            BlendMode.srcIn,
+          ),
         ),
       ),
     );
 
     await tester.pumpAndSettle();
     await _checkWidgetAndGolden(key, 'text_color_filter.png');
-  });
-
-  testWidgets('Nested SVG elements report a FlutterError',
-      (WidgetTester tester) async {
-    await svg.fromSvgString(
-        '<svg viewBox="0 0 166 202"><svg viewBox="0 0 166 202"></svg></svg>',
-        'test');
-    final UnsupportedError error = tester.takeException() as UnsupportedError;
-    expect(error.message, 'Unsupported nested <svg> element.');
   });
 
   testWidgets('Can take AlignmentDirectional', (WidgetTester tester) async {
@@ -765,7 +754,6 @@ void main() {
           key: key,
           child: SvgPicture.string(
             svgStr,
-            theme: const SvgTheme(fontSize: 600),
           ),
         ),
       );
@@ -789,7 +777,6 @@ void main() {
           key: key,
           child: SvgPicture.string(
             svgStr,
-            theme: const SvgTheme(fontSize: 100),
           ),
         ),
       );
@@ -812,7 +799,6 @@ void main() {
           key: key,
           child: SvgPicture.string(
             svgStr,
-            theme: const SvgTheme(fontSize: 100),
           ),
         ),
       );
@@ -861,10 +847,6 @@ void main() {
           key: key,
           child: SvgPicture.string(
             svgStr,
-            theme: const SvgTheme(
-              fontSize: 1500,
-              xHeight: 600,
-            ),
           ),
         ),
       );
@@ -1047,13 +1029,11 @@ void main() {
     );
     expect(find.byKey(key), findsOneWidget);
     expect(info.debugHandleCount, 3);
-    PictureProvider.cache.clear();
+
     expect(info.debugHandleCount, 3);
 
     await tester.pumpWidget(const SizedBox.shrink());
     expect(info.debugHandleCount, 0);
-
-    PictureProvider.cache.maximumSize = oldCacheSize;
   });
 }
 

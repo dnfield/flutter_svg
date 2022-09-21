@@ -10,8 +10,9 @@ dependencies:
   meta: ^1.7.0
   path_drawing: ^1.0.1
   vector_math: ^2.1.2
-
-  xml: ^6.0.1
+  vector_graphics_codec: any
+  vector_graphics_compiler: any
+  vector_graphics: any
 
 dev_dependencies:
   flutter_test:
@@ -24,7 +25,13 @@ environment:
   flutter: ">=2.11.0-0.1.pre"
 
 ## For developing features that require new functionality in engine:
-# dependency_overrides:
+dependency_overrides:
+  vector_graphics_codec:
+    path: ../vector_graphics/packages/vector_graphics_codec
+  vector_graphics_compiler:
+    path: ../vector_graphics/packages/vector_graphics_compiler
+  vector_graphics:
+    path: ../vector_graphics/packages/vector_graphics
 #  sky_engine:
 #    path: /Users/dnfield/engine/src/out/host_debug_unopt/gen/dart-pkg/sky_engine
 #  sky_services:
