@@ -1,3 +1,4 @@
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:xml/xml_events.dart' as xml show parseEvents;
 
 import 'src/svg/parser_state.dart';
@@ -21,9 +22,10 @@ class SvgParser {
     SvgTheme theme = const SvgTheme(),
     String? key,
     bool warningsAsErrors = false,
+    bool? catchError,
   }) async {
     final SvgParserState state =
-        SvgParserState(xml.parseEvents(str), theme, key, warningsAsErrors);
+        SvgParserState(xml.parseEvents(str), theme, key, warningsAsErrors, catchError);
     return await state.parse();
   }
 }

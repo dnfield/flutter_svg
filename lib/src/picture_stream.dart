@@ -398,9 +398,13 @@ class OneFramePictureStreamCompleter extends PictureStreamCompleter {
   OneFramePictureStreamCompleter(
     Future<PictureInfo?> picture, {
     InformationCollector? informationCollector,
+    bool? catchError,
     // ignore: unnecessary_null_comparison
   }) : assert(picture != null) {
     picture.then<void>(setPicture, onError: (Object error, StackTrace stack) {
+      if (catchError == true) {
+        return;
+      }
       FlutterError.reportError(FlutterErrorDetails(
         exception: error,
         stack: stack,

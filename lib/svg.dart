@@ -53,8 +53,9 @@ class Svg {
     ColorFilter? colorFilter,
     String key, {
     SvgTheme theme = const SvgTheme(),
+    bool? catchError,
   }) async {
-    final DrawableRoot svgRoot = await fromSvgBytes(raw, key, theme: theme);
+    final DrawableRoot svgRoot = await fromSvgBytes(raw, key, theme: theme, catchError: catchError);
     final Picture pic = svgRoot.toPicture(
       clipToViewBox: allowDrawingOutsideOfViewBox == true ? false : true,
       colorFilter: colorFilter,
@@ -86,6 +87,7 @@ class Svg {
     ColorFilter? colorFilter,
     String key, {
     SvgTheme theme = const SvgTheme(),
+    bool? catchError,
   }) async {
     final DrawableRoot svgRoot = await fromSvgString(raw, key, theme: theme);
     final Picture pic = svgRoot.toPicture(
@@ -109,13 +111,14 @@ class Svg {
     Uint8List raw,
     String key, {
     SvgTheme theme = const SvgTheme(),
+    bool? catchError,
   }) async {
     // TODO(dnfield): do utf decoding in another thread?
     // Might just have to live with potentially slow(ish) decoding, this is causing errors.
     // See: https://github.com/dart-lang/sdk/issues/31954
     // See: https://github.com/flutter/flutter/blob/bf3bd7667f07709d0b817ebfcb6972782cfef637/packages/flutter/lib/src/services/asset_bundle.dart#L66
     // if (raw.lengthInBytes < 20 * 1024) {
-    return fromSvgString(utf8.decode(raw), key, theme: theme);
+    return fromSvgString(utf8.decode(raw), key, theme: theme, catchError: catchError);
     // } else {
     //   final String str =
     //       await compute(_utf8Decode, raw, debugLabel: 'UTF8 decode for SVG');
@@ -134,9 +137,10 @@ class Svg {
     String rawSvg,
     String key, {
     SvgTheme theme = const SvgTheme(),
+    bool? catchError,
   }) async {
     final SvgParser parser = SvgParser();
-    return await parser.parse(rawSvg, theme: theme, key: key);
+    return await parser.parse(rawSvg, theme: theme, key: key, catchError: catchError);
   }
 }
 
@@ -238,6 +242,7 @@ class SvgPicture extends StatefulWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
+    this.errorBuilder,
     this.colorFilter,
     this.semanticsLabel,
     this.excludeFromSemantics = false,
@@ -338,6 +343,7 @@ class SvgPicture extends StatefulWidget {
     this.alignment = Alignment.center,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
+    this.errorBuilder,
     Color? color,
     BlendMode colorBlendMode = BlendMode.srcIn,
     this.semanticsLabel,
@@ -357,7 +363,9 @@ class SvgPicture extends StatefulWidget {
               : null,
         ),
         colorFilter = _getColorFilter(color, colorBlendMode),
-        super(key: key);
+        super(key: key) {
+          // svg._catchError = errorBuilder != null;
+        }
 
   /// Creates a widget that displays a [PictureStream] obtained from the network.
   ///
@@ -402,6 +410,7 @@ class SvgPicture extends StatefulWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
+    this.errorBuilder,
     Color? color,
     BlendMode colorBlendMode = BlendMode.srcIn,
     this.semanticsLabel,
@@ -462,6 +471,7 @@ class SvgPicture extends StatefulWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
+    this.errorBuilder,
     Color? color,
     BlendMode colorBlendMode = BlendMode.srcIn,
     this.semanticsLabel,
@@ -518,6 +528,7 @@ class SvgPicture extends StatefulWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
+    this.errorBuilder,
     Color? color,
     BlendMode colorBlendMode = BlendMode.srcIn,
     this.semanticsLabel,
@@ -574,6 +585,7 @@ class SvgPicture extends StatefulWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
+    this.errorBuilder,
     Color? color,
     BlendMode colorBlendMode = BlendMode.srcIn,
     this.semanticsLabel,
@@ -604,48 +616,52 @@ class SvgPicture extends StatefulWidget {
   /// A [PictureInfoDecoderBuilder] for [Uint8List]s that will clip to the viewBox.
   static final PictureInfoDecoderBuilder<Uint8List> svgByteDecoderBuilder =
       (SvgTheme theme) =>
-          (Uint8List bytes, ColorFilter? colorFilter, String key) =>
+          (Uint8List bytes, ColorFilter? colorFilter, String key, bool? catchError) =>
               svg.svgPictureDecoder(
                 bytes,
                 false,
                 colorFilter,
                 key,
                 theme: theme,
+                catchError: catchError,
               );
 
   /// A [PictureInfoDecoderBuilder] for strings that will clip to the viewBox.
   static final PictureInfoDecoderBuilder<String> svgStringDecoderBuilder =
-      (SvgTheme theme) => (String data, ColorFilter? colorFilter, String key) =>
+      (SvgTheme theme) => (String data, ColorFilter? colorFilter, String key, bool? catchError) =>
           svg.svgPictureStringDecoder(
             data,
             false,
             colorFilter,
             key,
             theme: theme,
+            catchError: catchError,
           );
 
   /// A [PictureInfoDecoderBuilder] for [Uint8List]s that will not clip to the viewBox.
   static final PictureInfoDecoderBuilder<Uint8List>
       svgByteDecoderOutsideViewBoxBuilder = (SvgTheme theme) =>
-          (Uint8List bytes, ColorFilter? colorFilter, String key) =>
+          (Uint8List bytes, ColorFilter? colorFilter, String key, bool? catchError) =>
               svg.svgPictureDecoder(
                 bytes,
                 true,
                 colorFilter,
                 key,
                 theme: theme,
+                catchError: catchError,
               );
 
   /// A [PictureInfoDecoderBuilder] for [String]s that will not clip to the viewBox.
   static final PictureInfoDecoderBuilder<String>
       svgStringDecoderOutsideViewBoxBuilder = (SvgTheme theme) =>
-          (String data, ColorFilter? colorFilter, String key) =>
+          (String data, ColorFilter? colorFilter, String key, bool? catchError) =>
               svg.svgPictureStringDecoder(
                 data,
                 true,
                 colorFilter,
                 key,
                 theme: theme,
+                catchError: catchError,
               );
 
   /// If specified, the width to use for the SVG.  If unspecified, the SVG
@@ -689,6 +705,8 @@ class SvgPicture extends StatefulWidget {
 
   /// The placeholder to use while fetching, decoding, and parsing the SVG data.
   final WidgetBuilder? placeholderBuilder;
+
+  final WidgetBuilder? errorBuilder;
 
   /// If true, will horizontally flip the picture in [TextDirection.rtl] contexts.
   final bool matchTextDirection;
@@ -744,6 +762,7 @@ class _SvgPictureState extends State<SvgPicture> {
   PictureHandle? _handle;
   PictureStream? _pictureStream;
   bool _isListeningToStream = false;
+  bool hasError = false;
 
   @override
   void didChangeDependencies() {
@@ -804,10 +823,17 @@ class _SvgPictureState extends State<SvgPicture> {
   }
 
   void _resolveImage() {
+    final PictureErrorListener? errorListener = widget.errorBuilder != null ? _errorListener : null;
     final PictureStream newStream = widget.pictureProvider
-        .resolve(createLocalPictureConfiguration(context));
+        .resolve(createLocalPictureConfiguration(context), onError: errorListener);
     assert(newStream != null); // ignore: unnecessary_null_comparison
     _updateSourceStream(newStream);
+  }
+
+  void _errorListener(Object exception, StackTrace stackTrace) {
+    setState(() {
+      hasError = true;
+    });
   }
 
   void _handleImageChanged(PictureInfo? imageInfo, bool synchronousCall) {
@@ -815,6 +841,7 @@ class _SvgPictureState extends State<SvgPicture> {
       _handle?.dispose();
       _handle = imageInfo?.createHandle();
       _picture = imageInfo;
+      hasError = false;
     });
   }
 
@@ -864,6 +891,9 @@ class _SvgPictureState extends State<SvgPicture> {
   @override
   Widget build(BuildContext context) {
     late Widget child;
+    if (hasError && widget.errorBuilder != null) {
+      return widget.errorBuilder!(context);
+    }
     if (_picture != null) {
       final Rect viewport = Offset.zero & _picture!.viewport.size;
 

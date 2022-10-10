@@ -51,6 +51,8 @@ const List<String> iconNames = <String>[
 
 /// Assets to test network access.
 const List<String> uriNames = <String>[
+  'https://btcsecure.io/img/logo.svg',
+  'https://btcsecure.io/img/logo.svg',
   'http://upload.wikimedia.org/wikipedia/commons/0/02/SVG_logo.svg',
   'https://dev.w3.org/SVG/tools/svgweb/samples/svg-files/410.svg',
   'https://upload.wikimedia.org/wikipedia/commons/b/b4/Chess_ndd45.svg',
@@ -116,6 +118,12 @@ class _MyHomePageState extends State<_MyHomePage> {
             padding: const EdgeInsets.all(30.0),
             child: const CircularProgressIndicator(),
           ),
+          errorBuilder: (BuildContext context) {
+            return Container(
+              padding: const EdgeInsets.all(30.0),
+              child: const Text('Error Detected'),
+            );
+          },
         ),
       );
     }

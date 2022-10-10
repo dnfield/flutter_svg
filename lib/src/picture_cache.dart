@@ -88,8 +88,8 @@ class PictureCache {
       if (_cache.length == maximumSize && maximumSize > 0) {
         _cache.remove(_cache.keys.first)!.cached = false;
       }
-      result = loader();
     }
+    result = loader();
     if (maximumSize > 0) {
       assert(_cache.length < maximumSize);
       _cache[key] = result;

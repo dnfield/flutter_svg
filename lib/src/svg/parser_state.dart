@@ -2,6 +2,7 @@ import 'dart:collection';
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:path_drawing/path_drawing.dart';
 import 'package:vector_math/vector_math_64.dart';
 import 'package:xml/xml_events.dart' hide parseEvents;
@@ -288,7 +289,7 @@ class _Elements {
       final DrawableGradient? ref =
           parserState._definitions.getGradient<DrawableGradient>('url($href)');
       if (ref == null) {
-        reportMissingDef(parserState._key, href, 'radialGradient');
+        reportMissingDef(parserState._key, href, 'radialGradient', catchError: parserState._catchError);
       } else {
         if (gradientUnits == null) {
           isObjectBoundingBox =
@@ -375,7 +376,7 @@ class _Elements {
       final DrawableGradient? ref =
           parserState._definitions.getGradient<DrawableGradient>('url($href)');
       if (ref == null) {
-        reportMissingDef(parserState._key, href, 'linearGradient');
+        reportMissingDef(parserState._key, href, 'linearGradient', catchError: parserState._catchError);
       } else {
         if (gradientUnits == null) {
           isObjectBoundingBox =
@@ -792,6 +793,7 @@ class SvgParserState {
     this.theme,
     this._key,
     this._warningsAsErrors,
+    this._catchError,
   )   
   // ignore: unnecessary_null_comparison
   : assert(events != null),
@@ -805,6 +807,7 @@ class SvgParserState {
   final Iterator<XmlEvent> _eventIterator;
   final String? _key;
   final bool _warningsAsErrors;
+  final bool? _catchError;
   final DrawableDefinitionServer _definitions = DrawableDefinitionServer();
   final Queue<_SvgGroupTuple> _parentDrawables = ListQueue<_SvgGroupTuple>(10);
   DrawableRoot? _root;
@@ -1293,7 +1296,7 @@ class SvgParserState {
   }) {
     final Shader? shader = definitions.getShader(iri, bounds);
     if (shader == null) {
-      reportMissingDef(key, iri, '_getDefinitionPaint');
+      reportMissingDef(key, iri, '_getDefinitionPaint', catchError: _catchError);
     }
 
     return DrawablePaint(

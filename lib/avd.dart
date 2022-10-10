@@ -181,22 +181,22 @@ class AvdPicture extends StatefulWidget {
 
   /// A [PictureInfoDecoder] for [Uint8List]s that will clip to the viewBox.
   static final PictureInfoDecoder<Uint8List> avdByteDecoder =
-      (Uint8List bytes, ColorFilter? colorFilter, String key) =>
+      (Uint8List bytes, ColorFilter? colorFilter, String key, bool? _) =>
           avd.avdPictureDecoder(bytes, false, colorFilter, key);
 
   /// A [PictureInfoDecoder] for strings that will clip to the viewBox.
   static final PictureInfoDecoder<String> avdStringDecoder =
-      (String data, ColorFilter? colorFilter, String key) =>
+      (String data, ColorFilter? colorFilter, String key, bool? _) =>
           avd.avdPictureStringDecoder(data, false, colorFilter, key);
 
   /// A [PictureInfoDecoder] for [Uint8List]s that will not clip to the viewBox.
   static final PictureInfoDecoder<Uint8List> avdByteDecoderOutsideViewBox =
-      (Uint8List bytes, ColorFilter? colorFilter, String key) =>
+      (Uint8List bytes, ColorFilter? colorFilter, String key, bool? _) =>
           avd.avdPictureDecoder(bytes, true, colorFilter, key);
 
   /// A [PictureInfoDecoder] for [String]s that will not clip to the viewBox.
   static final PictureInfoDecoder<String> avdStringDecoderOutsideViewBox =
-      (String data, ColorFilter? colorFilter, String key) =>
+      (String data, ColorFilter? colorFilter, String key, bool? _) =>
           avd.avdPictureStringDecoder(data, true, colorFilter, key);
 
   /// The [PictureProvider] used to resolve the AVD.

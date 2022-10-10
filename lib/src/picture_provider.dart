@@ -11,6 +11,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart'
     show BuildContext, DefaultAssetBundle, Directionality, Localizations;
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'picture_cache.dart';
 import 'picture_stream.dart';
@@ -26,6 +27,7 @@ typedef PictureInfoDecoder<T> = Future<PictureInfo> Function(
   T data,
   ColorFilter? colorFilter,
   String key,
+  bool? catchError,
 );
 
 /// The signature of a builder that returns a [PictureInfoDecoder]
@@ -533,6 +535,7 @@ abstract class AssetBundlePictureProvider
         DiagnosticsProperty<PictureProvider>('Picture provider', this),
         DiagnosticsProperty<AssetBundlePictureKey>('Picture key', key),
       ],
+      catchError: onError != null,
     );
   }
 
@@ -550,12 +553,13 @@ abstract class AssetBundlePictureProvider
         data,
         key.colorFilter,
         key.toString(),
+        true,
       ).catchError((Object error, StackTrace stack) {
         onError(error, stack);
         return Future<PictureInfo>.error(error, stack);
       });
     }
-    return decoder(data, key.colorFilter, key.toString());
+    return decoder(data, key.colorFilter, key.toString(), false);
   }
 }
 
@@ -633,6 +637,7 @@ class NetworkPicture
         DiagnosticsProperty<PictureKey<NetworkPictureKeyData>>(
             'Picture key', key),
       ],
+      catchError: onError != null,
     );
   }
 
@@ -647,12 +652,13 @@ class NetworkPicture
         bytes,
         colorFilter,
         key.toString(),
+        true,
       ).catchError((Object error, StackTrace stack) {
         onError(error, stack);
         return Future<PictureInfo>.error(error, stack);
       });
     }
-    return decoder(bytes, colorFilter, key.toString());
+    return decoder(bytes, colorFilter, key.toString(), false);
   }
 
   @override
@@ -698,6 +704,7 @@ class FilePicture extends PictureProvider<PictureKey<String>, Uint8List> {
       informationCollector: () => <DiagnosticsNode>[
         DiagnosticsProperty<String>('Path', file.path),
       ],
+      catchError: onError != null,
     );
   }
 
@@ -714,12 +721,13 @@ class FilePicture extends PictureProvider<PictureKey<String>, Uint8List> {
         data,
         colorFilter,
         key.toString(),
+        true,
       ).catchError((Object error, StackTrace stack) async {
         onError(error, stack);
         return Future<PictureInfo>.error(error, stack);
       });
     }
-    return decoder(data, colorFilter, key.toString());
+    return decoder(data, colorFilter, key.toString(), false);
   }
 
   @override
@@ -776,12 +784,13 @@ class MemoryPicture extends PictureProvider<PictureKey<Uint8List>, Uint8List> {
         bytes,
         colorFilter,
         key.toString(),
+        true,
       ).catchError((Object error, StackTrace stack) {
         onError(error, stack);
         return Future<PictureInfo>.error(error, stack);
       });
     }
-    return decoder(bytes, colorFilter, key.toString());
+    return decoder(bytes, colorFilter, key.toString(), false);
   }
 
   @override
@@ -839,12 +848,13 @@ class StringPicture extends PictureProvider<PictureKey<String>, String> {
         string,
         colorFilter,
         key.toString(),
+        true,
       ).catchError((Object error, StackTrace stack) {
         onError(error, stack);
         return Future<PictureInfo>.error(error, stack);
       });
     }
-    return decoder(string, colorFilter, key.toString());
+    return decoder(string, colorFilter, key.toString(), false);
   }
 
   @override
