@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
-import 'package:vector_graphics/vector_graphics.dart';
+import 'package:vector_graphics/vector_graphics_compat.dart';
 import 'package:vector_graphics_compiler/vector_graphics_compiler.dart';
 
 import 'src/loaders.dart';
@@ -408,7 +408,7 @@ class SvgPicture extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return VectorGraphic(
+    return createCompatVectorGraphic(
       loader: bytesLoader,
       width: width,
       height: height,
