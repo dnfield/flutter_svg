@@ -7,16 +7,27 @@ import 'package:flutter_svg/src/utilities/http.dart';
 import 'package:vector_graphics/vector_graphics.dart';
 import 'package:vector_graphics_compiler/vector_graphics_compiler.dart';
 
+final ComputeImpl _computeImpl = Platform.executable.endsWith('flutter_tester')
+    ? <Q, R>(ComputeCallback<Q, R> callback, Q message,
+            {String? debugLabel}) async =>
+        await callback(message)
+    : compute;
+
 class SvgStringLoader extends BytesLoader {
-  const SvgStringLoader(this.svg);
+  const SvgStringLoader(
+    this.svg, {
+    this.theme = const SvgTheme(),
+  });
 
   final String svg;
+  final SvgTheme theme;
 
   @override
   Future<ByteData> loadBytes(BuildContext context) async {
-    return await compute((String svg) async {
+    return await _computeImpl((String svg) async {
       final Uint8List compiledBytes = await encodeSvg(
         xml: svg,
+        theme: theme,
         debugName: 'Svg loader',
         enableClippingOptimizer: false,
         enableMaskingOptimizer: false,
@@ -28,15 +39,20 @@ class SvgStringLoader extends BytesLoader {
 }
 
 class SvgBytesLoader extends BytesLoader {
-  const SvgBytesLoader(this.svg);
+  const SvgBytesLoader(
+    this.svg, {
+    this.theme = const SvgTheme(),
+  });
 
   final Uint8List svg;
+  final SvgTheme theme;
 
   @override
   Future<ByteData> loadBytes(BuildContext context) async {
-    return await compute((_) async {
+    return await _computeImpl((_) async {
       final Uint8List compiledBytes = await encodeSvg(
         xml: utf8.decode(svg),
+        theme: theme,
         debugName: 'Svg loader',
         enableClippingOptimizer: false,
         enableMaskingOptimizer: false,
@@ -48,17 +64,22 @@ class SvgBytesLoader extends BytesLoader {
 }
 
 class SvgFileLoader extends BytesLoader {
-  const SvgFileLoader(this.file);
+  const SvgFileLoader(
+    this.file, {
+    this.theme = const SvgTheme(),
+  });
 
   final File file;
+  final SvgTheme theme;
 
   @override
   Future<ByteData> loadBytes(BuildContext context) async {
     final Uint8List bytes = file.readAsBytesSync();
 
-    return await compute((_) async {
+    return await _computeImpl((_) async {
       final Uint8List compiledBytes = await encodeSvg(
         xml: utf8.decode(bytes),
+        theme: theme,
         debugName: file.path,
         enableClippingOptimizer: false,
         enableMaskingOptimizer: false,
@@ -70,20 +91,27 @@ class SvgFileLoader extends BytesLoader {
 }
 
 class SvgAssetLoader extends BytesLoader {
-  const SvgAssetLoader(this.assetName, {this.packageName, this.assetBundle});
+  const SvgAssetLoader(
+    this.assetName, {
+    this.packageName,
+    this.assetBundle,
+    this.theme = const SvgTheme(),
+  });
 
   final String assetName;
   final String? packageName;
   final AssetBundle? assetBundle;
+  final SvgTheme theme;
 
   @override
   Future<ByteData> loadBytes(BuildContext context) async {
     final ByteData bytes =
         await (assetBundle ?? DefaultAssetBundle.of(context)).load(assetName);
 
-    return await compute((_) async {
+    return await _computeImpl((_) async {
       final Uint8List compiledBytes = await encodeSvg(
         xml: utf8.decode(bytes.buffer.asUint8List()),
+        theme: theme,
         debugName: assetName,
         enableClippingOptimizer: false,
         enableMaskingOptimizer: false,
@@ -106,18 +134,23 @@ class SvgAssetLoader extends BytesLoader {
 }
 
 class SvgNetworkLoader extends BytesLoader {
-  const SvgNetworkLoader(this.url, {this.headers});
+  const SvgNetworkLoader(
+    this.url, {
+    this.headers,
+    this.theme = const SvgTheme(),
+  });
 
   final String url;
-
   final Map<String, String>? headers;
+  final SvgTheme theme;
 
   @override
   Future<ByteData> loadBytes(BuildContext context) async {
-    return await compute((String svgUrl) async {
+    return await _computeImpl((String svgUrl) async {
       final Uint8List bytes = await httpGet(svgUrl, headers: headers);
       final Uint8List compiledBytes = await encodeSvg(
         xml: utf8.decode(bytes),
+        theme: theme,
         debugName: svgUrl,
         enableClippingOptimizer: false,
         enableMaskingOptimizer: false,

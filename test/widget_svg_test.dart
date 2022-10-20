@@ -4,7 +4,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' show window;
 
-import 'package:flutter/rendering.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -73,82 +73,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(ColorFiltered), findsNothing);
-  });
-
-  testWidgets('SvgPicture does not invalidate the cache when color changes',
-      (WidgetTester tester) async {
-    await tester.pumpWidget(
-      SvgPicture.string(
-        svgStr,
-        width: 100.0,
-        height: 100.0,
-        colorFilter: const Color(0xFF990000),
-      ),
-    );
-
-    await tester.pumpWidget(
-      SvgPicture.string(
-        svgStr,
-        width: 100.0,
-        height: 100.0,
-        colorFilter: const Color(0xFF990099),
-      ),
-    );
-  });
-
-  testWidgets(
-      'SvgPicture does invalidate the cache when color changes and color filter is cached',
-      (WidgetTester tester) async {
-    await tester.pumpWidget(
-      SvgPicture.string(
-        svgStr,
-        width: 100.0,
-        height: 100.0,
-        colorFilter: const Color(0xFF990000),
-        cacheColorFilter: true,
-      ),
-    );
-
-    await tester.pumpWidget(
-      SvgPicture.string(
-        svgStr,
-        width: 100.0,
-        height: 100.0,
-        colorFilter: const ColorFilter.mode(
-          Color(0xFF990099),
-          BlendMode.srcIn,
-        ),
-        cacheColorFilter: true,
-      ),
-    );
-  });
-
-  testWidgets(
-      'SvgPicture does invalidate the cache when color changes and color filter is cached (override)',
-      (WidgetTester tester) async {
-    await tester.pumpWidget(
-      SvgPicture.string(
-        svgStr,
-        width: 100.0,
-        height: 100.0,
-        colorFilter: const ColorFilter.mode(
-          Color(0xFF990000),
-          BlendMode.srcIn,
-        ),
-      ),
-    );
-
-    await tester.pumpWidget(
-      SvgPicture.string(
-        svgStr,
-        width: 100.0,
-        height: 100.0,
-        colorFilter: const ColorFilter.mode(
-          Color(0xFF990099),
-          BlendMode.srcIn,
-        ),
-      ),
-    );
   });
 
   testWidgets('SvgPicture can work with a FittedBox',
@@ -603,142 +527,6 @@ void main() {
     expect(find.byType(SvgPicture), findsOneWidget);
   });
 
-  testWidgets('SvgPicture.string respects clipBehavior',
-      (WidgetTester tester) async {
-    await tester.pumpWidget(Directionality(
-      textDirection: TextDirection.ltr,
-      child: SvgPicture.string(svgStr),
-    ));
-    await tester.pumpAndSettle();
-
-    // Check that the render object has received the default clip behavior.
-    final RenderFittedBox renderObject =
-        tester.allRenderObjects.whereType<RenderFittedBox>().first;
-    expect(renderObject.clipBehavior, equals(Clip.hardEdge));
-
-    // Pump a new widget to check that the render object can update its clip
-    // behavior.
-    await tester.pumpWidget(
-      Directionality(
-        textDirection: TextDirection.ltr,
-        child: SvgPicture.string(svgStr, clipBehavior: Clip.antiAlias),
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(renderObject.clipBehavior, equals(Clip.antiAlias));
-  });
-
-  testWidgets('SvgPicture.asset respects clipBehavior',
-      (WidgetTester tester) async {
-    final FakeAssetBundle fakeAsset = FakeAssetBundle();
-    await tester.pumpWidget(Directionality(
-      textDirection: TextDirection.ltr,
-      child: SvgPicture.asset(
-        'test.svg',
-        bundle: fakeAsset,
-      ),
-    ));
-    await tester.pumpAndSettle();
-
-    // Check that the render object has received the default clip behavior.
-    final RenderFittedBox renderObject =
-        tester.allRenderObjects.whereType<RenderFittedBox>().first;
-    expect(renderObject.clipBehavior, equals(Clip.hardEdge));
-
-    // Pump a new widget to check that the render object can update its clip
-    // behavior.
-    await tester.pumpWidget(
-      Directionality(
-        textDirection: TextDirection.ltr,
-        child: SvgPicture.asset(
-          'test.svg',
-          bundle: fakeAsset,
-          clipBehavior: Clip.antiAlias,
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(renderObject.clipBehavior, equals(Clip.antiAlias));
-  });
-
-  testWidgets('SvgPicture.memory respects clipBehavior',
-      (WidgetTester tester) async {
-    await tester.pumpWidget(Directionality(
-      textDirection: TextDirection.ltr,
-      child: SvgPicture.memory(svgBytes),
-    ));
-    await tester.pumpAndSettle();
-
-    // Check that the render object has received the default clip behavior.
-    final RenderFittedBox renderObject =
-        tester.allRenderObjects.whereType<RenderFittedBox>().first;
-    expect(renderObject.clipBehavior, equals(Clip.hardEdge));
-
-    // Pump a new widget to check that the render object can update its clip
-    // behavior.
-    await tester.pumpWidget(
-      Directionality(
-        textDirection: TextDirection.ltr,
-        child: SvgPicture.memory(svgBytes, clipBehavior: Clip.antiAlias),
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(renderObject.clipBehavior, equals(Clip.antiAlias));
-  });
-
-  testWidgets('SvgPicture.network respects clipBehavior',
-      (WidgetTester tester) async {
-    await HttpOverrides.runZoned(() async {
-      await tester.pumpWidget(
-        Directionality(
-          textDirection: TextDirection.ltr,
-          child: SvgPicture.network('test.svg'),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Check that the render object has received the default clip behavior.
-      final RenderFittedBox renderObject =
-          tester.allRenderObjects.whereType<RenderFittedBox>().first;
-      expect(renderObject.clipBehavior, equals(Clip.hardEdge));
-
-      // Pump a new widget to check that the render object can update its clip
-      // behavior.
-      await tester.pumpWidget(
-        Directionality(
-          textDirection: TextDirection.ltr,
-          child: SvgPicture.network('test.svg', clipBehavior: Clip.antiAlias),
-        ),
-      );
-      await tester.pumpAndSettle();
-      expect(renderObject.clipBehavior, equals(Clip.antiAlias));
-    }, createHttpClient: (SecurityContext? c) => fakeHttpClient);
-  });
-
-  testWidgets('SvgPicture respects clipBehavior', (WidgetTester tester) async {
-    await tester.pumpWidget(Directionality(
-      textDirection: TextDirection.ltr,
-      child: SvgPicture.string(svgStr),
-    ));
-    await tester.pumpAndSettle();
-
-    // Check that the render object has received the default clip behavior.
-    final RenderFittedBox renderObject =
-        tester.allRenderObjects.whereType<RenderFittedBox>().first;
-    expect(renderObject.clipBehavior, equals(Clip.hardEdge));
-
-    // Pump a new widget to check that the render object can update its clip
-    // behavior.
-    await tester.pumpWidget(
-      Directionality(
-        textDirection: TextDirection.ltr,
-        child: SvgPicture.string(svgStr, clipBehavior: Clip.antiAlias),
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(renderObject.clipBehavior, equals(Clip.antiAlias));
-  });
-
   group('SvgPicture respects em units', () {
     testWidgets('circle (cx, cy, r)', (WidgetTester tester) async {
       final GlobalKey key = GlobalKey();
@@ -754,6 +542,7 @@ void main() {
           key: key,
           child: SvgPicture.string(
             svgStr,
+            theme: const SvgTheme(fontSize: 600),
           ),
         ),
       );
@@ -777,6 +566,7 @@ void main() {
           key: key,
           child: SvgPicture.string(
             svgStr,
+            theme: const SvgTheme(fontSize: 100),
           ),
         ),
       );
@@ -799,6 +589,7 @@ void main() {
           key: key,
           child: SvgPicture.string(
             svgStr,
+            theme: const SvgTheme(fontSize: 100),
           ),
         ),
       );
@@ -847,12 +638,16 @@ void main() {
           key: key,
           child: SvgPicture.string(
             svgStr,
+            theme: const SvgTheme(
+              fontSize: 1500,
+              xHeight: 600,
+            ),
           ),
         ),
       );
 
       await tester.pumpAndSettle();
-      await _checkWidgetAndGolden(key, 'circle.em_ex.png');
+      await _checkWidgetAndGolden(key, 'circle.em_ex2.png');
     });
 
     testWidgets('rect (x, y, width, height, rx, ry)',
@@ -879,7 +674,7 @@ void main() {
       );
 
       await tester.pumpAndSettle();
-      await _checkWidgetAndGolden(key, 'rect.em_ex.png');
+      await _checkWidgetAndGolden(key, 'rect.em_ex2.png');
     });
 
     testWidgets('ellipse (cx, cy, rx, ry)', (WidgetTester tester) async {
@@ -905,7 +700,7 @@ void main() {
       );
 
       await tester.pumpAndSettle();
-      await _checkWidgetAndGolden(key, 'ellipse.em_ex.png');
+      await _checkWidgetAndGolden(key, 'ellipse.em_ex2.png');
     });
 
     testWidgets('line (x1, y1, x2, y2)', (WidgetTester tester) async {
@@ -932,7 +727,7 @@ void main() {
       );
 
       await tester.pumpAndSettle();
-      await _checkWidgetAndGolden(key, 'line.em_ex.png');
+      await _checkWidgetAndGolden(key, 'line.em_ex2.png');
     });
   });
 
@@ -956,117 +751,17 @@ void main() {
       matchesGoldenFile('golden_widget/two_of_same.png'),
     );
   });
-
-  testWidgets(
-      'Update widget without a cache does not result in an disposed picture',
-      (WidgetTester tester) async {
-    final int oldCacheSize = PictureProvider.cache.maximumSize;
-    PictureProvider.cache.maximumSize = 0;
-    final GlobalKey key = GlobalKey();
-
-    await tester.pumpWidget(
-      Directionality(
-        textDirection: TextDirection.ltr,
-        child: SvgPicture(
-            FakePictureProvider(
-              SvgPicture.svgStringDecoderBuilder,
-              simpleSvg,
-            ),
-            key: key),
-      ),
-    );
-
-    expect(find.byKey(key), findsOneWidget);
-
-    // Update the widget with a new incompatible key.
-    await tester.pumpWidget(
-      Directionality(
-        textDirection: TextDirection.ltr,
-        child: SvgPicture(
-            FakePictureProvider(
-              SvgPicture.svgStringDecoderBuilder,
-              stickFigureSvgStr,
-            ),
-            key: key),
-      ),
-    );
-
-    expect(find.byKey(key), findsOneWidget);
-    await tester.pumpAndSettle();
-    PictureProvider.cache.maximumSize = oldCacheSize;
-  });
-
-  testWidgets('state maintains a handle', (WidgetTester tester) async {
-    final int oldCacheSize = PictureProvider.cache.maximumSize;
-    PictureProvider.cache.maximumSize = 1;
-    final GlobalKey key = GlobalKey();
-    final FakePictureProvider provider = FakePictureProvider(
-      SvgPicture.svgStringDecoderBuilder,
-      simpleSvg,
-    );
-
-    final PictureStream stream = provider.resolve(
-      createLocalPictureConfiguration(key.currentContext),
-    );
-    final Completer<PictureInfo> completer = Completer<PictureInfo>();
-    void listener(PictureInfo? info, bool syncCall) {
-      completer.complete(info!);
-    }
-
-    stream.addListener(listener);
-
-    final PictureInfo info = await completer.future;
-    expect(info.debugHandleCount, 1);
-    stream.removeListener(listener);
-    // Still in cache.
-    expect(info.debugHandleCount, 1);
-
-    await tester.pumpWidget(
-      Directionality(
-        textDirection: TextDirection.ltr,
-        child: SvgPicture(provider, key: key),
-      ),
-    );
-    expect(find.byKey(key), findsOneWidget);
-    expect(info.debugHandleCount, 3);
-
-    expect(info.debugHandleCount, 3);
-
-    await tester.pumpWidget(const SizedBox.shrink());
-    expect(info.debugHandleCount, 0);
-  });
-}
-
-class FakePictureProvider extends StringPicture {
-  FakePictureProvider(
-    PictureInfoDecoderBuilder<String> decoderBuilder,
-    String string,
-  ) : super(decoderBuilder, string);
-
-  int resolveCount = 0;
-
-  @override
-  PictureStream resolve(
-    PictureConfiguration picture, {
-    PictureErrorListener? onError,
-  }) {
-    resolveCount += 1;
-    return super.resolve(picture, onError: onError);
-  }
-
-  @override
-  // ignore: hash_and_equals, avoid_equals_and_hash_code_on_mutable_classes
-  bool operator ==(Object other) {
-    // Picture providers should be compared based on key. Make sure tests don't
-    // cheat this check by using an identical provider.
-    return false;
-  }
 }
 
 class FakeAssetBundle extends Fake implements AssetBundle {
   @override
   Future<String> loadString(String key, {bool cache = true}) async {
     return svgStr;
+  }
+
+  @override
+  Future<ByteData> load(String key) async {
+    return Uint8List.fromList(utf8.encode(svgStr)).buffer.asByteData();
   }
 }
 

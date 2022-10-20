@@ -6,6 +6,9 @@ import 'package:vector_graphics_compiler/vector_graphics_compiler.dart';
 import 'src/loaders.dart';
 import 'src/utilities/file.dart';
 
+export 'package:vector_graphics_compiler/vector_graphics_compiler.dart'
+    show SvgTheme;
+
 /// A widget that will parse SVG data for rendering on screen.
 class SvgPicture extends StatelessWidget {
   /// Instantiates a widget that renders an SVG picture using the `pictureProvider`.
@@ -43,7 +46,7 @@ class SvgPicture extends StatelessWidget {
     this.colorFilter,
     this.semanticsLabel,
     this.excludeFromSemantics = false,
-    this.theme,
+    this.theme = const SvgTheme(),
   }) : super(key: key);
 
   /// Instantiates a widget that renders an SVG picture from an [AssetBundle].
@@ -141,11 +144,12 @@ class SvgPicture extends StatelessWidget {
     this.colorFilter,
     this.semanticsLabel,
     this.excludeFromSemantics = false,
-    this.theme,
+    this.theme = const SvgTheme(),
   })  : bytesLoader = SvgAssetLoader(
           assetName,
           packageName: package,
           assetBundle: bundle,
+          theme: theme,
         ),
         super(key: key);
 
@@ -195,8 +199,8 @@ class SvgPicture extends StatelessWidget {
     this.colorFilter,
     this.semanticsLabel,
     this.excludeFromSemantics = false,
-    this.theme,
-  })  : bytesLoader = SvgNetworkLoader(url, headers: headers),
+    this.theme = const SvgTheme(),
+  })  : bytesLoader = SvgNetworkLoader(url, headers: headers, theme: theme),
         super(key: key);
 
   /// Creates a widget that displays a [PictureStream] obtained from a [File].
@@ -242,8 +246,8 @@ class SvgPicture extends StatelessWidget {
     this.colorFilter,
     this.semanticsLabel,
     this.excludeFromSemantics = false,
-    this.theme,
-  })  : bytesLoader = SvgFileLoader(file),
+    this.theme = const SvgTheme(),
+  })  : bytesLoader = SvgFileLoader(file, theme: theme),
         super(key: key);
 
   /// Creates a widget that displays a [PictureStream] obtained from a [Uint8List].
@@ -286,8 +290,8 @@ class SvgPicture extends StatelessWidget {
     this.colorFilter,
     this.semanticsLabel,
     this.excludeFromSemantics = false,
-    this.theme,
-  })  : bytesLoader = SvgBytesLoader(bytes),
+    this.theme = const SvgTheme(),
+  })  : bytesLoader = SvgBytesLoader(bytes, theme: theme),
         super(key: key);
 
   /// Creates a widget that displays a [PictureStream] obtained from a [String].
@@ -330,8 +334,8 @@ class SvgPicture extends StatelessWidget {
     this.colorFilter,
     this.semanticsLabel,
     this.excludeFromSemantics = false,
-    this.theme,
-  })  : bytesLoader = SvgStringLoader(string),
+    this.theme = const SvgTheme(),
+  })  : bytesLoader = SvgStringLoader(string, theme: theme),
         super(key: key);
 
   /// The default placeholder for a SVG that may take time to parse or
@@ -404,7 +408,7 @@ class SvgPicture extends StatelessWidget {
   final ColorFilter? colorFilter;
 
   /// The theme used when parsing SVG elements.
-  final SvgTheme? theme;
+  final SvgTheme theme;
 
   @override
   Widget build(BuildContext context) {
