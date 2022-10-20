@@ -47,7 +47,7 @@ String? getAttribute(
     raw = _getAttribute(el, name);
   }
 
-  return raw == '' ? def : raw;
+  return (raw == '' || raw == 'null') ? def : raw;
 }
 
 String _getAttribute(
