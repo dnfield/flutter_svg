@@ -8,8 +8,9 @@ import 'package:vector_graphics/vector_graphics.dart';
 import 'package:vector_graphics_compiler/vector_graphics_compiler.dart';
 
 /// Compute will mess up tests because of FakeAsync.
-final bool _isTest = Platform.executable.endsWith('flutter_tester') ||
-    Platform.executable.endsWith('flutter_tester.exe');
+final bool _isTest =
+    kDebugMode && !kIsWeb && Platform.executable.endsWith('flutter_tester') ||
+        Platform.executable.endsWith('flutter_tester.exe');
 
 final ComputeImpl _computeImpl = _isTest
     ? <Q, R>(ComputeCallback<Q, R> callback, Q message,
@@ -97,9 +98,8 @@ class SvgFileLoader extends BytesLoader {
 
   @override
   Future<ByteData> loadBytes(BuildContext context) async {
-    final Uint8List bytes = file.readAsBytesSync();
-
-    return await _computeImpl((_) async {
+    return await _computeImpl((File file) async {
+      final Uint8List bytes = file.readAsBytesSync();
       final Uint8List compiledBytes = await encodeSvg(
         xml: utf8.decode(bytes),
         theme: theme,
@@ -109,7 +109,7 @@ class SvgFileLoader extends BytesLoader {
         enableOverdrawOptimizer: false,
       );
       return compiledBytes.buffer.asByteData();
-    }, null, debugLabel: 'Load Bytes');
+    }, file, debugLabel: 'Load Bytes');
   }
 }
 
