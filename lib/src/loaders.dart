@@ -1,22 +1,13 @@
 import 'dart:convert' show utf8;
-import 'dart:io';
+import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/src/utilities/http.dart';
 import 'package:vector_graphics/vector_graphics.dart';
 import 'package:vector_graphics_compiler/vector_graphics_compiler.dart';
 
-/// Compute will mess up tests because of FakeAsync.
-final bool _isTest =
-    kDebugMode && !kIsWeb && Platform.executable.endsWith('flutter_tester') ||
-        Platform.executable.endsWith('flutter_tester.exe');
-
-final ComputeImpl _computeImpl = _isTest
-    ? <Q, R>(ComputeCallback<Q, R> callback, Q message,
-            {String? debugLabel}) async =>
-        await callback(message)
-    : compute;
+import 'utilities/compute.dart';
+import 'utilities/file.dart';
 
 /// A [BytesLoader] that parses an SVG string in an isolate and creates a
 /// vector_graphics binary representation.
@@ -35,7 +26,7 @@ class SvgStringLoader extends BytesLoader {
 
   @override
   Future<ByteData> loadBytes(BuildContext context) async {
-    return await _computeImpl((String svg) async {
+    return await compute((String svg) async {
       final Uint8List compiledBytes = await encodeSvg(
         xml: svg,
         theme: theme,
@@ -67,7 +58,7 @@ class SvgBytesLoader extends BytesLoader {
 
   @override
   Future<ByteData> loadBytes(BuildContext context) async {
-    return await _computeImpl((_) async {
+    return await compute((_) async {
       final Uint8List compiledBytes = await encodeSvg(
         xml: utf8.decode(svg),
         theme: theme,
@@ -98,7 +89,7 @@ class SvgFileLoader extends BytesLoader {
 
   @override
   Future<ByteData> loadBytes(BuildContext context) async {
-    return await _computeImpl((File file) async {
+    return await compute((File file) async {
       final Uint8List bytes = file.readAsBytesSync();
       final Uint8List compiledBytes = await encodeSvg(
         xml: utf8.decode(bytes),
@@ -141,7 +132,7 @@ class SvgAssetLoader extends BytesLoader {
     final ByteData bytes =
         await (assetBundle ?? DefaultAssetBundle.of(context)).load(assetName);
 
-    return await _computeImpl((_) async {
+    return await compute((_) async {
       final Uint8List compiledBytes = await encodeSvg(
         xml: utf8.decode(bytes.buffer.asUint8List()),
         theme: theme,
@@ -187,7 +178,7 @@ class SvgNetworkLoader extends BytesLoader {
 
   @override
   Future<ByteData> loadBytes(BuildContext context) async {
-    return await _computeImpl((String svgUrl) async {
+    return await compute((String svgUrl) async {
       final Uint8List bytes = await httpGet(svgUrl, headers: headers);
       final Uint8List compiledBytes = await encodeSvg(
         xml: utf8.decode(bytes),
