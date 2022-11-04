@@ -8,6 +8,7 @@ import 'src/utilities/file.dart';
 
 export 'package:vector_graphics_compiler/vector_graphics_compiler.dart'
     show SvgTheme;
+export 'src/loaders.dart';
 
 /// A widget that will parse SVG data for rendering on screen.
 class SvgPicture extends StatelessWidget {
