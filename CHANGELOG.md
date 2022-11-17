@@ -12,7 +12,7 @@
 - Parse SVG data in background isolate by default.
 - Use widgets/rendering strategy from `vector_graphics`.
 - Much less caching.
-- More tests work without special handling - most of parsing is now async,
+- More tests work without special handling - most of parsing is now sync,
   and the loaders know how to avoid using `compute` in tests. For SVGs that
   contain images, `vg.waitForPendingDecodes` is available.
 
