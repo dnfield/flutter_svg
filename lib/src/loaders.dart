@@ -1,5 +1,6 @@
 import 'dart:convert' show utf8;
 
+import 'package:flutter/foundation.dart' hide compute;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/src/utilities/http.dart';
@@ -9,98 +10,134 @@ import 'package:vector_graphics_compiler/vector_graphics_compiler.dart';
 import 'utilities/compute.dart';
 import 'utilities/file.dart';
 
-/// A [BytesLoader] that parses an SVG string in an isolate and creates a
+/// A [BytesLoader] that parses a SVG data in an isolate and creates a
 /// vector_graphics binary representation.
-class SvgStringLoader extends BytesLoader {
+abstract class SvgLoader<T> extends BytesLoader {
   /// See class doc.
-  const SvgStringLoader(
-    this.svg, {
+  const SvgLoader({
     this.theme = const SvgTheme(),
+    this.colorMapper,
   });
-
-  /// The raw XML string.
-  final String svg;
 
   /// The theme to determine currentColor and font sizing attributes.
   final SvgTheme theme;
 
+  /// The [ColorMapper] used to transform colors from the SVG, if any.
+  final ColorMapper? colorMapper;
+
+  /// Will be called in [compute] with the result of [prepareMessage].
+  String svg(T? message);
+
+  /// Will be called
+  Future<T?> prepareMessage(BuildContext? context) =>
+      SynchronousFuture<T?>(null);
+
+  /// This method intentionally avoids using `await` to avoid unnecessary event
+  /// loop turns. This is meant to to help tests in particular.
   @override
-  Future<ByteData> loadBytes(BuildContext? context) async {
-    return await compute((String svg) async {
-      final Uint8List compiledBytes = await encodeSvg(
-        xml: svg,
-        theme: theme,
-        debugName: 'Svg loader',
-        enableClippingOptimizer: false,
-        enableMaskingOptimizer: false,
-        enableOverdrawOptimizer: false,
-      );
-      return compiledBytes.buffer.asByteData();
-    }, svg, debugLabel: 'Load Bytes');
+  Future<ByteData> loadBytes(BuildContext? context) {
+    return prepareMessage(context).then((T? message) {
+      return compute((T? message) {
+        return encodeSvg(
+          xml: svg(message),
+          theme: theme,
+          colorMapper: colorMapper,
+          debugName: 'Svg loader',
+          enableClippingOptimizer: false,
+          enableMaskingOptimizer: false,
+          enableOverdrawOptimizer: false,
+        ).buffer.asByteData();
+      }, message, debugLabel: 'Load Bytes');
+    });
+  }
+}
+
+/// A [BytesLoader] that parses an SVG string in an isolate and creates a
+/// vector_graphics binary representation.
+class SvgStringLoader extends SvgLoader<void> {
+  /// See class doc.
+  const SvgStringLoader(
+    this._svg, {
+    super.theme,
+    super.colorMapper,
+  });
+
+  final String _svg;
+
+  @override
+  String svg(void message) {
+    return _svg;
+  }
+
+  @override
+  int get hashCode => Object.hash(svg, theme, colorMapper);
+
+  @override
+  bool operator ==(Object other) {
+    return other is SvgStringLoader &&
+        other.svg == svg &&
+        other.theme == theme &&
+        other.colorMapper == colorMapper;
   }
 }
 
 /// A [BytesLoader] that decodes and parses a UTF-8 encoded SVG string from a
 /// [Uint8List] in an isolate and creates a vector_graphics binary
 /// representation.
-class SvgBytesLoader extends BytesLoader {
+class SvgBytesLoader extends SvgLoader<void> {
   /// See class doc.
   const SvgBytesLoader(
-    this.svg, {
-    this.theme = const SvgTheme(),
+    this.bytes, {
+    super.theme,
+    super.colorMapper,
   });
 
   /// The UTF-8 encoded XML bytes.
-  final Uint8List svg;
-
-  /// The theme to determine currentColor and font sizing attributes.
-  final SvgTheme theme;
+  final Uint8List bytes;
 
   @override
-  Future<ByteData> loadBytes(BuildContext? context) async {
-    return await compute((_) async {
-      final Uint8List compiledBytes = await encodeSvg(
-        xml: utf8.decode(svg),
-        theme: theme,
-        debugName: 'Svg loader',
-        enableClippingOptimizer: false,
-        enableMaskingOptimizer: false,
-        enableOverdrawOptimizer: false,
-      );
-      return compiledBytes.buffer.asByteData();
-    }, null, debugLabel: 'Load Bytes');
+  String svg(void message) => utf8.decode(bytes);
+
+  @override
+  int get hashCode => Object.hash(svg, theme, colorMapper);
+
+  @override
+  bool operator ==(Object other) {
+    return other is SvgBytesLoader &&
+        other.svg == svg &&
+        other.theme == theme &&
+        other.colorMapper == colorMapper;
   }
 }
 
 /// A [BytesLoader] that decodes SVG data from a file in an isolate and creates
 /// a vector_graphics binary representation.
-class SvgFileLoader extends BytesLoader {
+class SvgFileLoader extends SvgLoader<void> {
   /// See class doc.
   const SvgFileLoader(
     this.file, {
-    this.theme = const SvgTheme(),
+    super.theme,
+    super.colorMapper,
   });
 
   /// The file containing the SVG data to decode and render.
   final File file;
 
-  /// The theme to determine currentColor and font sizing attributes.
-  final SvgTheme theme;
+  @override
+  String svg(void message) {
+    final Uint8List bytes = file.readAsBytesSync();
+    return utf8.decode(bytes);
+  }
 
   @override
-  Future<ByteData> loadBytes(BuildContext? context) async {
-    return await compute((File file) async {
-      final Uint8List bytes = file.readAsBytesSync();
-      final Uint8List compiledBytes = await encodeSvg(
-        xml: utf8.decode(bytes),
-        theme: theme,
-        debugName: file.path,
-        enableClippingOptimizer: false,
-        enableMaskingOptimizer: false,
-        enableOverdrawOptimizer: false,
-      );
-      return compiledBytes.buffer.asByteData();
-    }, file, debugLabel: 'Load Bytes');
+  int get hashCode => Object.hash(file, theme, colorMapper);
+
+  @override
+  bool operator ==(Object other) {
+    return other is SvgFileLoader &&
+        other.file == file &&
+        other.theme == theme &&
+        other.colorMapper == colorMapper;
   }
 }
 
@@ -138,13 +175,14 @@ class _AssetByteLoaderCacheKey {
 
 /// A [BytesLoader] that decodes and parses an SVG asset in an isolate and
 /// creates a vector_graphics binary representation.
-class SvgAssetLoader extends BytesLoader {
+class SvgAssetLoader extends SvgLoader<ByteData> {
   /// See class doc.
   const SvgAssetLoader(
     this.assetName, {
     this.packageName,
     this.assetBundle,
-    this.theme = const SvgTheme(),
+    super.theme,
+    super.colorMapper,
   });
 
   /// The name of the asset, e.g. foo.svg.
@@ -155,9 +193,6 @@ class SvgAssetLoader extends BytesLoader {
 
   /// The asset bundle to use, or [DefaultAssetBundle] if null.
   final AssetBundle? assetBundle;
-
-  /// The theme to determine currentColor and font sizing attributes.
-  final SvgTheme theme;
 
   AssetBundle _resolveBundle(BuildContext? context) {
     if (assetBundle != null) {
@@ -170,21 +205,12 @@ class SvgAssetLoader extends BytesLoader {
   }
 
   @override
-  Future<ByteData> loadBytes(BuildContext? context) async {
-    final ByteData bytes = await _resolveBundle(context).load(assetName);
-
-    return await compute((_) async {
-      final Uint8List compiledBytes = await encodeSvg(
-        xml: utf8.decode(bytes.buffer.asUint8List()),
-        theme: theme,
-        debugName: assetName,
-        enableClippingOptimizer: false,
-        enableMaskingOptimizer: false,
-        enableOverdrawOptimizer: false,
-      );
-      return compiledBytes.buffer.asByteData();
-    }, null, debugLabel: 'Load Bytes');
+  Future<ByteData?> prepareMessage(BuildContext? context) {
+    return _resolveBundle(context).load(assetName);
   }
+
+  @override
+  String svg(ByteData? message) => utf8.decode(message!.buffer.asUint8List());
 
   @override
   Object cacheKey(BuildContext? context) {
@@ -196,25 +222,32 @@ class SvgAssetLoader extends BytesLoader {
   }
 
   @override
-  int get hashCode => Object.hash(assetName, packageName, assetBundle);
+  int get hashCode =>
+      Object.hash(assetName, packageName, assetBundle, theme, colorMapper);
 
   @override
   bool operator ==(Object other) {
     return other is SvgAssetLoader &&
         other.assetName == assetName &&
         other.packageName == packageName &&
-        other.assetBundle == assetBundle;
+        other.assetBundle == assetBundle &&
+        other.theme == theme &&
+        other.colorMapper == colorMapper;
   }
+
+  @override
+  String toString() => 'SvgAssetLoader($assetName)';
 }
 
 /// A [BytesLoader] that decodes and parses a UTF-8 encoded SVG string the
 /// network in an isolate and creates a vector_graphics binary representation.
-class SvgNetworkLoader extends BytesLoader {
+class SvgNetworkLoader extends SvgLoader<Uint8List> {
   /// See class doc.
   const SvgNetworkLoader(
     this.url, {
     this.headers,
-    this.theme = const SvgTheme(),
+    super.theme,
+    super.colorMapper,
   });
 
   /// The [Uri] encoded resource address.
@@ -223,32 +256,26 @@ class SvgNetworkLoader extends BytesLoader {
   /// Optional HTTP headers to send as part of the request.
   final Map<String, String>? headers;
 
-  /// The theme to determine currentColor and font sizing attributes.
-  final SvgTheme theme;
-
   @override
-  Future<ByteData> loadBytes(BuildContext? context) async {
-    return await compute((String svgUrl) async {
-      final Uint8List bytes = await httpGet(svgUrl, headers: headers);
-      final Uint8List compiledBytes = await encodeSvg(
-        xml: utf8.decode(bytes),
-        theme: theme,
-        debugName: svgUrl,
-        enableClippingOptimizer: false,
-        enableMaskingOptimizer: false,
-        enableOverdrawOptimizer: false,
-      );
-      return compiledBytes.buffer.asByteData();
-    }, url, debugLabel: 'Load Bytes');
+  Future<Uint8List?> prepareMessage(BuildContext? context) {
+    return httpGet(url, headers: headers);
   }
 
   @override
-  int get hashCode => Object.hash(url, headers);
+  String svg(Uint8List? message) => utf8.decode(message!);
+
+  @override
+  int get hashCode => Object.hash(url, headers, theme, colorMapper);
 
   @override
   bool operator ==(Object other) {
     return other is SvgNetworkLoader &&
         other.url == url &&
-        other.headers == headers;
+        other.headers == headers &&
+        other.theme == theme &&
+        other.colorMapper == colorMapper;
   }
+
+  @override
+  String toString() => 'SvgNetworkLoader($url)';
 }

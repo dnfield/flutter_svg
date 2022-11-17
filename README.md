@@ -1,28 +1,22 @@
 # flutter_svg
 
-[![Pub](https://img.shields.io/pub/v/flutter_svg.svg)](https://pub.dartlang.org/packages/flutter_svg) [![Build Status](https://travis-ci.org/dnfield/flutter_svg.svg?branch=master)](https://travis-ci.org/dnfield/flutter_svg) [![Coverage Status](https://coveralls.io/repos/github/dnfield/flutter_svg/badge.svg?branch=master)](https://coveralls.io/github/dnfield/flutter_svg?branch=master)
+[![Pub](https://img.shields.io/pub/v/flutter_svg.svg)](https://pub.dartlang.org/packages/flutter_svg) [![Coverage Status](https://coveralls.io/repos/github/dnfield/flutter_svg/badge.svg?branch=master)](https://coveralls.io/github/dnfield/flutter_svg?branch=master)
 
 <!-- markdownlint-disable MD033 -->
 <img src="https://raw.githubusercontent.com/dnfield/flutter_svg/7d374d7107561cbd906d7c0ca26fef02cc01e7c8/example/assets/flutter_logo.svg?sanitize=true" width="200px" alt="Flutter Logo which can be rendered by this package!">
 <!-- markdownlint-enable MD033 -->
 
-Draw SVG (and _some_ Android VectorDrawable (XML)) files on a Flutter Widget.
+Draw SVG files using Flutter.
 
 ## Getting Started
 
-This is a Dart-native rendering library. Issues/PRs will be raised in Flutter
-and flutter/engine as necessary for features that are not good candidates for
-Dart implementations (especially if they're impossible to implement without
-engine support). However, not everything that Skia can easily do needs to be
-done by Skia; for example, the Path parsing logic here isn't much slower than
-doing it in native, and Skia isn't always doing low level GPU accelerated work
-where you might think it is (e.g. Dash Paths).
-
-All of the SVGs in the `assets/` folder (except the text related one(s)) now
-have corresponding PNGs in the `golden/` folder that were rendered using
-`flutter test tool/gen_golden.dart` and compared against their rendering output
-in Chrome. Automated tests will continue to compare these to ensure code changes
-do not break known-good renderings.
+This package provides a wrapper around Dart implementations of SVG parsing,
+including SVG path data. In particular, it provides efficient `BytesLoader`
+implementations for [`package:vector_graphics`](https://pub.dev/packages/vector_graphics).
+This package is easier to use but not as performant as using the
+`vector_graphics` and `vector_graphics_compiler` packages directly. Those
+packages allow you to do ahead-of-time compilation and optimization of SVGs,
+and offer some more performant rasterization strategies at runtime.
 
 Basic usage (to create an SVG rendering widget from an asset):
 
@@ -74,60 +68,33 @@ If you'd like to render the SVG to some other canvas, you can do something like:
 
 ```dart
 import 'package:flutter_svg/flutter_svg.dart';
-final String rawSvg = '''<svg viewBox="...">...</svg>''';
-final DrawableRoot svgRoot = await svg.fromSvgString(rawSvg, rawSvg);
+final String rawSvg = '''<svg ...>...</svg>''';
+final PictureInfo pictureInfo = await vg.loadPicture(SvgStringLoader(rawSvg), null);
 
-// If you only want the final Picture output, just use
-final Picture picture = svgRoot.toPicture();
-
-// Otherwise, if you want to draw it to a canvas:
-// Optional, but probably normally desirable: scale the canvas dimensions to
-// the SVG's viewbox
-svgRoot.scaleCanvasToViewBox(canvas);
-
-// Optional, but probably normally desireable: ensure the SVG isn't rendered
-// outside of the viewbox bounds
-svgRoot.clipCanvasToViewBox(canvas);
-// The second parameter is not used
-svgRoot.draw(canvas, null);
+canvas.drawPicture(pictureInfo.picture);
+pictureInfo.picture.dispose();
 ```
 
 The `SvgPicture` helps to automate this logic, and it provides some convenience
-wrappers for getting assets from multiple sources and caching the resultant
-`Picture`. _It does not render the data to an `Image` at any point_; you
-certainly can do that in Flutter, but you then lose some of the benefit of
-having a vector format to begin with.
+wrappers for getting assets from multiple sources. Unlike the `vector_graphics`
+package, this package _does not render the data to an `Image` at any point_.
+This carries a performance penalty for some common use cases, but also allows
+for more flexibility around scaling.
 
 See [main.dart](/../master/example/lib/main.dart) for a complete sample.
 
 ## Check SVG compatibility
 
-As not all SVG features are supported by this library (see below), sometimes we have to dynamically
-check if an SVG contains any unsupported features resulting in broken images.
-You might also want to throw errors in tests, but only warn about them at runtime.
-This can be done by using the snippet below:
+The SVG parsing implementation is provided by the `vector_graphics_compiler`
+package. Compatibility testing can be achieved via the following:
 
-```dart
-final SvgParser parser = SvgParser();
-try {
-  parser.parse(svgString, warningsAsErrors: true);
-  print('SVG is supported');
-} catch (e) {
-  print('SVG contains unsupported features');
-}
+```sh
+# Use the same $VERSION as the version found in flutter_svg's pubspec.
+dart pub global activate vector_graphics_compiler $VERSION
+dart pub global run vector_graphics_compiler -i $SVG_FILE -o $TEMPORARY_OUTPUT_TO_BE_DELETED --no-optimize-masks --no-optimize-clips --no-optimize-overdraw --no-tessellate
 ```
 
-> Note:
-> The library currently only detects unsupported elements (like the `<style>`-tag), but not unsupported attributes.
-
-## Use Cases
-
-- Your designer creates a vector asset that you want to include without
-  converting to 5 different raster format resolutions.
-- Your vector drawing is meant to be static and non (or maybe minimally)
-  interactive.
-- You want to load SVGs dynamically from network sources at runtime.
-- You want to paint SVG data and render it to an image.
+See the `vector_graphics_compiler` package for more details.
 
 ## Out of scope/non-goals
 
@@ -144,6 +111,7 @@ try {
 - In Images: choose Embded not Linked to other file to get a single svg with no dependency to other files.
 - In Objects IDs: choose layer names to add every layer name to svg tags or you can use minimal,it is optional.
 ![Export configuration](https://user-images.githubusercontent.com/2842459/62599914-91de9c00-b8fe-11e9-8fb7-4af57d5100f7.png)
+
 ## SVG sample attribution
 
 SVGs in `/assets/w3samples` pulled from [W3 sample files](https://dev.w3.org/SVG/tools/svgweb/samples/svg-files/)
@@ -174,6 +142,7 @@ scope" (above).
 
 ## Alternatives
 
+- [vector_graphics](https://pub.dev/packages/vector_graphics) which powers this package.
 - [Rive](https://rive.app/) supports importing SVGs and animating vector graphics.
 - [FlutterShapeMaker](https://fluttershapemaker.com) supports converting SVGs to [CustomPaint](https://api.flutter.dev/flutter/widgets/CustomPaint-class.html) widgets.
 - [Jovial SVG](https://pub.dev/packages/jovial_svg) supports a slightly different feature set and a fast binary format.

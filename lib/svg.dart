@@ -8,8 +8,11 @@ import 'package:vector_graphics_compiler/vector_graphics_compiler.dart';
 import 'src/loaders.dart';
 import 'src/utilities/file.dart';
 
+export 'package:vector_graphics/vector_graphics.dart'
+    show BytesLoader, vg, VectorGraphicUtilities, PictureInfo;
 export 'package:vector_graphics_compiler/vector_graphics_compiler.dart'
     show SvgTheme;
+
 export 'src/loaders.dart';
 
 /// Instance for [Svg]'s utility methods, which can produce a [DrawableRoot]
@@ -84,7 +87,7 @@ class SvgPicture extends StatelessWidget {
   /// The `semanticsLabel` can be used to identify the purpose of this picture for
   /// screen reading software.
   ///
-  /// If [excludeFromSemantics] is true, then [semanticLabel] will be ignored.
+  /// If [excludeFromSemantics] is true, then [semanticsLabel] will be ignored.
   const SvgPicture(
     this.bytesLoader, {
     Key? key,
@@ -175,14 +178,10 @@ class SvgPicture extends StatelessWidget {
   ///
   /// See also:
   ///
-  ///  * [AssetPicture], which is used to implement the behavior when the scale is
-  ///    omitted.
-  ///  * [ExactAssetPicture], which is used to implement the behavior when the
-  ///    scale is present.
   ///  * <https://flutter.io/assets-and-images/>, an introduction to assets in
   ///    Flutter.
   ///
-  /// If [excludeFromSemantics] is true, then [semanticLabel] will be ignored.
+  /// If [excludeFromSemantics] is true, then [semanticsLabel] will be ignored.
   SvgPicture.asset(
     String assetName, {
     Key? key,
@@ -212,7 +211,7 @@ class SvgPicture extends StatelessWidget {
         colorFilter = colorFilter ?? _getColorFilter(color, colorBlendMode),
         super(key: key);
 
-  /// Creates a widget that displays a [PictureStream] obtained from the network.
+  /// Creates a widget that displays an SVG obtained from the network.
   ///
   /// The [url] argument must not be null.
   ///
@@ -243,7 +242,7 @@ class SvgPicture extends StatelessWidget {
   /// An optional `headers` argument can be used to send custom HTTP headers
   /// with the image request.
   ///
-  /// If [excludeFromSemantics] is true, then [semanticLabel] will be ignored.
+  /// If [excludeFromSemantics] is true, then [semanticsLabel] will be ignored.
   SvgPicture.network(
     String url, {
     Key? key,
@@ -267,7 +266,7 @@ class SvgPicture extends StatelessWidget {
         colorFilter = colorFilter ?? _getColorFilter(color, colorBlendMode),
         super(key: key);
 
-  /// Creates a widget that displays a [PictureStream] obtained from a [File].
+  /// Creates a widget that displays an SVG obtained from a [File].
   ///
   /// The [file] argument must not be null.
   ///
@@ -296,7 +295,7 @@ class SvgPicture extends StatelessWidget {
   /// On Android, this may require the
   /// `android.permission.READ_EXTERNAL_STORAGE` permission.
   ///
-  /// If [excludeFromSemantics] is true, then [semanticLabel] will be ignored.
+  /// If [excludeFromSemantics] is true, then [semanticsLabel] will be ignored.
   SvgPicture.file(
     File file, {
     Key? key,
@@ -319,7 +318,7 @@ class SvgPicture extends StatelessWidget {
         colorFilter = colorFilter ?? _getColorFilter(color, colorBlendMode),
         super(key: key);
 
-  /// Creates a widget that displays a [PictureStream] obtained from a [Uint8List].
+  /// Creates a widget that displays an SVG obtained from a [Uint8List].
   ///
   /// The [bytes] argument must not be null.
   ///
@@ -345,7 +344,7 @@ class SvgPicture extends StatelessWidget {
   /// The `theme` argument, if provided, will override the default theme
   /// used when parsing SVG elements.
   ///
-  /// If [excludeFromSemantics] is true, then [semanticLabel] will be ignored.
+  /// If [excludeFromSemantics] is true, then [semanticsLabel] will be ignored.
   SvgPicture.memory(
     Uint8List bytes, {
     Key? key,
@@ -368,9 +367,9 @@ class SvgPicture extends StatelessWidget {
         colorFilter = colorFilter ?? _getColorFilter(color, colorBlendMode),
         super(key: key);
 
-  /// Creates a widget that displays a [PictureStream] obtained from a [String].
+  /// Creates a widget that displays an SVG obtained from a [String].
   ///
-  /// The [bytes] argument must not be null.
+  /// The [string] argument must not be null.
   ///
   /// Either the [width] and [height] arguments should be specified, or the
   /// widget should be placed in a context that sets tight layout constraints.
@@ -394,7 +393,7 @@ class SvgPicture extends StatelessWidget {
   /// The `theme` argument, if provided, will override the default theme
   /// used when parsing SVG elements.
   ///
-  /// If [excludeFromSemantics] is true, then [semanticLabel] will be ignored.
+  /// If [excludeFromSemantics] is true, then [semanticsLabel] will be ignored.
   SvgPicture.string(
     String string, {
     Key? key,
@@ -505,6 +504,7 @@ class SvgPicture extends StatelessWidget {
       excludeFromSemantics: excludeFromSemantics,
       colorFilter: colorFilter,
       placeholderBuilder: placeholderBuilder,
+      clipViewbox: !allowDrawingOutsideViewBox,
     );
   }
 }
