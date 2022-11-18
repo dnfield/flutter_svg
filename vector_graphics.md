@@ -115,8 +115,9 @@ the SVG string that will be run in a non-UI isolate. See more examples in
 
 ### `PictureCache`
 
-There is no replacement as of right now, since this package does not cache
-anything currently.
+Pictures are no longer cached, however the byte data for vector_graphics output
+is cached in the `Cache` object. This is similar to but not quite the same as
+the old picture cache. It is available via `svg.cache`.
 
 ### Widget changes
 
