@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:vector_graphics/vector_graphics_compat.dart';
 import 'package:vector_graphics_compiler/vector_graphics_compiler.dart';
 
+import 'src/cache.dart';
 import 'src/loaders.dart';
 import 'src/utilities/file.dart';
 
@@ -13,6 +14,7 @@ export 'package:vector_graphics/vector_graphics.dart'
 export 'package:vector_graphics_compiler/vector_graphics_compiler.dart'
     show SvgTheme;
 
+export 'src/cache.dart';
 export 'src/loaders.dart';
 
 /// Instance for [Svg]'s utility methods, which can produce a [DrawableRoot]
@@ -36,23 +38,6 @@ class Svg {
 
   /// The cache instance for decoded SVGs.
   final Cache cache = Cache();
-}
-
-/// The cache for decoded SVGs.
-class Cache {
-  int _maximumSize = 100;
-
-  /// The maximum number of decoded SVGs to keep in memory.
-  int get maximumSize => _maximumSize;
-  set maximumSize(int value) {
-    if (value == _maximumSize) {
-      return;
-    }
-    _maximumSize = value;
-  }
-
-  /// Clears the cache.
-  void clear() {}
 }
 
 // ignore: avoid_classes_with_only_static_members

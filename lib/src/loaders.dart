@@ -7,6 +7,7 @@ import 'package:flutter_svg/src/utilities/http.dart';
 import 'package:vector_graphics/vector_graphics.dart';
 import 'package:vector_graphics_compiler/vector_graphics_compiler.dart';
 
+import '../svg.dart' show svg;
 import 'utilities/compute.dart';
 import 'utilities/file.dart';
 
@@ -26,9 +27,11 @@ abstract class SvgLoader<T> extends BytesLoader {
   final ColorMapper? colorMapper;
 
   /// Will be called in [compute] with the result of [prepareMessage].
-  String svg(T? message);
+  @protected
+  String provideSvg(T? message);
 
   /// Will be called
+  @protected
   Future<T?> prepareMessage(BuildContext? context) =>
       SynchronousFuture<T?>(null);
 
@@ -36,18 +39,20 @@ abstract class SvgLoader<T> extends BytesLoader {
   /// loop turns. This is meant to to help tests in particular.
   @override
   Future<ByteData> loadBytes(BuildContext? context) {
-    return prepareMessage(context).then((T? message) {
-      return compute((T? message) {
-        return encodeSvg(
-          xml: svg(message),
-          theme: theme,
-          colorMapper: colorMapper,
-          debugName: 'Svg loader',
-          enableClippingOptimizer: false,
-          enableMaskingOptimizer: false,
-          enableOverdrawOptimizer: false,
-        ).buffer.asByteData();
-      }, message, debugLabel: 'Load Bytes');
+    return svg.cache.putIfAbsent(cacheKey(context), () {
+      return prepareMessage(context).then((T? message) {
+        return compute((T? message) {
+          return encodeSvg(
+            xml: provideSvg(message),
+            theme: theme,
+            colorMapper: colorMapper,
+            debugName: 'Svg loader',
+            enableClippingOptimizer: false,
+            enableMaskingOptimizer: false,
+            enableOverdrawOptimizer: false,
+          ).buffer.asByteData();
+        }, message, debugLabel: 'Load Bytes');
+      });
     });
   }
 }
@@ -65,7 +70,7 @@ class SvgStringLoader extends SvgLoader<void> {
   final String _svg;
 
   @override
-  String svg(void message) {
+  String provideSvg(void message) {
     return _svg;
   }
 
@@ -75,7 +80,7 @@ class SvgStringLoader extends SvgLoader<void> {
   @override
   bool operator ==(Object other) {
     return other is SvgStringLoader &&
-        other.svg == svg &&
+        other._svg == _svg &&
         other.theme == theme &&
         other.colorMapper == colorMapper;
   }
@@ -96,7 +101,7 @@ class SvgBytesLoader extends SvgLoader<void> {
   final Uint8List bytes;
 
   @override
-  String svg(void message) => utf8.decode(bytes);
+  String provideSvg(void message) => utf8.decode(bytes);
 
   @override
   int get hashCode => Object.hash(svg, theme, colorMapper);
@@ -104,7 +109,7 @@ class SvgBytesLoader extends SvgLoader<void> {
   @override
   bool operator ==(Object other) {
     return other is SvgBytesLoader &&
-        other.svg == svg &&
+        other.bytes == bytes &&
         other.theme == theme &&
         other.colorMapper == colorMapper;
   }
@@ -124,7 +129,7 @@ class SvgFileLoader extends SvgLoader<void> {
   final File file;
 
   @override
-  String svg(void message) {
+  String provideSvg(void message) {
     final Uint8List bytes = file.readAsBytesSync();
     return utf8.decode(bytes);
   }
@@ -210,7 +215,8 @@ class SvgAssetLoader extends SvgLoader<ByteData> {
   }
 
   @override
-  String svg(ByteData? message) => utf8.decode(message!.buffer.asUint8List());
+  String provideSvg(ByteData? message) =>
+      utf8.decode(message!.buffer.asUint8List());
 
   @override
   Object cacheKey(BuildContext? context) {
@@ -262,7 +268,7 @@ class SvgNetworkLoader extends SvgLoader<Uint8List> {
   }
 
   @override
-  String svg(Uint8List? message) => utf8.decode(message!);
+  String provideSvg(Uint8List? message) => utf8.decode(message!);
 
   @override
   int get hashCode => Object.hash(url, headers, theme, colorMapper);
