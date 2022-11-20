@@ -11,7 +11,7 @@ Draw SVG files using Flutter.
 ## Getting Started
 
 This package provides a wrapper around Dart implementations of SVG parsing,
-including SVG path data. In particular, it provides an efficient `BytesLoader`
+including SVG path data. In particular, it provides efficient `BytesLoader`
 implementations for [`package:vector_graphics`](https://pub.dev/packages/vector_graphics).
 This package is easier to use but not as performant as using the
 `vector_graphics` and `vector_graphics_compiler` packages directly. Those
