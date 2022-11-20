@@ -11,7 +11,7 @@ Draw SVG files using Flutter.
 ## Getting Started
 
 This package provides a wrapper around Dart implementations of SVG parsing,
-including SVG path data. In particular, it provides efficient `BytesLoader`
+including SVG path data. In particular, it provides an efficient `BytesLoader`
 implementations for [`package:vector_graphics`](https://pub.dev/packages/vector_graphics).
 This package is easier to use but not as performant as using the
 `vector_graphics` and `vector_graphics_compiler` packages directly. Those
@@ -108,8 +108,8 @@ See the `vector_graphics_compiler` package for more details.
 
 ## Recommended Adobe Illustrator SVG Configuration
 - In Styling: choose Presentation Attributes instead of Inline CSS because CSS is not fully supported.
-- In Images: choose Embded not Linked to other file to get a single svg with no dependency to other files.
-- In Objects IDs: choose layer names to add every layer name to svg tags or you can use minimal,it is optional.
+- In Images: choose Embded not Linked to other file to get a single svg with no dependency to the other files.
+- In Objects IDs: choose layer names to add every layer name to svg tags or you can use minimal, it is optional.
 ![Export configuration](https://user-images.githubusercontent.com/2842459/62599914-91de9c00-b8fe-11e9-8fb7-4af57d5100f7.png)
 
 ## SVG sample attribution
@@ -127,7 +127,7 @@ SVGs in `/assets/wikimedia` are pulled from [Wikimedia Commons](https://commons.
 Android Drawables in `/assets/android_vd` are pulled from Android Documentation
 and examples.
 
-The Flutter Logo created based on the Flutter Logo Widget © Google.
+The Flutter Logo was created based on the Flutter Logo Widget © Google.
 
 The Dart logo is from
 [dartlang.org](https://github.com/dart-lang/site-shared/blob/master/src/_assets/images/dart/logo%2Btext/horizontal/original.svg)
