@@ -12,7 +12,6 @@ dependencies:
   vector_graphics: ^1.0.0
   vector_graphics_codec: ^1.0.0
   vector_graphics_compiler: ^1.0.0
-  vector_math: ^2.1.2
 
 dev_dependencies:
   flutter_test:
