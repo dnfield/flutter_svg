@@ -7,8 +7,6 @@ version: 2.0.0
 dependencies:
   flutter:
     sdk: flutter
-  meta: ^1.7.0
-  path_drawing: ^1.0.1
   vector_graphics: ^1.0.0
   vector_graphics_codec: ^1.0.0
   vector_graphics_compiler: ^1.0.0
