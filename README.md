@@ -87,13 +87,14 @@ See [main.dart](/../master/example/lib/main.dart) for a complete sample.
 
 The vector_graphics backend supports SVG compilation which produces a binary
 format that is faster to parse and can optimize SVGs to reduce the amount of
-clipping, masking, and overdraw.
+clipping, masking, and overdraw. The SVG compilation is provided by
+[`package:vector_graphics_compiler`](https://pub.dev/packages/vector_graphics_compiler).
 
 ```sh
 dart run vector_graphics_compiler -i assets/foo.svg -o assets/foo.svg.vec
 ```
 
-The output foo.svg.vec can be loaded using the default constructor of
+The output `foo.svg.vec` can be loaded using the default constructor of
 `SvgPicture`.
 
 ```dart
@@ -105,16 +106,14 @@ final Widget svg = SvgPicture(
 );
 ```
 
-## Check SVG compatibility
+### Check SVG compatibility
 
-The SVG parsing implementation is provided by the `vector_graphics_compiler`
-package. Compatibility testing can be achieved via the following:
+An SVG can be tested for compatibility with the vector graphics backend by
+running the compiler locally to see if any errors are thrown.
 
 ```sh
 dart run vector_graphics_compiler -i $SVG_FILE -o $TEMPORARY_OUTPUT_TO_BE_DELETED --no-optimize-masks --no-optimize-clips --no-optimize-overdraw --no-tessellate
 ```
-
-See the `vector_graphics_compiler` package for more details.
 
 ## Out of scope/non-goals
 
