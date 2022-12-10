@@ -83,18 +83,37 @@ for more flexibility around scaling.
 
 See [main.dart](/../master/example/lib/main.dart) for a complete sample.
 
-## Check SVG compatibility
+## Precompiling and Optimizing SVGs
 
-The SVG parsing implementation is provided by the `vector_graphics_compiler`
-package. Compatibility testing can be achieved via the following:
+The vector_graphics backend supports SVG compilation which produces a binary
+format that is faster to parse and can optimize SVGs to reduce the amount of
+clipping, masking, and overdraw. The SVG compilation is provided by
+[`package:vector_graphics_compiler`](https://pub.dev/packages/vector_graphics_compiler).
 
 ```sh
-# Use the same $VERSION as the version found in flutter_svg's pubspec.
-dart pub global activate vector_graphics_compiler $VERSION
-dart pub global run vector_graphics_compiler -i $SVG_FILE -o $TEMPORARY_OUTPUT_TO_BE_DELETED --no-optimize-masks --no-optimize-clips --no-optimize-overdraw --no-tessellate
+dart run vector_graphics_compiler -i assets/foo.svg -o assets/foo.svg.vec
 ```
 
-See the `vector_graphics_compiler` package for more details.
+The output `foo.svg.vec` can be loaded using the default constructor of
+`SvgPicture`.
+
+```dart
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:vector_graphics/vector_graphics.dart';
+
+final Widget svg = SvgPicture(
+  AssetLoader(const AssetBytesLoader('assets/foo.svg.vec'))
+);
+```
+
+### Check SVG compatibility
+
+An SVG can be tested for compatibility with the vector graphics backend by
+running the compiler locally to see if any errors are thrown.
+
+```sh
+dart run vector_graphics_compiler -i $SVG_FILE -o $TEMPORARY_OUTPUT_TO_BE_DELETED --no-optimize-masks --no-optimize-clips --no-optimize-overdraw --no-tessellate
+```
 
 ## Out of scope/non-goals
 
