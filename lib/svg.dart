@@ -200,6 +200,14 @@ Future<void> precachePicture(
   return completer.future;
 }
 
+/// Signature used by [SvgPicture.frameBuilder] to control the widget that will be
+/// used when an [SvgPicture] is built.
+typedef PictureFrameBuilder = Widget Function(
+  BuildContext context,
+  Widget child,
+  PictureInfo? pictureInfo,
+);
+
 /// A widget that will parse SVG data into a [Picture] using a [PictureProvider].
 ///
 /// The picture will be cached using the [PictureCache], incorporating any color
@@ -237,6 +245,7 @@ class SvgPicture extends StatefulWidget {
     this.alignment = Alignment.center,
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
+    this.frameBuilder,
     this.placeholderBuilder,
     this.colorFilter,
     this.semanticsLabel,
@@ -337,6 +346,7 @@ class SvgPicture extends StatefulWidget {
     this.fit = BoxFit.contain,
     this.alignment = Alignment.center,
     this.allowDrawingOutsideViewBox = false,
+    this.frameBuilder,
     this.placeholderBuilder,
     Color? color,
     BlendMode colorBlendMode = BlendMode.srcIn,
@@ -401,6 +411,7 @@ class SvgPicture extends StatefulWidget {
     this.alignment = Alignment.center,
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
+    this.frameBuilder,
     this.placeholderBuilder,
     Color? color,
     BlendMode colorBlendMode = BlendMode.srcIn,
@@ -461,6 +472,7 @@ class SvgPicture extends StatefulWidget {
     this.alignment = Alignment.center,
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
+    this.frameBuilder,
     this.placeholderBuilder,
     Color? color,
     BlendMode colorBlendMode = BlendMode.srcIn,
@@ -517,6 +529,7 @@ class SvgPicture extends StatefulWidget {
     this.alignment = Alignment.center,
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
+    this.frameBuilder,
     this.placeholderBuilder,
     Color? color,
     BlendMode colorBlendMode = BlendMode.srcIn,
@@ -573,6 +586,7 @@ class SvgPicture extends StatefulWidget {
     this.alignment = Alignment.center,
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
+    this.frameBuilder,
     this.placeholderBuilder,
     Color? color,
     BlendMode colorBlendMode = BlendMode.srcIn,
@@ -686,6 +700,9 @@ class SvgPicture extends StatefulWidget {
 
   /// The [PictureProvider] used to resolve the SVG.
   final PictureProvider pictureProvider;
+
+  /// A builder function responsible for creating the widget that represents this picture.
+  final PictureFrameBuilder? frameBuilder;
 
   /// The placeholder to use while fetching, decoding, and parsing the SVG data.
   final WidgetBuilder? placeholderBuilder;
@@ -908,6 +925,12 @@ class _SvgPictureState extends State<SvgPicture> {
           ? _getDefaultPlaceholder(context, widget.width, widget.height)
           : widget.placeholderBuilder!(context);
     }
+
+    final PictureFrameBuilder? frameBuilder = widget.frameBuilder;
+    if (frameBuilder != null) {
+      child = frameBuilder.call(context, child, _picture);
+    }
+
     if (!widget.excludeFromSemantics) {
       child = Semantics(
         container: widget.semanticsLabel != null,
