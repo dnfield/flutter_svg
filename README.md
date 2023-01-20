@@ -34,7 +34,7 @@ You can color/tint the image like so:
 final String assetName = 'assets/up_arrow.svg';
 final Widget svgIcon = SvgPicture.asset(
   assetName,
-  color: Colors.red,
+  colorFilter: ColorFilter.mode(Colors.red, BlendMode.srcIn),
   semanticsLabel: 'A red up arrow'
 );
 ```
