@@ -102,7 +102,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:vector_graphics/vector_graphics.dart';
 
 final Widget svg = SvgPicture(
-  AssetLoader(const AssetBytesLoader('assets/foo.svg.vec'))
+  const AssetBytesLoader('assets/foo.svg.vec')
 );
 ```
 
