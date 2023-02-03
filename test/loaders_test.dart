@@ -25,7 +25,8 @@ void main() {
       'packages/packageName/foo': Uint8List(1).buffer.asByteData(),
     });
     final SvgAssetLoader loader = SvgAssetLoader('foo', assetBundle: bundle);
-    final SvgAssetLoader packageLoader = SvgAssetLoader('foo', assetBundle: bundle, packageName: 'packageName');
+    final SvgAssetLoader packageLoader =
+        SvgAssetLoader('foo', assetBundle: bundle, packageName: 'packageName');
     expect((await loader.prepareMessage(null))!.lengthInBytes, 0);
     expect((await packageLoader.prepareMessage(null))!.lengthInBytes, 1);
   });
