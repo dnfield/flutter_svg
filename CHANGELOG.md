@@ -1,5 +1,9 @@
 # CHANGES
 
+## Next
+
+- Disable Isolate parsing in debug mode.
+
 ## 2.0.0+1
 
 - Fix bug in asset loading from packages.
