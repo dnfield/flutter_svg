@@ -19,9 +19,12 @@ environment:
   sdk: '>=2.19.0-0 <4.0.0'
   flutter: ">=3.7.0-0"
 
-# dependency_overrides:
-#   vector_graphics:
-#     path: ../vector_graphics/packages/vector_graphics
+dependency_overrides:
+  vector_graphics:
+    git:
+      url: https://github.com/sabifa/vector_graphics.git
+      ref: reintroduce_clip_behavior
+      path: packages/vector_graphics
 #   vector_graphics_codec:
 #     path: ../vector_graphics/packages/vector_graphics_codec
 #   vector_graphics_compiler:
