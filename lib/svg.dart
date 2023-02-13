@@ -86,8 +86,8 @@ class SvgPicture extends StatelessWidget {
     this.colorFilter,
     this.semanticsLabel,
     this.excludeFromSemantics = false,
+    this.clipBehavior = Clip.hardEdge,
     this.theme = const SvgTheme(),
-    @deprecated Clip? clipBehavior,
     @deprecated bool cacheColorFilter = false,
   }) : super(key: key);
 
@@ -181,11 +181,11 @@ class SvgPicture extends StatelessWidget {
     this.placeholderBuilder,
     this.semanticsLabel,
     this.excludeFromSemantics = false,
+    this.clipBehavior = Clip.hardEdge,
     this.theme = const SvgTheme(),
     ui.ColorFilter? colorFilter,
     @deprecated ui.Color? color,
     @deprecated ui.BlendMode colorBlendMode = ui.BlendMode.srcIn,
-    @deprecated Clip? clipBehavior,
     @deprecated bool cacheColorFilter = false,
   })  : bytesLoader = SvgAssetLoader(
           assetName,
@@ -244,7 +244,7 @@ class SvgPicture extends StatelessWidget {
     @deprecated ui.BlendMode colorBlendMode = ui.BlendMode.srcIn,
     this.semanticsLabel,
     this.excludeFromSemantics = false,
-    @deprecated Clip? clipBehavior,
+    this.clipBehavior = Clip.hardEdge,
     @deprecated bool cacheColorFilter = false,
     this.theme = const SvgTheme(),
   })  : bytesLoader = SvgNetworkLoader(url, headers: headers, theme: theme),
@@ -296,8 +296,8 @@ class SvgPicture extends StatelessWidget {
     @deprecated ui.BlendMode colorBlendMode = ui.BlendMode.srcIn,
     this.semanticsLabel,
     this.excludeFromSemantics = false,
+    this.clipBehavior = Clip.hardEdge,
     this.theme = const SvgTheme(),
-    @deprecated Clip? clipBehavior,
     @deprecated bool cacheColorFilter = false,
   })  : bytesLoader = SvgFileLoader(file, theme: theme),
         colorFilter = colorFilter ?? _getColorFilter(color, colorBlendMode),
@@ -345,8 +345,8 @@ class SvgPicture extends StatelessWidget {
     @deprecated ui.BlendMode colorBlendMode = ui.BlendMode.srcIn,
     this.semanticsLabel,
     this.excludeFromSemantics = false,
+    this.clipBehavior = Clip.hardEdge,
     this.theme = const SvgTheme(),
-    @deprecated Clip? clipBehavior,
     @deprecated bool cacheColorFilter = false,
   })  : bytesLoader = SvgBytesLoader(bytes, theme: theme),
         colorFilter = colorFilter ?? _getColorFilter(color, colorBlendMode),
@@ -394,8 +394,8 @@ class SvgPicture extends StatelessWidget {
     @deprecated ui.BlendMode colorBlendMode = ui.BlendMode.srcIn,
     this.semanticsLabel,
     this.excludeFromSemantics = false,
+    this.clipBehavior = Clip.hardEdge,
     this.theme = const SvgTheme(),
-    @deprecated Clip? clipBehavior,
     @deprecated bool cacheColorFilter = false,
   })  : bytesLoader = SvgStringLoader(string, theme: theme),
         colorFilter = colorFilter ?? _getColorFilter(color, colorBlendMode),
@@ -471,6 +471,14 @@ class SvgPicture extends StatelessWidget {
   /// application.
   final bool excludeFromSemantics;
 
+  /// The content will be clipped (or not) according to this option.
+  ///
+  /// See the enum [Clip] for details of all possible options and their common
+  /// use cases.
+  ///
+  /// Defaults to [Clip.hardEdge], and must not be null.
+  final Clip clipBehavior;
+
   /// The color filter, if any, to apply to this widget.
   final ColorFilter? colorFilter;
 
@@ -487,6 +495,7 @@ class SvgPicture extends StatelessWidget {
       alignment: alignment,
       semanticsLabel: semanticsLabel,
       excludeFromSemantics: excludeFromSemantics,
+      clipBehavior: clipBehavior,
       colorFilter: colorFilter,
       placeholderBuilder: placeholderBuilder,
       clipViewbox: !allowDrawingOutsideViewBox,
