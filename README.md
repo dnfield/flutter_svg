@@ -71,7 +71,12 @@ import 'package:flutter_svg/flutter_svg.dart';
 final String rawSvg = '''<svg ...>...</svg>''';
 final PictureInfo pictureInfo = await vg.loadPicture(SvgStringLoader(rawSvg), null);
 
+// You can draw the picture to a canvas:
 canvas.drawPicture(pictureInfo.picture);
+
+// Or convert the picture to a an image:
+final ui.Image image = pictureInfo.picture.toImage(...);
+
 pictureInfo.picture.dispose();
 ```
 
