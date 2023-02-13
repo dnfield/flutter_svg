@@ -29,29 +29,13 @@ final Svg svg = Svg._();
 class Svg {
   Svg._();
 
-  /// A global override flag for [SvgPicture.cacheColorFilter].
-  ///
-  /// If this is null, the value in [SvgPicture.cacheColorFilter] is used. If it
-  /// is not null, it will override that value.
-  @Deprecated('This no longer does anything.')
-  bool? cacheColorFilterOverride;
-
   /// The cache instance for decoded SVGs.
   final Cache cache = Cache();
 }
 
-// ignore: avoid_classes_with_only_static_members
-/// Deprecated class, will be removed, does not do anything.
-@Deprecated('This feature does not do anything anymore.')
-class PictureProvider {
-  /// Deprecated, use [svg.cache] instead.
-  @Deprecated('Use svg.cache instead.')
-  static Cache get cache => svg.cache;
-}
-
 /// A widget that will parse SVG data for rendering on screen.
 class SvgPicture extends StatelessWidget {
-  /// Instantiates a widget that renders an SVG picture using the `pictureProvider`.
+  /// Instantiates a widget that renders an SVG picture using a [BytesLoader].
   ///
   /// Either the [width] and [height] arguments should be specified, or the
   /// widget should be placed in a context that sets tight layout constraints.
@@ -87,8 +71,6 @@ class SvgPicture extends StatelessWidget {
     this.semanticsLabel,
     this.excludeFromSemantics = false,
     this.theme = const SvgTheme(),
-    @deprecated Clip? clipBehavior,
-    @deprecated bool cacheColorFilter = false,
   }) : super(key: key);
 
   /// Instantiates a widget that renders an SVG picture from an [AssetBundle].
@@ -182,11 +164,16 @@ class SvgPicture extends StatelessWidget {
     this.semanticsLabel,
     this.excludeFromSemantics = false,
     this.theme = const SvgTheme(),
+
+    /// The [ColorFilter] to apply to the picture. An easy way to add color.
+    /// e.g. `ColorFilter.mode(Colors.red, BlendMode.srcIn)`
     ui.ColorFilter? colorFilter,
-    @deprecated ui.Color? color,
-    @deprecated ui.BlendMode colorBlendMode = ui.BlendMode.srcIn,
-    @deprecated Clip? clipBehavior,
-    @deprecated bool cacheColorFilter = false,
+    @Deprecated('Use colorFilter: ColorFilter.mode(color, blendMode) instead '
+        '- default BlendMode is BlendMode.srcIn )')
+        ui.Color? color,
+    @Deprecated('Use colorFilter: ColorFilter.mode(color, blendMode) instead '
+        '- default BlendMode is BlendMode.srcIn )')
+        ui.BlendMode colorBlendMode = ui.BlendMode.srcIn,
   })  : bytesLoader = SvgAssetLoader(
           assetName,
           packageName: package,
@@ -239,13 +226,18 @@ class SvgPicture extends StatelessWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
+
+    /// The [ColorFilter] to apply to the picture. An easy way to add color.
+    /// e.g. `ColorFilter.mode(Colors.red, BlendMode.srcIn)`
     ui.ColorFilter? colorFilter,
-    @deprecated ui.Color? color,
-    @deprecated ui.BlendMode colorBlendMode = ui.BlendMode.srcIn,
+    @Deprecated('Use colorFilter: ColorFilter.mode(color, blendMode) instead '
+        '- default BlendMode is BlendMode.srcIn )')
+        ui.Color? color,
+    @Deprecated('Use colorFilter: ColorFilter.mode(color, blendMode) instead '
+        '- default BlendMode is BlendMode.srcIn )')
+        ui.BlendMode colorBlendMode = ui.BlendMode.srcIn,
     this.semanticsLabel,
     this.excludeFromSemantics = false,
-    @deprecated Clip? clipBehavior,
-    @deprecated bool cacheColorFilter = false,
     this.theme = const SvgTheme(),
   })  : bytesLoader = SvgNetworkLoader(url, headers: headers, theme: theme),
         colorFilter = colorFilter ?? _getColorFilter(color, colorBlendMode),
@@ -291,14 +283,21 @@ class SvgPicture extends StatelessWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
+
+    /// The [ColorFilter] to apply to the picture. An easy way to add color.
+    /// e.g. `ColorFilter.mode(Colors.red, BlendMode.srcIn)`
     ui.ColorFilter? colorFilter,
-    @deprecated ui.Color? color,
-    @deprecated ui.BlendMode colorBlendMode = ui.BlendMode.srcIn,
+    @Deprecated('Use colorFilter: ColorFilter.mode(color, blendMode) instead '
+        '- default BlendMode is BlendMode.srcIn )')
+        ui.Color? color,
+    @Deprecated('Use colorFilter: ColorFilter.mode(color, blendMode) instead '
+        '- default BlendMode is BlendMode.srcIn )')
+        ui.BlendMode colorBlendMode = ui.BlendMode.srcIn,
     this.semanticsLabel,
     this.excludeFromSemantics = false,
     this.theme = const SvgTheme(),
-    @deprecated Clip? clipBehavior,
-    @deprecated bool cacheColorFilter = false,
+    @Deprecated('This has property has been removed')
+        Clip? clipBehavior,
   })  : bytesLoader = SvgFileLoader(file, theme: theme),
         colorFilter = colorFilter ?? _getColorFilter(color, colorBlendMode),
         super(key: key);
@@ -340,14 +339,19 @@ class SvgPicture extends StatelessWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
+
+    /// The [ColorFilter] to apply to the picture. An easy way to add color.
+    /// e.g. `ColorFilter.mode(Colors.red, BlendMode.srcIn)`
     ui.ColorFilter? colorFilter,
-    @deprecated ui.Color? color,
-    @deprecated ui.BlendMode colorBlendMode = ui.BlendMode.srcIn,
+    @Deprecated('Use colorFilter: ColorFilter.mode(color, blendMode) instead '
+        '- default BlendMode is BlendMode.srcIn )')
+        ui.Color? color,
+    @Deprecated('Use colorFilter: ColorFilter.mode(color, blendMode) instead '
+        '- default BlendMode is BlendMode.srcIn )')
+        ui.BlendMode colorBlendMode = ui.BlendMode.srcIn,
     this.semanticsLabel,
     this.excludeFromSemantics = false,
     this.theme = const SvgTheme(),
-    @deprecated Clip? clipBehavior,
-    @deprecated bool cacheColorFilter = false,
   })  : bytesLoader = SvgBytesLoader(bytes, theme: theme),
         colorFilter = colorFilter ?? _getColorFilter(color, colorBlendMode),
         super(key: key);
@@ -389,14 +393,19 @@ class SvgPicture extends StatelessWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
+
+    /// The [ColorFilter] to apply to the picture. An easy way to add color.
+    /// e.g. `ColorFilter.mode(Colors.red, BlendMode.srcIn)`
     ui.ColorFilter? colorFilter,
-    @deprecated ui.Color? color,
-    @deprecated ui.BlendMode colorBlendMode = ui.BlendMode.srcIn,
+    @Deprecated('Use colorFilter: ColorFilter.mode(color, blendMode) instead '
+        '- default BlendMode is BlendMode.srcIn )')
+        ui.Color? color,
+    @Deprecated('Use colorFilter: ColorFilter.mode(color, blendMode) instead '
+        '- default BlendMode is BlendMode.srcIn )')
+        ui.BlendMode colorBlendMode = ui.BlendMode.srcIn,
     this.semanticsLabel,
     this.excludeFromSemantics = false,
     this.theme = const SvgTheme(),
-    @deprecated Clip? clipBehavior,
-    @deprecated bool cacheColorFilter = false,
   })  : bytesLoader = SvgStringLoader(string, theme: theme),
         colorFilter = colorFilter ?? _getColorFilter(color, colorBlendMode),
         super(key: key);
