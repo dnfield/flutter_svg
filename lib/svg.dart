@@ -169,10 +169,10 @@ class SvgPicture extends StatelessWidget {
     /// e.g. `ColorFilter.mode(Colors.red, BlendMode.srcIn)`
     ui.ColorFilter? colorFilter,
     @Deprecated('Use colorFilter: ColorFilter.mode(color, blendMode) instead '
-        '- default BlendMode is BlendMode.srcIn )')
+        '- default BlendMode is BlendMode.srcIn.')
         ui.Color? color,
     @Deprecated('Use colorFilter: ColorFilter.mode(color, blendMode) instead '
-        '- default BlendMode is BlendMode.srcIn )')
+        '- default BlendMode is BlendMode.srcIn.')
         ui.BlendMode colorBlendMode = ui.BlendMode.srcIn,
   })  : bytesLoader = SvgAssetLoader(
           assetName,
@@ -231,10 +231,10 @@ class SvgPicture extends StatelessWidget {
     /// e.g. `ColorFilter.mode(Colors.red, BlendMode.srcIn)`
     ui.ColorFilter? colorFilter,
     @Deprecated('Use colorFilter: ColorFilter.mode(color, blendMode) instead '
-        '- default BlendMode is BlendMode.srcIn )')
+        '- default BlendMode is BlendMode.srcIn.')
         ui.Color? color,
     @Deprecated('Use colorFilter: ColorFilter.mode(color, blendMode) instead '
-        '- default BlendMode is BlendMode.srcIn )')
+        '- default BlendMode is BlendMode.srcIn.')
         ui.BlendMode colorBlendMode = ui.BlendMode.srcIn,
     this.semanticsLabel,
     this.excludeFromSemantics = false,
@@ -288,10 +288,10 @@ class SvgPicture extends StatelessWidget {
     /// e.g. `ColorFilter.mode(Colors.red, BlendMode.srcIn)`
     ui.ColorFilter? colorFilter,
     @Deprecated('Use colorFilter: ColorFilter.mode(color, blendMode) instead '
-        '- default BlendMode is BlendMode.srcIn )')
+        '- default BlendMode is BlendMode.srcIn.')
         ui.Color? color,
     @Deprecated('Use colorFilter: ColorFilter.mode(color, blendMode) instead '
-        '- default BlendMode is BlendMode.srcIn )')
+        '- default BlendMode is BlendMode.srcIn.')
         ui.BlendMode colorBlendMode = ui.BlendMode.srcIn,
     this.semanticsLabel,
     this.excludeFromSemantics = false,
@@ -344,10 +344,10 @@ class SvgPicture extends StatelessWidget {
     /// e.g. `ColorFilter.mode(Colors.red, BlendMode.srcIn)`
     ui.ColorFilter? colorFilter,
     @Deprecated('Use colorFilter: ColorFilter.mode(color, blendMode) instead '
-        '- default BlendMode is BlendMode.srcIn )')
+        '- default BlendMode is BlendMode.srcIn.')
         ui.Color? color,
     @Deprecated('Use colorFilter: ColorFilter.mode(color, blendMode) instead '
-        '- default BlendMode is BlendMode.srcIn )')
+        '- default BlendMode is BlendMode.srcIn.')
         ui.BlendMode colorBlendMode = ui.BlendMode.srcIn,
     this.semanticsLabel,
     this.excludeFromSemantics = false,
@@ -398,10 +398,10 @@ class SvgPicture extends StatelessWidget {
     /// e.g. `ColorFilter.mode(Colors.red, BlendMode.srcIn)`
     ui.ColorFilter? colorFilter,
     @Deprecated('Use colorFilter: ColorFilter.mode(color, blendMode) instead '
-        '- default BlendMode is BlendMode.srcIn )')
+        '- default BlendMode is BlendMode.srcIn.')
         ui.Color? color,
     @Deprecated('Use colorFilter: ColorFilter.mode(color, blendMode) instead '
-        '- default BlendMode is BlendMode.srcIn )')
+        '- default BlendMode is BlendMode.srcIn.')
         ui.BlendMode colorBlendMode = ui.BlendMode.srcIn,
     this.semanticsLabel,
     this.excludeFromSemantics = false,
