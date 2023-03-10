@@ -61,7 +61,7 @@ SVGs, and the way that Flutter ties together byte acquisition and image decoding
 makes things a bit complicated. Instead, `vector_graphics` introduces the
 concept of a `BytesLoader` class, which knows how to obtain encoded bytes to
 feed to the runtime via an asynchronous method that optionally receives a
-`BuildContext`.  See the `loaders.dart` file in this package for examples.
+`BuildContext`. See the `loaders.dart` file in this package for examples.
 
 As of this writing, the optimizations that are available include:
 
@@ -167,3 +167,18 @@ await tester.pump();
 
 to make sure that the image decode(s) finish and the placeholder widget is
 replaced with the actual picture.
+
+### Widget testing
+
+For creating matchers for an svg asset you can use the following as suggested in [#852](https://github.com/dnfield/flutter_svg/issues/852):
+
+```dart
+final findAsset = find.byWidgetPredicate(
+  (widget) =>
+      widget is SvgPicture &&
+      (widget.bytesLoader as SvgAssetLoader) // Here!
+              .assetName
+              .compareTo('assets/flutter.svg') ==
+          0,
+);
+```

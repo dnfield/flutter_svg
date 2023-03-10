@@ -8,6 +8,8 @@
 
 Draw SVG files using Flutter.
 
+If you are migrating from flutter_svg 1.x to 2.x, please take a look at the [migration document](https://github.com/dnfield/flutter_svg/blob/master/vector_graphics.md).
+
 ## Getting Started
 
 This package provides a wrapper around Dart implementations of SVG parsing,
