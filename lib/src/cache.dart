@@ -97,10 +97,12 @@ class Cache {
 
   void _add(Object key, ByteData result) {
     if (maximumSize > 0) {
-      if (_cache.length == maximumSize && maximumSize > 0) {
+      if (_cache.containsKey(key)) {
+        _cache.remove(key); // update LRU.
+      } else if (_cache.length == maximumSize && maximumSize > 0) {
         _cache.remove(_cache.keys.first);
       }
-      assert(_cache.containsKey(key) || _cache.length < maximumSize);
+      assert(_cache.length < maximumSize);
       _cache[key] = result;
     }
     assert(_cache.length <= maximumSize);
