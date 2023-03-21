@@ -3,6 +3,7 @@ import 'dart:convert' show utf8;
 import 'package:flutter/foundation.dart' hide compute;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_svg/src/utilities/extensions.dart';
 import 'package:flutter_svg/src/utilities/http.dart';
 import 'package:vector_graphics/vector_graphics.dart';
 import 'package:vector_graphics_compiler/vector_graphics_compiler.dart' as vg;
@@ -346,7 +347,7 @@ class SvgAssetLoader extends SvgLoader<ByteData> {
 
   @override
   String provideSvg(ByteData? message) =>
-      utf8.decode(message!.buffer.asUint8List(), allowMalformed: true);
+      utf8.decode(message.ifEmpty.buffer.asUint8List(), allowMalformed: true);
 
   @override
   SvgCacheKey cacheKey(BuildContext? context) {
@@ -402,7 +403,7 @@ class SvgNetworkLoader extends SvgLoader<Uint8List> {
 
   @override
   String provideSvg(Uint8List? message) =>
-      utf8.decode(message!, allowMalformed: true);
+      utf8.decode(message.ifEmpty, allowMalformed: true);
 
   @override
   int get hashCode => Object.hash(url, headers, theme, colorMapper);
