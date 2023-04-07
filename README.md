@@ -120,6 +120,21 @@ running the compiler locally to see if any errors are thrown.
 dart run vector_graphics_compiler -i $SVG_FILE -o $TEMPORARY_OUTPUT_TO_BE_DELETED --no-optimize-masks --no-optimize-clips --no-optimize-overdraw --no-tessellate
 ```
 
+### Testing
+
+For testing this api provides a find extension function.
+
+ ```dart
+import 'package:flutter_svg/flutter_svg_test_helper.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:flutter_test/flutter_test.dart';
+testWidgets('Finds svg', (WidgetTester widgetTester) async {
+  final SvgPicture asset = SvgPicture.asset('/test/path/my.svg');
+  await widgetTester.pumpWidget(asset);
+  expect(find.svg(asset.bytesLoader), findsOneWidget);
+});
+ ```
+
 ## Out of scope/non-goals
 
 - SMIL animations. That just seems crazy. I think it'll be possible to animate
