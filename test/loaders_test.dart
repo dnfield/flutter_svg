@@ -82,7 +82,8 @@ class TestLoader extends SvgLoader<void> {
 
   @override
   SvgCacheKey cacheKey(BuildContext? context) {
-    return SvgCacheKey(theme: theme, colorMapper: colorMapper, keyData: keyName);
+    return SvgCacheKey(
+        theme: theme, colorMapper: colorMapper, keyData: keyName);
   }
 }
 
