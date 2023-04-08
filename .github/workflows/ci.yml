@@ -18,7 +18,7 @@ jobs:
         channel: 'stable'
     - run: flutter --version
     - run: flutter pub get
-    - run: flutter format --set-exit-if-changed .
+    - run: dart format --set-exit-if-changed .
     - run: flutter analyze .
     - run: flutter test --coverage
     # - uses: romeovs/lcov-reporter-action@v0.2.16
