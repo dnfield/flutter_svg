@@ -5,7 +5,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:flutter_svg_test/svg_test.dart';
+import 'package:flutter_svg_test/flutter_svg_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

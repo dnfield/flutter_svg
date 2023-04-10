@@ -24,7 +24,7 @@ extension CommonFinderExt on CommonFinders {
   /// ```dart
   /// expect(svgAssetWithPath('assets/asset_name.svg'), findsOneWidget);
   /// ```
-  /// This will match one [SvgPicture.asset] with the [path] 'assets/asset_name.svg'.
+  /// This will match [SvgPicture.asset] with the [path] 'assets/asset_name.svg'.
   /// If the `skipOffstage` argument is true (the default), then this skips
   /// nodes that are [Offstage] or that are from inactive [Route]s.
   Finder svgAssetWithPath(String path, {bool skipOffstage = true}) {
@@ -36,7 +36,7 @@ extension CommonFinderExt on CommonFinders {
   /// ```dart
   /// expect(find.svgNetworkWithUrl('https://svg.dart'), findsOneWidget);
   /// ```
-  /// This will match one [SvgPicture.network] with the [url] https://svg.dart'.
+  /// This will match [SvgPicture.network] with the [url] https://svg.dart'.
   /// If the `skipOffstage` argument is true (the default), then this skips
   /// nodes that are [Offstage] or that are from inactive [Route]s.
   Finder svgNetworkWithUrl(String url, {bool skipOffstage = true}) {
@@ -49,7 +49,7 @@ extension CommonFinderExt on CommonFinders {
   /// const Uint8List svgBytes = [1, 2, 3, 4];
   /// expect(find.svgMemoryWithBytes(svgBytes), findsOneWidget);
   /// ```
-  /// This will match one [SvgPicture.memory] with the [bytes] [1,2,3,4].
+  /// This will match [SvgPicture.memory] with the [bytes] [1,2,3,4].
   /// If the `skipOffstage` argument is true (the default), then this skips
   /// nodes that are [Offstage] or that are from inactive [Route]s.
   Finder svgMemoryWithBytes(Uint8List bytes, {bool skipOffstage = true}) {
@@ -61,7 +61,7 @@ extension CommonFinderExt on CommonFinders {
   /// ```dart
   /// expect(find.svgFileWithPath('test/flutter_logo.svg'), findsOneWidget);
   /// ```
-  /// This will match one [SvgPicture.file] with the [path] 'test/flutter_logo.svg'.
+  /// This will match [SvgPicture.file] with the [path] 'test/flutter_logo.svg'.
   /// If the `skipOffstage` argument is true (the default), then this skips
   /// nodes that are [Offstage] or that are from inactive [Route]s.
   Finder svgFileWithPath(String path, {bool skipOffstage = true}) {

@@ -10,14 +10,6 @@ Draw SVG files using Flutter.
 
 ## Getting Started
 
-This package provides a wrapper around Dart implementations of SVG parsing,
-including SVG path data. In particular, it provides efficient `BytesLoader`
-implementations for [`package:vector_graphics`](https://pub.dev/packages/vector_graphics).
-This package is easier to use but not as performant as using the
-`vector_graphics` and `vector_graphics_compiler` packages directly. Those
-packages allow you to do ahead-of-time compilation and optimization of SVGs,
-and offer some more performant rasterization strategies at runtime.
-
 Basic usage (to create an SVG rendering widget from an asset):
 
 ```dart
@@ -120,16 +112,6 @@ running the compiler locally to see if any errors are thrown.
 dart run vector_graphics_compiler -i $SVG_FILE -o $TEMPORARY_OUTPUT_TO_BE_DELETED --no-optimize-masks --no-optimize-clips --no-optimize-overdraw --no-tessellate
 ```
 
-## Out of scope/non-goals
-
-- SMIL animations. That just seems crazy. I think it'll be possible to animate
-  the SVG but probably in a more Flutter driven way.
-- Interactivity/events in SVG.
-- Any CSS support - preprocess your SVGs (perhaps with [usvg](https://github.com/RazrFalcon/resvg/tree/master/usvg) or [scour](https://github.com/scour-project/scour) to get rid of all CSS?).
-- Scripting in SVGs
-- Foreign elements
-- Rendering properties/hints
-
 ## Recommended Adobe Illustrator SVG Configuration
 - In Styling: choose Presentation Attributes instead of Inline CSS because CSS is not fully supported.
 - In Images: choose Embded not Linked to other file to get a single svg with no dependency to other files.
@@ -163,10 +145,3 @@ licensed under the Apache license.
 Please submit SVGs that can't render properly (e.g. that don't render here the
 way they do in chrome), as long as they're not using anything "probably out of
 scope" (above).
-
-## Alternatives
-
-- [vector_graphics](https://pub.dev/packages/vector_graphics) which powers this package.
-- [Rive](https://rive.app/) supports importing SVGs and animating vector graphics.
-- [FlutterShapeMaker](https://fluttershapemaker.com) supports converting SVGs to [CustomPaint](https://api.flutter.dev/flutter/widgets/CustomPaint-class.html) widgets.
-- [Jovial SVG](https://pub.dev/packages/jovial_svg) supports a slightly different feature set and a fast binary format.
