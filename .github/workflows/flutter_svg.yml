@@ -11,6 +11,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/flutter_svg
     steps:
     - uses: actions/checkout@v3
     - uses: subosito/flutter-action@v2
