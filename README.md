@@ -132,8 +132,8 @@ dart run vector_graphics_compiler -i $SVG_FILE -o $TEMPORARY_OUTPUT_TO_BE_DELETE
 
 ## Recommended Adobe Illustrator SVG Configuration
 - In Styling: choose Presentation Attributes instead of Inline CSS because CSS is not fully supported.
-- In Images: choose Embded not Linked to other file to get a single svg with no dependency to other files.
-- In Objects IDs: choose layer names to add every layer name to svg tags or you can use minimal,it is optional.
+- In Images: choose Embed not Linked to other file to get a single svg with no dependency to the other files.
+- In Objects IDs: choose layer names to add every layer name to svg tags or you can use minimal, it is optional.
 ![Export configuration](https://user-images.githubusercontent.com/2842459/62599914-91de9c00-b8fe-11e9-8fb7-4af57d5100f7.png)
 
 ## SVG sample attribution
@@ -151,7 +151,7 @@ SVGs in `/assets/wikimedia` are pulled from [Wikimedia Commons](https://commons.
 Android Drawables in `/assets/android_vd` are pulled from Android Documentation
 and examples.
 
-The Flutter Logo created based on the Flutter Logo Widget © Google.
+The Flutter Logo was created based on the Flutter Logo Widget © Google.
 
 The Dart logo is from
 [dartlang.org](https://github.com/dart-lang/site-shared/blob/master/src/_assets/images/dart/logo%2Btext/horizontal/original.svg)
