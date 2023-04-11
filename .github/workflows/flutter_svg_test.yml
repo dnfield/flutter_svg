@@ -1,0 +1,30 @@
+name: analyze and test flutter_svg_test
+
+on:
+  push:
+    branches: [master]
+    paths-ignore:
+      - '**/*.md'
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/flutter_svg_test
+    steps:
+    - uses: actions/checkout@v3
+    - uses: subosito/flutter-action@v2
+      with:
+        channel: 'stable'
+    - run: flutter --version
+    - run: flutter pub get
+    - run: dart format --set-exit-if-changed .
+    - run: flutter analyze .
+    - run: flutter test --coverage
+    # - uses: romeovs/lcov-reporter-action@v0.2.16
+    #   with:
+    #     lcov-file: ./packages/vector_graphics_codec/coverage/lcov.info
+    #     github-token: ${{ secrets.GITHUB_TOKEN }}
