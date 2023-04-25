@@ -2,7 +2,7 @@
 
 set -e
 
-pushd packages/flutter_svg
+cd packages/flutter_svg
 flutter analyze --no-fatal-infos
 flutter test
-popd
+cd ../..
