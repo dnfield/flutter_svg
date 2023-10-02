@@ -69,6 +69,15 @@ canvas.drawPicture(pictureInfo.picture);
 // Or convert the picture to an image:
 final ui.Image image = pictureInfo.picture.toImage(...);
 
+// Or convert the picture to a scaled image:
+const double targetWidth = 512;
+const double targetHeight = 512;
+final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
+final ui.Canvas canvas = Canvas(pictureRecorder, Rect.fromPoints(Offset.zero, Offset(targetWidth, targetHeight)));
+canvas.scale(targetWidth / pictureInfo.size.width, targetHeight / pictureInfo.size.height);
+canvas.drawPicture(picture);
+final ui.Image scaledImage = await pictureRecorder.endRecording().toImage(targetWidth.ceil(), targetHeight.ceil());
+
 pictureInfo.picture.dispose();
 ```
 
