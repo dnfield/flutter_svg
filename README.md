@@ -15,7 +15,7 @@ This library consists of two packages:
 and
 [**flutter_svg_test** ](https://github.com/dnfield/flutter_svg/tree/master/packages/flutter_svg_test).
 
-[flutter_svg](https://github.com/dnfield/flutter_svg/tree/master/packages/flutter_svg_test)
+[flutter_svg](https://github.com/dnfield/flutter_svg/tree/master/packages/flutter_svg)
 provides a wrapper around Dart implementations of SVG parsing,
 including SVG path data. In particular, it provides efficient `BytesLoader`
 implementations for [`package:vector_graphics`](https://pub.dev/packages/vector_graphics).
