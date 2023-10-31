@@ -765,7 +765,8 @@ void main() {
 
       // Then with SvgPicture.memory
       await tester.pumpWidget(RepaintBoundary(
-        child: SvgPicture.memory(utf8.encode(svgStr)),
+        // ignore: unnecessary_cast
+        child: SvgPicture.memory(utf8.encode(svgStr) as Uint8List),
       ));
       await tester.runAsync(() => vg.waitForPendingDecodes());
       await tester.pumpAndSettle();
@@ -902,4 +903,4 @@ const String stickFigureSvgStr = '''
 </svg>
 ''';
 
-final Uint8List svgBytes = utf8.encode(svgStr);
+final Uint8List svgBytes = Uint8List.fromList(utf8.encode(svgStr));
