@@ -14,6 +14,6 @@ coverage/
 .project
 
 # golden failure diffs
-test/failures
+**/test/failures
 # Flutter crash logs
 /flutter_*.log
