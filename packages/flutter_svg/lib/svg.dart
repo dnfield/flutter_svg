@@ -250,7 +250,12 @@ class SvgPicture extends StatelessWidget {
     @deprecated bool cacheColorFilter = false,
     SvgTheme? theme,
     http.Client? httpClient,
-  })  : bytesLoader = SvgNetworkLoader(url, headers: headers, theme: theme, httpClient: httpClient),
+  })  : bytesLoader = SvgNetworkLoader(
+          url,
+          headers: headers,
+          theme: theme,
+          httpClient: httpClient,
+        ),
         colorFilter = colorFilter ?? _getColorFilter(color, colorBlendMode),
         super(key: key);
 
