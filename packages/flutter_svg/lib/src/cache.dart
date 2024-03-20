@@ -85,6 +85,8 @@ class Cache {
         _pending.remove(key);
         _add(key, data);
         result = data; // in case it was a synchronous future.
+      }).catchError((Object e, _) {
+        _pending.remove(key);
       });
     }
     if (result != null) {
