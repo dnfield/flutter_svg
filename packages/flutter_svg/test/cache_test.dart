@@ -133,4 +133,19 @@ void main() {
     await null;
     expect(cache.count, 2);
   });
+
+  test('Exception thrown during loader execution is handled', () async {
+    final Cache cache = Cache();
+
+    Future<ByteData> futureThatThrows() async =>
+        Future<ByteData>.error(Exception('Exception inside future'));
+    await expectLater(
+      cache.putIfAbsent(1, () => futureThatThrows()),
+      throwsA(anything),
+    );
+
+    Future<ByteData> futureThatDoesntThrow() async => ByteData(1);
+    // Doesn't throw an error
+    await cache.putIfAbsent(1, () => futureThatDoesntThrow());
+  });
 }
