@@ -505,6 +505,7 @@ class SvgPicture extends StatelessWidget {
       placeholderBuilder: placeholderBuilder,
       clipViewbox: !allowDrawingOutsideViewBox,
       matchTextDirection: matchTextDirection,
+      strategy: RenderingStrategy.raster,
     );
   }
 
