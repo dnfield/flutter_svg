@@ -55,6 +55,13 @@ const List<String> uriNames = <String>[
   'https://upload.wikimedia.org/wikipedia/commons/b/b4/Chess_ndd45.svg',
 ];
 
+const List<String> uriFailedNames = <String>[
+  'an error image url.svg',
+  'https: /sadf.svg',
+  'http://www.google.com/404',
+  'https://dev-public-cdn.baokim.vn/retail/xyx.png',
+];
+
 void main() {
   runApp(_MyApp());
 }
@@ -121,6 +128,19 @@ class _MyHomePageState extends State<_MyHomePage> {
         ),
       );
     }
+
+    for (String uriName in uriFailedNames) {
+      _painters.add(
+        SvgPicture.network(
+          uriName,
+          placeholderBuilder: (BuildContext context) => Container(
+            padding: const EdgeInsets.all(30.0),
+            child: const CircularProgressIndicator(),
+          ),
+        ),
+      );
+    }
+
     // Shows an example of an SVG image that will fetch a raster image from a URL.
     _painters.add(SvgPicture.string('''<svg viewBox="0 0 200 200"
   xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
