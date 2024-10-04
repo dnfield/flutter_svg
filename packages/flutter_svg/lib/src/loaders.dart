@@ -373,15 +373,19 @@ class SvgAssetLoader extends SvgLoader<ByteData> {
   }
 
   @override
-  Future<ByteData?> prepareMessage(BuildContext? context) {
-    return _resolveBundle(context).load(
-      packageName == null ? assetName : 'packages/$packageName/$assetName',
-    );
+  Future<ByteData?> prepareMessage(BuildContext? context) async {
+    try {
+      return await _resolveBundle(context).load(
+        packageName == null ? assetName : 'packages/$packageName/$assetName',
+      );
+    } catch (e) {
+      debugPrint('SvgAssetLoader.prepareMessage.error: $e');
+      return Future<ByteData?>.value();
+    }
   }
 
   @override
-  String provideSvg(ByteData? message) =>
-      utf8.decode(message!.buffer.asUint8List(), allowMalformed: true);
+  String provideSvg(ByteData? message) => utf8.decode(message!.buffer.asUint8List(), allowMalformed: true);
 
   @override
   SvgCacheKey cacheKey(BuildContext? context) {
