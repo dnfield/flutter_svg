@@ -437,13 +437,18 @@ class SvgNetworkLoader extends SvgLoader<Uint8List> {
 
   @override
   Future<Uint8List?> prepareMessage(BuildContext? context) async {
-    final http.Client client = _httpClient ?? http.Client();
-    return (await client.get(Uri.parse(url), headers: headers)).bodyBytes;
+    try {
+      final http.Client client = _httpClient ?? http.Client();
+      final http.Response res = await client.get(Uri.parse(url), headers: headers);
+      return res.bodyBytes;
+    } catch (e) {
+      debugPrint('SvgNetworkLoader.prepareMessage.error: $e');
+      return null;
+    }
   }
 
   @override
-  String provideSvg(Uint8List? message) =>
-      utf8.decode(message!, allowMalformed: true);
+  String provideSvg(Uint8List? message) => message == null ? '' : utf8.decode(message, allowMalformed: true);
 
   @override
   int get hashCode => Object.hash(url, headers, theme, colorMapper);
