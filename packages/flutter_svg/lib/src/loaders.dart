@@ -152,20 +152,29 @@ abstract class SvgLoader<T> extends BytesLoader {
     final SvgTheme theme = getTheme(context);
     return prepareMessage(context).then((T? message) {
       return compute((T? message) {
-        return vg
-            .encodeSvg(
-              xml: provideSvg(message),
-              theme: theme.toVgTheme(),
-              colorMapper: colorMapper == null
-                  ? null
-                  : _DelegateVgColorMapper(colorMapper!),
-              debugName: 'Svg loader',
-              enableClippingOptimizer: false,
-              enableMaskingOptimizer: false,
-              enableOverdrawOptimizer: false,
-            )
-            .buffer
-            .asByteData();
+        try {
+          debugPrint('SvgLoader._load.provideSvg: empty');
+          final String xml = provideSvg(message);
+          if (xml.isEmpty) {
+            return Future<ByteData>.value(ByteData.new(0));
+          } else {
+            return vg
+                .encodeSvg(
+                  xml: xml,
+                  theme: theme.toVgTheme(),
+                  colorMapper: colorMapper == null ? null : _DelegateVgColorMapper(colorMapper!),
+                  debugName: 'Svg loader',
+                  enableClippingOptimizer: false,
+                  enableMaskingOptimizer: false,
+                  enableOverdrawOptimizer: false,
+                )
+                .buffer
+                .asByteData();
+          }
+        } catch (e) {
+          debugPrint('SvgLoader._load.error: $e');
+          return Future<ByteData>.value(ByteData.new(0));
+        }
       }, message, debugLabel: 'Load Bytes');
     });
   }
