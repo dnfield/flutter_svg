@@ -91,6 +91,7 @@ class SvgPicture extends StatelessWidget {
         'The SVG theme must be set on the bytesLoader.')
     SvgTheme? theme,
     @deprecated bool cacheColorFilter = false,
+    this.errorBuilder,
   }) : super(key: key);
 
   /// Instantiates a widget that renders an SVG picture from an [AssetBundle].
@@ -189,6 +190,7 @@ class SvgPicture extends StatelessWidget {
     @deprecated ui.Color? color,
     @deprecated ui.BlendMode colorBlendMode = ui.BlendMode.srcIn,
     @deprecated bool cacheColorFilter = false,
+    this.errorBuilder,
   })  : bytesLoader = SvgAssetLoader(
           assetName,
           packageName: package,
@@ -250,6 +252,7 @@ class SvgPicture extends StatelessWidget {
     @deprecated bool cacheColorFilter = false,
     SvgTheme? theme,
     http.Client? httpClient,
+    this.errorBuilder,
   })  : bytesLoader = SvgNetworkLoader(
           url,
           headers: headers,
@@ -307,6 +310,7 @@ class SvgPicture extends StatelessWidget {
     this.clipBehavior = Clip.hardEdge,
     SvgTheme? theme,
     @deprecated bool cacheColorFilter = false,
+    this.errorBuilder,
   })  : bytesLoader = SvgFileLoader(file, theme: theme),
         colorFilter = colorFilter ?? _getColorFilter(color, colorBlendMode),
         super(key: key);
@@ -356,6 +360,7 @@ class SvgPicture extends StatelessWidget {
     this.clipBehavior = Clip.hardEdge,
     SvgTheme? theme,
     @deprecated bool cacheColorFilter = false,
+    this.errorBuilder,
   })  : bytesLoader = SvgBytesLoader(bytes, theme: theme),
         colorFilter = colorFilter ?? _getColorFilter(color, colorBlendMode),
         super(key: key);
@@ -405,6 +410,7 @@ class SvgPicture extends StatelessWidget {
     this.clipBehavior = Clip.hardEdge,
     SvgTheme? theme,
     @deprecated bool cacheColorFilter = false,
+    this.errorBuilder,
   })  : bytesLoader = SvgStringLoader(string, theme: theme),
         colorFilter = colorFilter ?? _getColorFilter(color, colorBlendMode),
         super(key: key);
@@ -490,6 +496,9 @@ class SvgPicture extends StatelessWidget {
   /// The color filter, if any, to apply to this widget.
   final ColorFilter? colorFilter;
 
+  /// The widget to show when failed to fetch, decode, and parse the SVG data.
+  final SvgPictureErrorWidgetBuilder? errorBuilder;
+
   @override
   Widget build(BuildContext context) {
     return createCompatVectorGraphic(
@@ -505,6 +514,7 @@ class SvgPicture extends StatelessWidget {
       placeholderBuilder: placeholderBuilder,
       clipViewbox: !allowDrawingOutsideViewBox,
       matchTextDirection: matchTextDirection,
+      errorBuilder: errorBuilder,
     );
   }
 
@@ -567,3 +577,10 @@ class SvgPicture extends StatelessWidget {
       ));
   }
 }
+
+/// The signature that [VectorGraphic.errorBuilder] uses to report exceptions.
+typedef SvgPictureErrorWidgetBuilder = Widget Function(
+  BuildContext context,
+  Object error,
+  StackTrace stackTrace,
+);
