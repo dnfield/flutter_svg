@@ -16,6 +16,13 @@ export 'src/cache.dart';
 export 'src/default_theme.dart';
 export 'src/loaders.dart';
 
+/// The signature that [SvgPicture.errorBuilder] uses to report exceptions.
+typedef ErrorWidgetBuilder = Widget Function(
+  BuildContext context,
+  Object error,
+  StackTrace stackTrace,
+);
+
 /// Instance for [Svg]'s utility methods, which can produce a [DrawableRoot]
 /// or [PictureInfo] from [String] or [Uint8List].
 final Svg svg = Svg._();
@@ -68,6 +75,9 @@ class SvgPicture extends StatelessWidget {
   /// A custom `placeholderBuilder` can be specified for cases where decoding or
   /// acquiring data may take a noticeably long time, e.g. for a network picture.
   ///
+  /// An `errorBuilder` can be specified to provide a custom error display in
+  /// case the SVG can't be shown.
+  ///
   /// The `semanticsLabel` can be used to identify the purpose of this picture for
   /// screen reading software.
   ///
@@ -82,6 +92,7 @@ class SvgPicture extends StatelessWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
+    this.errorBuilder,
     this.colorFilter,
     this.semanticsLabel,
     this.excludeFromSemantics = false,
@@ -115,6 +126,9 @@ class SvgPicture extends StatelessWidget {
   ///
   /// A custom `placeholderBuilder` can be specified for cases where decoding or
   /// acquiring data may take a noticeably long time.
+  ///
+  /// An `errorBuilder` can be specified to provide a custom error display in
+  /// case the SVG can't be shown.
   ///
   /// The `color` and `colorBlendMode` arguments, if specified, will be used to set a
   /// [ColorFilter] on any [Paint]s created for this drawing.
@@ -181,6 +195,7 @@ class SvgPicture extends StatelessWidget {
     this.alignment = Alignment.center,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
+    this.errorBuilder,
     this.semanticsLabel,
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
@@ -218,6 +233,9 @@ class SvgPicture extends StatelessWidget {
   /// A custom `placeholderBuilder` can be specified for cases where decoding or
   /// acquiring data may take a noticeably long time, such as high latency scenarios.
   ///
+  /// An `errorBuilder` can be specified to provide a custom error display in
+  /// case the SVG can't be shown.
+  ///
   /// The `color` and `colorBlendMode` arguments, if specified, will be used to set a
   /// [ColorFilter] on any [Paint]s created for this drawing.
   ///
@@ -241,6 +259,7 @@ class SvgPicture extends StatelessWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
+    this.errorBuilder,
     ui.ColorFilter? colorFilter,
     @deprecated ui.Color? color,
     @deprecated ui.BlendMode colorBlendMode = ui.BlendMode.srcIn,
@@ -279,6 +298,9 @@ class SvgPicture extends StatelessWidget {
   /// A custom `placeholderBuilder` can be specified for cases where decoding or
   /// acquiring data may take a noticeably long time.
   ///
+  /// An `errorBuilder` can be specified to provide a custom error display in
+  /// case the SVG can't be shown.
+  ///
   /// The `color` and `colorBlendMode` arguments, if specified, will be used to set a
   /// [ColorFilter] on any [Paint]s created for this drawing.
   ///
@@ -299,6 +321,7 @@ class SvgPicture extends StatelessWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
+    this.errorBuilder,
     ui.ColorFilter? colorFilter,
     @deprecated ui.Color? color,
     @deprecated ui.BlendMode colorBlendMode = ui.BlendMode.srcIn,
@@ -331,6 +354,9 @@ class SvgPicture extends StatelessWidget {
   /// A custom `placeholderBuilder` can be specified for cases where decoding or
   /// acquiring data may take a noticeably long time.
   ///
+  /// An `errorBuilder` can be specified to provide a custom error display in
+  /// case the SVG can't be shown.
+  ///
   /// The `color` and `colorBlendMode` arguments, if specified, will be used to set a
   /// [ColorFilter] on any [Paint]s created for this drawing.
   ///
@@ -348,6 +374,7 @@ class SvgPicture extends StatelessWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
+    this.errorBuilder,
     ui.ColorFilter? colorFilter,
     @deprecated ui.Color? color,
     @deprecated ui.BlendMode colorBlendMode = ui.BlendMode.srcIn,
@@ -380,6 +407,9 @@ class SvgPicture extends StatelessWidget {
   /// A custom `placeholderBuilder` can be specified for cases where decoding or
   /// acquiring data may take a noticeably long time.
   ///
+  /// An `errorBuilder` can be specified to provide a custom error display in
+  /// case the SVG can't be shown.
+  ///
   /// The `color` and `colorBlendMode` arguments, if specified, will be used to set a
   /// [ColorFilter] on any [Paint]s created for this drawing.
   ///
@@ -397,6 +427,7 @@ class SvgPicture extends StatelessWidget {
     this.matchTextDirection = false,
     this.allowDrawingOutsideViewBox = false,
     this.placeholderBuilder,
+    this.errorBuilder,
     ui.ColorFilter? colorFilter,
     @deprecated ui.Color? color,
     @deprecated ui.BlendMode colorBlendMode = ui.BlendMode.srcIn,
@@ -460,6 +491,9 @@ class SvgPicture extends StatelessWidget {
   /// The placeholder to use while fetching, decoding, and parsing the SVG data.
   final WidgetBuilder? placeholderBuilder;
 
+  /// The placeholder to use in the event that an error occurs.
+  final ErrorWidgetBuilder? errorBuilder;
+
   /// If true, will horizontally flip the picture in [TextDirection.rtl] contexts.
   final bool matchTextDirection;
 
@@ -503,6 +537,7 @@ class SvgPicture extends StatelessWidget {
       clipBehavior: clipBehavior,
       colorFilter: colorFilter,
       placeholderBuilder: placeholderBuilder,
+      errorBuilder: errorBuilder,
       clipViewbox: !allowDrawingOutsideViewBox,
       matchTextDirection: matchTextDirection,
     );
@@ -548,6 +583,11 @@ class SvgPicture extends StatelessWidget {
       ..add(DiagnosticsProperty<Function>(
         'placeholderBuilder',
         placeholderBuilder,
+        defaultValue: null,
+      ))
+      ..add(DiagnosticsProperty<Function>(
+        'errorBuilder',
+        errorBuilder,
         defaultValue: null,
       ))
       ..add(DiagnosticsProperty<bool>(
