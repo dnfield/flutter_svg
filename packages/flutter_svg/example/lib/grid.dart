@@ -130,8 +130,8 @@ class _MyHomePageState extends State<_MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    if (_dimension > MediaQuery.of(context).size.width - 10.0) {
-      _dimension = MediaQuery.of(context).size.width - 10.0;
+    if (_dimension > MediaQuery.sizeOf(context).width - 10.0) {
+      _dimension = MediaQuery.sizeOf(context).width - 10.0;
     }
     return Scaffold(
       appBar: AppBar(
@@ -140,7 +140,7 @@ class _MyHomePageState extends State<_MyHomePage> {
       body: Column(children: <Widget>[
         Slider(
           min: 5.0,
-          max: MediaQuery.of(context).size.width - 10.0,
+          max: MediaQuery.sizeOf(context).width - 10.0,
           value: _dimension,
           onChanged: (double val) {
             setState(() => _dimension = val);
